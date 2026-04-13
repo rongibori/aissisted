@@ -1,0 +1,6 @@
+{
+  "name": "@aissisted/types",
+  "private": true,
+  "version": "0.1.0",
+  "main": "src/index.ts"
+}
