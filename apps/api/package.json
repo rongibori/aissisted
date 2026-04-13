@@ -1,0 +1,11 @@
+{
+  "name": "@aissisted/api",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "node src/index.js",
+    "build": "echo \"api build step pending\"",
+    "lint": "echo \"api lint step pending\"",
+    "typecheck": "echo \"api typecheck pending\""
+  }
+}
