@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
 import { biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Input, Spinner, EmptyState, Badge } from "../../components/ui";
+import { getRangeStatus, STATUS_LABELS, STATUS_COLORS } from "../../lib/biomarker-ranges";
 
 interface Biomarker {
   id: string;
@@ -233,9 +234,17 @@ function LabsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-[#e8e8f0]">
-                      {b.value}
+                      {b.value} {b.unit}
                     </span>
-                    <Badge variant="default">{b.unit}</Badge>
+                    {(() => {
+                      const status = getRangeStatus(b.name, b.value);
+                      if (status === "unknown") return null;
+                      return (
+                        <span className={`text-xs px-2 py-0.5 rounded border font-medium ${STATUS_COLORS[status]}`}>
+                          {STATUS_LABELS[status]}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

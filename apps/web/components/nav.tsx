@@ -10,6 +10,7 @@ const links = [
   { href: "/chat", label: "Jeffrey" },
   { href: "/stack", label: "My Stack" },
   { href: "/labs", label: "Labs" },
+  { href: "/integrations", label: "Integrations" },
 ];
 
 export function Nav() {

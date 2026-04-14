@@ -129,6 +129,34 @@ export const chat = {
     request<{ conversations: any[] }>("/chat/conversations"),
 };
 
+// ─── Integrations ────────────────────────────────────────
+export const integrations = {
+  status: () =>
+    request<{ connected: Record<string, { connectedAt: string }> }>(
+      "/integrations/status"
+    ),
+
+  whoopConnect: () => {
+    // Redirects — navigate directly
+    window.location.href = `${API_URL}/integrations/whoop/connect`;
+  },
+
+  whoopSync: () =>
+    request<{ synced: number }>("/integrations/whoop/sync", {
+      method: "POST",
+    }),
+
+  appleHealthUpload: (xml: string) =>
+    request<{ parsed: number; imported: number }>(
+      "/integrations/apple-health/upload",
+      { method: "POST", body: JSON.stringify({ xml }) }
+    ),
+
+  fhirConnect: () => {
+    window.location.href = `${API_URL}/integrations/fhir/connect`;
+  },
+};
+
 // ─── Health ──────────────────────────────────────────────
 export const health = {
   check: () =>

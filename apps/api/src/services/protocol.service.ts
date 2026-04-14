@@ -9,6 +9,7 @@ import {
   buildSignalsFromBiomarkers,
   buildSignalsFromGoals,
 } from "../engine/evaluator.js";
+import { desc } from "@aissisted/db";
 import { checkInteractions, formatInteractionWarnings } from "../engine/interactions.js";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
@@ -151,7 +152,7 @@ export async function getLatestProtocol(userId: string) {
     .select()
     .from(schema.protocols)
     .where(eq(schema.protocols.userId, userId))
-    .orderBy(schema.protocols.createdAt)
+    .orderBy(desc(schema.protocols.createdAt))
     .get();
 
   if (!protocol) return null;

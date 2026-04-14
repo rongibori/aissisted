@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
 import { Spinner } from "../../components/ui";
+import { ErrorBoundary } from "../../components/error-boundary";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -29,7 +30,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Nav />
-      <main className="pt-14">{children}</main>
+      <main className="pt-14">
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </main>
     </>
   );
 }

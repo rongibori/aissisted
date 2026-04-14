@@ -32,8 +32,15 @@ export async function biomarkerRoutes(app: FastifyInstance) {
         measuredAt: string;
       };
 
-      const biomarker = await biomarkerService.addBiomarker(sub, body);
-      reply.status(201).send({ data: { biomarker } });
+      try {
+        const biomarker = await biomarkerService.addBiomarker(sub, body);
+        reply.status(201).send({ data: { biomarker } });
+      } catch (err: any) {
+        if (err.code === "INVALID_BIOMARKER_VALUE") {
+          return reply.status(400).send({ error: { message: err.message, code: err.code } });
+        }
+        throw err;
+      }
     }
   );
 

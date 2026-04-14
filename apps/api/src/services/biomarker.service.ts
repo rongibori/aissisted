@@ -1,5 +1,12 @@
 import { randomUUID } from "crypto";
 import { db, schema, eq, and, desc } from "@aissisted/db";
+import {
+  getRangeStatus,
+  validateBiomarkerValue,
+  type RangeStatus,
+} from "../engine/biomarker-ranges.js";
+
+export type { RangeStatus };
 
 export async function addBiomarker(
   userId: string,
@@ -11,6 +18,12 @@ export async function addBiomarker(
     measuredAt: string;
   }
 ) {
+  // Validate value before persisting
+  const validationError = validateBiomarkerValue(data.name, data.value, data.unit);
+  if (validationError) {
+    throw Object.assign(new Error(validationError), { code: "INVALID_BIOMARKER_VALUE" });
+  }
+
   const id = randomUUID();
   const now = new Date().toISOString();
 
@@ -25,7 +38,22 @@ export async function addBiomarker(
     createdAt: now,
   });
 
-  return { id, userId, ...data, createdAt: now };
+  const { status, isCritical } = getRangeStatus(data.name, data.value);
+  return { id, userId, ...data, createdAt: now, status, isCritical };
+}
+
+function annotate(row: {
+  id: string;
+  name: string;
+  value: number;
+  unit: string;
+  userId: string;
+  source: string | null;
+  measuredAt: string;
+  createdAt: string;
+}) {
+  const { status, isCritical } = getRangeStatus(row.name, row.value);
+  return { ...row, status, isCritical };
 }
 
 export async function getBiomarkers(
@@ -46,11 +74,10 @@ export async function getBiomarkers(
     .orderBy(desc(schema.biomarkers.measuredAt))
     .limit(options?.limit ?? 100);
 
-  return rows;
+  return rows.map(annotate);
 }
 
 export async function getLatestBiomarkers(userId: string) {
-  // Get the most recent reading for each unique biomarker name
   const all = await getBiomarkers(userId, { limit: 500 });
   const seen = new Set<string>();
   return all.filter((b) => {
