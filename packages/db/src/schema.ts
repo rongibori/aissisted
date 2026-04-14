@@ -193,6 +193,35 @@ export const sessionHistory = sqliteTable("session_history", {
   createdAt: text("created_at").notNull(),
 });
 
+// ─── Integration Tokens ──────────────────────────────────
+
+export const integrationTokens = sqliteTable("integration_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider", {
+    enum: ["whoop", "fhir", "apple_health"],
+  }).notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: text("expires_at"),
+  scope: text("scope"),
+  metadata: text("metadata"), // JSON for provider-specific data
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const integrationTokensRelations = relations(
+  integrationTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [integrationTokens.userId],
+      references: [users.id],
+    }),
+  })
+);
+
 // ─── Audit Log ───────────────────────────────────────────
 
 export const auditLog = sqliteTable("audit_log", {
