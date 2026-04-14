@@ -114,6 +114,17 @@ export const chat = {
       body: JSON.stringify({ message, conversationId }),
     }),
 
+  recent: () =>
+    request<{
+      conversationId: string | null;
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant" | "system";
+        content: string;
+        createdAt: string;
+      }>;
+    }>("/chat/recent"),
+
   conversations: () =>
     request<{ conversations: any[] }>("/chat/conversations"),
 };

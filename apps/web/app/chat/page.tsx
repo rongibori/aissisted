@@ -14,21 +14,43 @@ interface Message {
   protocolTriggered?: boolean;
 }
 
+const WELCOME: Message = {
+  id: "welcome",
+  role: "assistant",
+  content:
+    "Hi! I'm Jeffrey, your Aissisted health concierge. I can help you understand your biomarkers, build a personalized supplement protocol, and answer health questions. What would you like to explore today?",
+};
+
 function ChatPage() {
   const { user, loading } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Hi! I'm Jeffrey, your Aissisted health concierge. I can help you understand your biomarkers, build a personalized supplement protocol, and answer health questions. What would you like to explore today?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [restoring, setRestoring] = useState(true);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Restore last conversation from server
+  useEffect(() => {
+    if (loading || !user) return;
+    chatApi.recent()
+      .then((data) => {
+        if (data.conversationId && data.messages.length > 0) {
+          setConversationId(data.conversationId);
+          const restored = data.messages
+            .filter((m) => m.role !== "system")
+            .map((m) => ({
+              id: m.id,
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            }));
+          setMessages(restored.length > 0 ? restored : [WELCOME]);
+        }
+      })
+      .catch(() => {}) // silently fall back to welcome message
+      .finally(() => setRestoring(false));
+  }, [user, loading]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,7 +103,7 @@ function ChatPage() {
     }
   };
 
-  if (loading) {
+  if (loading || restoring) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />

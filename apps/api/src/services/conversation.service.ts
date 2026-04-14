@@ -68,6 +68,15 @@ export async function addMessage(
   return { id, conversationId, role, content, intent, createdAt: now };
 }
 
+export async function getConversationById(id: string, userId: string) {
+  return db
+    .select()
+    .from(schema.conversations)
+    .where(eq(schema.conversations.id, id))
+    .get()
+    .then((row) => (row?.userId === userId ? row : null));
+}
+
 export async function getUserConversations(userId: string) {
   return db
     .select()
