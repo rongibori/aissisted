@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
-import { protocol, biomarkers as biomarkersApi } from "../../lib/api";
+import { protocol, biomarkers as biomarkersApi, profile as profileApi } from "../../lib/api";
 import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
@@ -40,18 +40,26 @@ export default function DashboardPage() {
   const [currentProtocol, setCurrentProtocol] = useState<Protocol | null>(null);
   const [latestBiomarkers, setLatestBiomarkers] = useState<Biomarker[]>([]);
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
+  const [hasProfile, setHasProfile] = useState(true);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [protoData, bioData] = await Promise.allSettled([
+      const [protoData, bioData, profileData] = await Promise.allSettled([
         protocol.latest(),
         biomarkersApi.list({ latest: true }),
+        profileApi.get(),
       ]);
       if (protoData.status === "fulfilled") {
         setCurrentProtocol(protoData.value.protocol);
+      }
+      if (profileData.status === "rejected") {
+        setHasProfile(false);
+      } else if (profileData.status === "fulfilled") {
+        const p = profileData.value.profile;
+        setHasProfile(!!(p?.firstName));
       }
       if (bioData.status === "fulfilled") {
         const markers: Biomarker[] = bioData.value.biomarkers;
@@ -116,6 +124,64 @@ export default function DashboardPage() {
           Generate Protocol
         </Button>
       </div>
+
+      {/* Onboarding checklist — shown until all three steps are done */}
+      {(!hasProfile || latestBiomarkers.length === 0 || !currentProtocol) && (
+        <div className="mb-6 p-4 bg-indigo-950 border border-indigo-800 rounded-xl">
+          <p className="text-sm font-medium text-indigo-300 mb-3">
+            Complete your setup to unlock your personalized protocol
+          </p>
+          <div className="flex flex-col gap-2">
+            {[
+              {
+                done: hasProfile,
+                label: "Complete your profile",
+                action: () => router.push("/profile"),
+                cta: "Go to Profile",
+              },
+              {
+                done: latestBiomarkers.length > 0,
+                label: "Add at least one biomarker reading",
+                action: () => router.push("/labs"),
+                cta: "Add labs",
+              },
+              {
+                done: !!currentProtocol,
+                label: "Generate your first protocol",
+                action: handleGenerate,
+                cta: "Generate now",
+              },
+            ].map((step) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                    step.done
+                      ? "bg-emerald-600 text-white"
+                      : "bg-[#2a2a38] text-[#7a7a98]"
+                  }`}
+                >
+                  {step.done ? "✓" : "○"}
+                </span>
+                <span
+                  className={`text-sm flex-1 ${
+                    step.done ? "line-through text-[#7a7a98]" : "text-[#e8e8f0]"
+                  }`}
+                >
+                  {step.label}
+                </span>
+                {!step.done && (
+                  <button
+                    onClick={step.action}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 shrink-0"
+                  >
+                    {step.cta} →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Protocol Summary */}

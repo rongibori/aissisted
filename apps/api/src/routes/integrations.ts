@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import { config } from "../config.js";
 import { db, schema, eq } from "@aissisted/db";
+import { persistRawBiomarkers } from "../services/biomarker.service.js";
 
 // WHOOP
 import { buildAuthUrl, exchangeCode, storeTokens } from "../integrations/whoop/oauth.js";
@@ -132,7 +133,7 @@ export async function integrationsRoutes(app: FastifyInstance) {
 
       const records = parseAppleHealthXml(xml);
       const normalized = normalizeAppleHealthRecords(records);
-      const count = await persistBiomarkers(sub, normalized);
+      const count = await persistRawBiomarkers(sub, normalized);
 
       reply.send({
         data: {
@@ -217,7 +218,7 @@ export async function integrationsRoutes(app: FastifyInstance) {
         // Fetch and persist observations
         const observations = await fetchObservations(accessToken, patientId);
         const normalized = normalizeObservations(observations);
-        await persistBiomarkers(userId, normalized);
+        await persistRawBiomarkers(userId, normalized);
 
         reply.redirect("/dashboard?connected=fhir");
       } catch (err: any) {

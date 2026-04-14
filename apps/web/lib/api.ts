@@ -51,6 +51,12 @@ export const auth = {
       method: "POST",
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
+
+  deleteAccount: (password: string) =>
+    request<{ message: string }>("/auth/account", {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    }),
 };
 
 // ─── Profile ─────────────────────────────────────────────

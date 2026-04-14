@@ -9,6 +9,7 @@ import {
 import { generateProtocol, getLatestProtocol } from "./protocol.service.js";
 import { getProfile } from "./profile.service.js";
 import { getLatestBiomarkers } from "./biomarker.service.js";
+import { getRangeStatus } from "../engine/biomarker-ranges.js";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
@@ -160,10 +161,21 @@ function buildUserContext(
 
   if (biomarkers.length) {
     const bList = biomarkers
-      .slice(0, 10)
-      .map((b) => `${b.name}: ${b.value} ${b.unit}`)
-      .join(", ");
-    parts.push(`Recent biomarkers: ${bList}`);
+      .slice(0, 12)
+      .map((b) => {
+        const { status } = getRangeStatus(b.name, b.value);
+        const statusNote =
+          status !== "unknown" && status !== "normal"
+            ? ` [${status.toUpperCase()}]`
+            : "";
+        const trendNote =
+          b.trend && b.trend !== "new" && b.trend !== "stable"
+            ? ` ${b.trend === "up" ? "↑" : "↓"}`
+            : "";
+        return `${b.name}: ${b.value} ${b.unit}${statusNote}${trendNote}`;
+      })
+      .join("\n  ");
+    parts.push(`Recent biomarkers:\n  ${bList}`);
   }
 
   if (protocol) {

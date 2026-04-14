@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { profile as profileApi, auth as authApi } from "../../lib/api";
+import { useRouter } from "next/navigation";
 import { Card, Button, Input, Spinner } from "../../components/ui";
 
 const GOAL_OPTIONS = [
@@ -101,7 +102,79 @@ function TagInput({
   );
 }
 
+function DangerZone({ router }: { router: ReturnType<typeof useRouter> }) {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDeleting(true);
+    setError("");
+    try {
+      await authApi.deleteAccount(password);
+      localStorage.removeItem("aissisted_token");
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Card className="mt-5 border border-red-900">
+      <h2 className="font-semibold text-red-400 mb-2">Danger zone</h2>
+      {!open ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="border-red-900 text-red-400 hover:border-red-700"
+        >
+          Delete account
+        </Button>
+      ) : (
+        <form onSubmit={handleDelete} className="flex flex-col gap-3">
+          <p className="text-sm text-[#7a7a98]">
+            This will permanently delete your account and all data. Enter your
+            password to confirm.
+          </p>
+          <Input
+            label="Confirm password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => { setOpen(false); setPassword(""); setError(""); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              loading={deleting}
+              className="bg-red-700 hover:bg-red-600 border-red-700"
+            >
+              Delete forever
+            </Button>
+          </div>
+        </form>
+      )}
+    </Card>
+  );
+}
+
 export default function ProfilePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -275,6 +348,7 @@ export default function ProfilePage() {
       </form>
 
       {/* Password change */}
+      <DangerZone router={router} />
       <Card className="mt-5">
         <h2 className="font-semibold text-[#e8e8f0] mb-4">Change password</h2>
         <form

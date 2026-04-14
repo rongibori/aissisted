@@ -87,6 +87,43 @@ export async function getBiomarkers(
   return rows.map((r) => annotate(r));
 }
 
+/**
+ * Bulk-insert biomarker entries, silently skipping constraint violations
+ * (e.g. duplicate data from repeated integration syncs).
+ */
+export async function persistRawBiomarkers(
+  userId: string,
+  entries: Array<{
+    name: string;
+    value: number;
+    unit: string;
+    source: string;
+    measuredAt: string;
+  }>
+): Promise<number> {
+  if (entries.length === 0) return 0;
+  let count = 0;
+  const now = new Date().toISOString();
+  for (const entry of entries) {
+    try {
+      await db.insert(schema.biomarkers).values({
+        id: randomUUID(),
+        userId,
+        name: entry.name,
+        value: entry.value,
+        unit: entry.unit,
+        source: entry.source,
+        measuredAt: entry.measuredAt,
+        createdAt: now,
+      });
+      count++;
+    } catch {
+      // Skip duplicates / constraint violations
+    }
+  }
+  return count;
+}
+
 export async function getLatestBiomarkers(userId: string) {
   // Fetch enough history to compute trends (2 readings per marker)
   const all = await db

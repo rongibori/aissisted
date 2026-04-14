@@ -95,6 +95,29 @@ export async function changePassword(
     .where(eq(schema.users.id, userId));
 }
 
+export async function deleteAccount(userId: string, password: string) {
+  const user = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .get();
+
+  if (!user) {
+    throw Object.assign(new Error("User not found"), { code: "NOT_FOUND", status: 404 });
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    throw Object.assign(new Error("Password is incorrect"), {
+      code: "INVALID_CREDENTIALS",
+      status: 401,
+    });
+  }
+
+  // CASCADE deletes handle all child records (profile, biomarkers, protocols, etc.)
+  await db.delete(schema.users).where(eq(schema.users.id, userId));
+}
+
 export async function getUserById(id: string) {
   const user = await db
     .select({

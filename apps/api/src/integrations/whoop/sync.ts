@@ -1,42 +1,6 @@
-import { randomUUID } from "crypto";
-import { db, schema } from "@aissisted/db";
 import { getLatestRecovery, getLatestSleep } from "./client.js";
 import { recoveryToSignals, sleepToSignals } from "./normalizer.js";
-
-type BiomarkerEntry = {
-  name: string;
-  value: number;
-  unit: string;
-  source: string;
-  measuredAt: string;
-};
-
-async function persistBiomarkers(
-  userId: string,
-  entries: BiomarkerEntry[]
-): Promise<number> {
-  if (entries.length === 0) return 0;
-  let count = 0;
-  const now = new Date().toISOString();
-  for (const entry of entries) {
-    try {
-      await db.insert(schema.biomarkers).values({
-        id: randomUUID(),
-        userId,
-        name: entry.name,
-        value: entry.value,
-        unit: entry.unit,
-        source: entry.source,
-        measuredAt: entry.measuredAt,
-        createdAt: now,
-      });
-      count++;
-    } catch {
-      // Skip duplicates / constraint violations
-    }
-  }
-  return count;
-}
+import { persistRawBiomarkers } from "../../services/biomarker.service.js";
 
 export async function syncWhoopForUser(userId: string): Promise<number> {
   const [recovery, sleep] = await Promise.all([
@@ -70,5 +34,5 @@ export async function syncWhoopForUser(userId: string): Promise<number> {
     }
   }
 
-  return persistBiomarkers(userId, entries);
+  return persistRawBiomarkers(userId, entries);
 }
