@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
 import { protocol, biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
+import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 
 interface Recommendation {
   id: string;
@@ -29,6 +30,7 @@ interface Biomarker {
   value: number;
   unit: string;
   measuredAt: string;
+  trend?: TrendDirection;
 }
 
 export default function DashboardPage() {
@@ -199,19 +201,34 @@ export default function DashboardPage() {
               />
             ) : (
               <div className="flex flex-col gap-2">
-                {latestBiomarkers.slice(0, 6).map((b) => (
-                  <div
-                    key={b.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-[#7a7a98] capitalize">
-                      {b.name.replace(/_/g, " ")}
-                    </span>
-                    <span className="text-[#e8e8f0] font-medium">
-                      {b.value} {b.unit}
-                    </span>
-                  </div>
-                ))}
+                {latestBiomarkers.slice(0, 6).map((b) => {
+                  const status = getRangeStatus(b.name, b.value);
+                  return (
+                    <div
+                      key={b.id}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="text-[#7a7a98] capitalize truncate mr-2">
+                        {b.name.replace(/_/g, " ")}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {b.trend && b.trend !== "new" && (
+                          <span className={`text-xs font-bold ${TREND_COLORS[b.trend]}`}>
+                            {TREND_ICONS[b.trend]}
+                          </span>
+                        )}
+                        <span className="text-[#e8e8f0] font-medium">
+                          {b.value} {b.unit}
+                        </span>
+                        {status !== "unknown" && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${STATUS_COLORS[status]}`}>
+                            {STATUS_LABELS[status]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Card>

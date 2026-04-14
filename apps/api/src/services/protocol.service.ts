@@ -68,7 +68,13 @@ export async function generateProtocol(userId: string) {
       const message = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: `You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any additional warnings or cautions specific to this user's profile (beyond those already listed). Respond in JSON: { "summary": "...", "warnings": ["..."] }`,
+        system: [
+          {
+            type: "text",
+            text: "You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any additional warnings or cautions specific to this user's profile (beyond those already listed). Respond in JSON: { \"summary\": \"...\", \"warnings\": [\"...\"] }",
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: [
           {
             role: "user",

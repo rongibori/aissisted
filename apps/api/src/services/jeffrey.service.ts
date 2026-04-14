@@ -103,7 +103,18 @@ export async function chat(
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: JEFFREY_SYSTEM + "\n\nUser context:\n" + userContext,
+        system: [
+          {
+            type: "text",
+            text: JEFFREY_SYSTEM,
+            cache_control: { type: "ephemeral" },
+          },
+          {
+            type: "text",
+            text: "\n\nUser context:\n" + userContext,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: claudeMessages,
       });
       reply =

@@ -11,6 +11,7 @@ const links = [
   { href: "/stack", label: "My Stack" },
   { href: "/labs", label: "Labs" },
   { href: "/integrations", label: "Integrations" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export function Nav() {
