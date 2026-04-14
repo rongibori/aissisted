@@ -1,7 +1,9 @@
 import cron from "node-cron";
-import { db, schema, eq } from "@aissisted/db";
+import { db, schema, eq, lt } from "@aissisted/db";
 import { syncWhoopForUser } from "./integrations/whoop/sync.js";
 import type { FastifyBaseLogger } from "fastify";
+
+const AUDIT_RETENTION_DAYS = 90;
 
 /**
  * Schedule background jobs.
@@ -29,5 +31,22 @@ export function startScheduler(log: FastifyBaseLogger): void {
     }
   });
 
-  log.info("Scheduler started — WHOOP sync every 30 minutes");
+  // Prune audit log daily at 03:00 — keep last 90 days
+  cron.schedule("0 3 * * *", async () => {
+    try {
+      const cutoff = new Date(
+        Date.now() - AUDIT_RETENTION_DAYS * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      await db
+        .delete(schema.auditLog)
+        .where(lt(schema.auditLog.createdAt, cutoff));
+
+      log.info(`Audit log pruned — entries older than ${AUDIT_RETENTION_DAYS} days removed`);
+    } catch (err) {
+      log.error(err, "Audit log pruning error");
+    }
+  });
+
+  log.info("Scheduler started — WHOOP sync every 30 min, audit pruning daily at 03:00");
 }

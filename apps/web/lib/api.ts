@@ -45,6 +45,12 @@ export const auth = {
 
   me: () =>
     request<{ user: { id: string; email: string } }>("/auth/me"),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ message: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 };
 
 // ─── Profile ─────────────────────────────────────────────

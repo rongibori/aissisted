@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { profile as profileApi } from "../../lib/api";
+import { profile as profileApi, auth as authApi } from "../../lib/api";
 import { Card, Button, Input, Spinner } from "../../components/ui";
 
 const GOAL_OPTIONS = [
@@ -105,6 +105,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMessage, setPwMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -270,6 +273,62 @@ export default function ProfilePage() {
           Save changes
         </Button>
       </form>
+
+      {/* Password change */}
+      <Card className="mt-5">
+        <h2 className="font-semibold text-[#e8e8f0] mb-4">Change password</h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (pwForm.next !== pwForm.confirm) {
+              setPwMessage({ text: "New passwords do not match", ok: false });
+              return;
+            }
+            setPwSaving(true);
+            setPwMessage(null);
+            try {
+              await authApi.changePassword(pwForm.current, pwForm.next);
+              setPwMessage({ text: "Password changed successfully", ok: true });
+              setPwForm({ current: "", next: "", confirm: "" });
+            } catch (err: any) {
+              setPwMessage({ text: err.message, ok: false });
+            } finally {
+              setPwSaving(false);
+            }
+          }}
+          className="flex flex-col gap-3"
+        >
+          <Input
+            label="Current password"
+            type="password"
+            value={pwForm.current}
+            onChange={(e) => setPwForm((f) => ({ ...f, current: e.target.value }))}
+            required
+          />
+          <Input
+            label="New password"
+            type="password"
+            value={pwForm.next}
+            onChange={(e) => setPwForm((f) => ({ ...f, next: e.target.value }))}
+            required
+          />
+          <Input
+            label="Confirm new password"
+            type="password"
+            value={pwForm.confirm}
+            onChange={(e) => setPwForm((f) => ({ ...f, confirm: e.target.value }))}
+            required
+          />
+          {pwMessage && (
+            <p className={`text-sm ${pwMessage.ok ? "text-emerald-400" : "text-red-400"}`}>
+              {pwMessage.text}
+            </p>
+          )}
+          <Button type="submit" loading={pwSaving} variant="secondary">
+            Change password
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

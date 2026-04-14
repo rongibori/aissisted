@@ -96,6 +96,12 @@ function ChatPage() {
     }
   };
 
+  const newConversation = () => {
+    setConversationId(undefined);
+    setMessages([WELCOME]);
+    inputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -120,10 +126,17 @@ function ChatPage() {
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">
             J
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-[#e8e8f0]">Jeffrey</p>
             <p className="text-xs text-[#7a7a98]">AI Health Concierge</p>
           </div>
+          <button
+            onClick={newConversation}
+            className="text-xs text-[#7a7a98] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a38] hover:border-[#7a7a98]"
+            title="Start new conversation"
+          >
+            + New chat
+          </button>
         </div>
 
         {/* Messages */}

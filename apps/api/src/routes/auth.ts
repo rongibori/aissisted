@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import * as authService from "../services/auth.service.js";
+import { changePassword } from "../services/auth.service.js";
 
 export async function authRoutes(app: FastifyInstance) {
   // POST /auth/register
@@ -80,6 +81,40 @@ export async function authRoutes(app: FastifyInstance) {
         const { sub } = request.user as { sub: string };
         const user = await authService.getUserById(sub);
         reply.send({ data: { user } });
+      } catch (err: any) {
+        reply
+          .status(err.status ?? 500)
+          .send({ error: { message: err.message, code: err.code ?? "ERROR" } });
+      }
+    }
+  );
+
+  // POST /auth/change-password
+  app.post(
+    "/auth/change-password",
+    {
+      preHandler: [requireAuth],
+      config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+      schema: {
+        body: {
+          type: "object",
+          required: ["currentPassword", "newPassword"],
+          properties: {
+            currentPassword: { type: "string" },
+            newPassword: { type: "string", minLength: 8 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+      const { currentPassword, newPassword } = request.body as {
+        currentPassword: string;
+        newPassword: string;
+      };
+      try {
+        await changePassword(sub, currentPassword, newPassword);
+        reply.send({ data: { message: "Password changed successfully" } });
       } catch (err: any) {
         reply
           .status(err.status ?? 500)

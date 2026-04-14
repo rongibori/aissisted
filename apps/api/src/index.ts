@@ -12,6 +12,7 @@ import { protocolRoutes } from "./routes/protocol.js";
 import { chatRoutes } from "./routes/chat.js";
 import { integrationsRoutes } from "./routes/integrations.js";
 import { startScheduler } from "./scheduler.js";
+import { db } from "@aissisted/db";
 
 const app = Fastify({
   logger: {
@@ -45,11 +46,22 @@ await registerJwt(app);
 await registerAuditLog(app);
 
 // ─── Health ──────────────────────────────────────────────
-app.get("/health", async () => ({
-  status: "ok",
-  timestamp: new Date().toISOString(),
-  version: "0.1.0",
-}));
+app.get("/health", async (_request, reply) => {
+  let dbStatus = "ok";
+  try {
+    await db.run({ sql: "SELECT 1", args: [] });
+  } catch {
+    dbStatus = "error";
+  }
+
+  const status = dbStatus === "ok" ? "ok" : "degraded";
+  reply.status(dbStatus === "ok" ? 200 : 503).send({
+    status,
+    timestamp: new Date().toISOString(),
+    version: "0.1.0",
+    checks: { db: dbStatus },
+  });
+});
 
 // ─── Routes ──────────────────────────────────────────────
 await app.register(authRoutes);

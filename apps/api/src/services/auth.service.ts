@@ -58,6 +58,43 @@ export async function verifyCredentials(email: string, password: string) {
   return { id: user.id, email: user.email, createdAt: user.createdAt };
 }
 
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) {
+  const user = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .get();
+
+  if (!user) {
+    throw Object.assign(new Error("User not found"), { code: "NOT_FOUND", status: 404 });
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw Object.assign(new Error("Current password is incorrect"), {
+      code: "INVALID_CREDENTIALS",
+      status: 401,
+    });
+  }
+
+  if (newPassword.length < 8) {
+    throw Object.assign(new Error("New password must be at least 8 characters"), {
+      code: "WEAK_PASSWORD",
+      status: 400,
+    });
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await db
+    .update(schema.users)
+    .set({ passwordHash, updatedAt: new Date().toISOString() })
+    .where(eq(schema.users.id, userId));
+}
+
 export async function getUserById(id: string) {
   const user = await db
     .select({
