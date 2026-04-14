@@ -6,8 +6,7 @@ import { db, schema, eq } from "@aissisted/db";
 
 // WHOOP
 import { buildAuthUrl, exchangeCode, storeTokens } from "../integrations/whoop/oauth.js";
-import { getLatestRecovery, getLatestSleep } from "../integrations/whoop/client.js";
-import { recoveryToSignals, sleepToSignals } from "../integrations/whoop/normalizer.js";
+import { syncWhoopForUser } from "../integrations/whoop/sync.js";
 
 // Apple Health
 import { parseAppleHealthXml } from "../integrations/apple-health/parser.js";
@@ -17,33 +16,6 @@ import { normalizeAppleHealthRecords } from "../integrations/apple-health/normal
 import { getSmartConfig, buildFhirAuthUrl, exchangeFhirCode, fetchObservations } from "../integrations/fhir/client.js";
 import { normalizeObservations } from "../integrations/fhir/normalizer.js";
 
-// Shared: persist biomarkers from integration
-async function persistBiomarkers(
-  userId: string,
-  entries: Array<{ name: string; value: number; unit: string; source: string; measuredAt: string }>
-): Promise<number> {
-  if (entries.length === 0) return 0;
-  let count = 0;
-  const now = new Date().toISOString();
-  for (const entry of entries) {
-    try {
-      await db.insert(schema.biomarkers).values({
-        id: randomUUID(),
-        userId,
-        name: entry.name,
-        value: entry.value,
-        unit: entry.unit,
-        source: entry.source,
-        measuredAt: entry.measuredAt,
-        createdAt: now,
-      });
-      count++;
-    } catch {
-      // Skip duplicates or constraint violations
-    }
-  }
-  return count;
-}
 
 export async function integrationsRoutes(app: FastifyInstance) {
   // ─── Status ────────────────────────────────────────────
@@ -109,7 +81,7 @@ export async function integrationsRoutes(app: FastifyInstance) {
         await storeTokens(userId, tokens);
 
         // Immediately fetch and persist initial WHOOP data
-        await syncWhoopData(userId);
+        await syncWhoopForUser(userId);
 
         reply.redirect("/dashboard?connected=whoop");
       } catch (err: any) {
@@ -126,7 +98,7 @@ export async function integrationsRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { sub } = request.user as { sub: string };
       try {
-        const count = await syncWhoopData(sub);
+        const count = await syncWhoopForUser(sub);
         reply.send({ data: { synced: count } });
       } catch (err: any) {
         reply.status(400).send({ error: { message: err.message, code: "WHOOP_SYNC_FAILED" } });
@@ -256,43 +228,3 @@ export async function integrationsRoutes(app: FastifyInstance) {
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────
-
-async function syncWhoopData(userId: string): Promise<number> {
-  const [recovery, sleep] = await Promise.all([
-    getLatestRecovery(userId),
-    getLatestSleep(userId),
-  ]);
-
-  const biomarkerEntries: Array<{ name: string; value: number; unit: string; source: string; measuredAt: string }> = [];
-
-  if (recovery?.score_state === "SCORED") {
-    const signals = recoveryToSignals(recovery);
-    const measuredAt = recovery.created_at;
-    for (const s of signals) {
-      biomarkerEntries.push({
-        name: s.name,
-        value: s.value,
-        unit: s.unit ?? "",
-        source: "whoop",
-        measuredAt,
-      });
-    }
-  }
-
-  if (sleep?.score_state === "SCORED") {
-    const signals = sleepToSignals(sleep);
-    const measuredAt = sleep.end;
-    for (const s of signals) {
-      biomarkerEntries.push({
-        name: s.name,
-        value: s.value,
-        unit: s.unit ?? "",
-        source: "whoop",
-        measuredAt,
-      });
-    }
-  }
-
-  return persistBiomarkers(userId, biomarkerEntries);
-}

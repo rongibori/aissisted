@@ -11,6 +11,7 @@ import { biomarkerRoutes } from "./routes/biomarkers.js";
 import { protocolRoutes } from "./routes/protocol.js";
 import { chatRoutes } from "./routes/chat.js";
 import { integrationsRoutes } from "./routes/integrations.js";
+import { startScheduler } from "./scheduler.js";
 
 const app = Fastify({
   logger: {
@@ -62,6 +63,7 @@ await app.register(integrationsRoutes);
 try {
   await app.listen({ port: config.port, host: config.host });
   app.log.info(`Aissisted API running on http://${config.host}:${config.port}`);
+  startScheduler(app.log);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

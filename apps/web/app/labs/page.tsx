@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
 import { biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Input, Spinner, EmptyState, Badge } from "../../components/ui";
-import { getRangeStatus, STATUS_LABELS, STATUS_COLORS } from "../../lib/biomarker-ranges";
+import { getRangeStatus, STATUS_LABELS, STATUS_COLORS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 
 interface Biomarker {
   id: string;
@@ -14,6 +14,8 @@ interface Biomarker {
   unit: string;
   source?: string;
   measuredAt: string;
+  trend?: TrendDirection;
+  previousValue?: number;
 }
 
 const COMMON_BIOMARKERS = [
@@ -233,6 +235,11 @@ function LabsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {b.trend && b.trend !== "new" && (
+                      <span className={`text-sm font-bold ${TREND_COLORS[b.trend]}`}>
+                        {TREND_ICONS[b.trend]}
+                      </span>
+                    )}
                     <span className="text-sm font-medium text-[#e8e8f0]">
                       {b.value} {b.unit}
                     </span>

@@ -1,4 +1,19 @@
 export type RangeStatus = "low" | "optimal" | "high" | "unknown";
+export type TrendDirection = "up" | "down" | "stable" | "new";
+
+export const TREND_ICONS: Record<TrendDirection, string> = {
+  up: "↑",
+  down: "↓",
+  stable: "→",
+  new: "",
+};
+
+export const TREND_COLORS: Record<TrendDirection, string> = {
+  up: "text-emerald-400",
+  down: "text-red-400",
+  stable: "text-[#7a7a98]",
+  new: "text-[#7a7a98]",
+};
 
 const RANGES: Record<string, { low: number; highNormal: number }> = {
   vitamin_d_ng_ml: { low: 30, highNormal: 100 },

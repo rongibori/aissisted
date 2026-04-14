@@ -7,6 +7,7 @@ import {
 } from "../engine/biomarker-ranges.js";
 
 export type { RangeStatus };
+export type TrendDirection = "up" | "down" | "stable" | "new";
 
 export async function addBiomarker(
   userId: string,
@@ -18,7 +19,6 @@ export async function addBiomarker(
     measuredAt: string;
   }
 ) {
-  // Validate value before persisting
   const validationError = validateBiomarkerValue(data.name, data.value, data.unit);
   if (validationError) {
     throw Object.assign(new Error(validationError), { code: "INVALID_BIOMARKER_VALUE" });
@@ -39,21 +39,31 @@ export async function addBiomarker(
   });
 
   const { status, isCritical } = getRangeStatus(data.name, data.value);
-  return { id, userId, ...data, createdAt: now, status, isCritical };
+  return { id, userId, ...data, createdAt: now, status, isCritical, trend: "new" as TrendDirection };
 }
 
-function annotate(row: {
-  id: string;
-  name: string;
-  value: number;
-  unit: string;
-  userId: string;
-  source: string | null;
-  measuredAt: string;
-  createdAt: string;
-}) {
+function annotate(
+  row: {
+    id: string;
+    name: string;
+    value: number;
+    unit: string;
+    userId: string;
+    source: string | null;
+    measuredAt: string;
+    createdAt: string;
+  },
+  previousValue?: number
+) {
   const { status, isCritical } = getRangeStatus(row.name, row.value);
-  return { ...row, status, isCritical };
+  let trend: TrendDirection = "new";
+  if (previousValue !== undefined) {
+    const delta = row.value - previousValue;
+    const pct = Math.abs(delta) / (Math.abs(previousValue) || 1);
+    if (pct < 0.01) trend = "stable";
+    else trend = delta > 0 ? "up" : "down";
+  }
+  return { ...row, status, isCritical, trend, previousValue };
 }
 
 export async function getBiomarkers(
@@ -74,15 +84,27 @@ export async function getBiomarkers(
     .orderBy(desc(schema.biomarkers.measuredAt))
     .limit(options?.limit ?? 100);
 
-  return rows.map(annotate);
+  return rows.map((r) => annotate(r));
 }
 
 export async function getLatestBiomarkers(userId: string) {
-  const all = await getBiomarkers(userId, { limit: 500 });
-  const seen = new Set<string>();
-  return all.filter((b) => {
-    if (seen.has(b.name)) return false;
-    seen.add(b.name);
-    return true;
-  });
+  // Fetch enough history to compute trends (2 readings per marker)
+  const all = await db
+    .select()
+    .from(schema.biomarkers)
+    .where(eq(schema.biomarkers.userId, userId))
+    .orderBy(desc(schema.biomarkers.measuredAt))
+    .limit(1000);
+
+  // Group by name, keep latest 2 per marker
+  const grouped = new Map<string, typeof all>();
+  for (const row of all) {
+    const arr = grouped.get(row.name) ?? [];
+    if (arr.length < 2) arr.push(row);
+    grouped.set(row.name, arr);
+  }
+
+  return Array.from(grouped.values()).map(([latest, previous]) =>
+    annotate(latest, previous?.value)
+  );
 }
