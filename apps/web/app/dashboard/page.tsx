@@ -7,6 +7,7 @@ import { protocol, biomarkers as biomarkersApi, profile as profileApi } from "..
 import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
+import { HealthStateWidget } from "../../components/health-state-widget";
 
 interface Recommendation {
   id: string;
@@ -260,6 +261,9 @@ export default function DashboardPage() {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-5">
+          {/* Health State */}
+          <HealthStateWidget />
+
           {/* Biomarkers */}
           <Card>
             <div className="flex items-center justify-between mb-4">
@@ -361,6 +365,14 @@ export default function DashboardPage() {
                 onClick={() => router.push("/stack")}
               >
                 💊 View my stack
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => router.push("/adherence")}
+              >
+                ✓ Log supplements
               </Button>
             </div>
           </Card>

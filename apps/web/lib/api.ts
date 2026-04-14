@@ -187,3 +187,64 @@ export const health = {
       .then((r) => r.json())
       .catch(() => ({ status: "offline" })),
 };
+
+// ─── Adherence ───────────────────────────────────────────
+export const adherence = {
+  log: (data: {
+    supplementName: string;
+    dosage?: string;
+    timeSlot?: string;
+    takenAt?: string;
+    skipped?: boolean;
+    protocolId?: string;
+    recommendationId?: string;
+    note?: string;
+  }) =>
+    request<{ log: any }>("/adherence/log", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  today: () => request<{ logs: any[] }>("/adherence/today"),
+
+  score: (days = 30) =>
+    request<{ score: number; taken: number; skipped: number; total: number; periodDays: number }>(
+      `/adherence/score?days=${days}`
+    ),
+
+  history: () => request<{ logs: any[] }>("/adherence/history"),
+};
+
+// ─── Health State ─────────────────────────────────────────
+export const healthState = {
+  get: (refresh = false) =>
+    request<{
+      id: string;
+      userId: string;
+      mode: string;
+      confidenceScore: number;
+      domainScores: {
+        cardiovascular: number;
+        metabolic: number;
+        hormonal: number;
+        micronutrient: number;
+        renal: number;
+        inflammatory: number;
+      };
+      activeSignals: Array<{
+        key: string;
+        domain: string;
+        biomarkerName: string;
+        signalType: string;
+        severity: "info" | "warn" | "critical";
+        explanation: string;
+        value?: number;
+      }>;
+      warnings: string[];
+      missingDataFlags: string[];
+      createdAt: string;
+    }>(`/health-state${refresh ? "?refresh=true" : ""}`),
+
+  refresh: () =>
+    request<any>("/health-state/refresh", { method: "POST" }),
+};
