@@ -12,7 +12,10 @@ import { protocolRoutes } from "./routes/protocol.js";
 import { chatRoutes } from "./routes/chat.js";
 import { integrationsRoutes } from "./routes/integrations.js";
 import { startScheduler } from "./scheduler.js";
-import { db } from "@aissisted/db";
+import { db, schema } from "@aissisted/db";
+import { migrate } from "drizzle-orm/libsql/migrator";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const app = Fastify({
   logger: {
@@ -70,6 +73,19 @@ await app.register(biomarkerRoutes);
 await app.register(protocolRoutes);
 await app.register(chatRoutes);
 await app.register(integrationsRoutes);
+
+// ─── DB Migration ────────────────────────────────────────
+try {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const migrationsFolder = resolve(__dirname, "../../packages/db/drizzle");
+  await migrate(db, { migrationsFolder });
+  app.log.info("DB migrations applied");
+} catch (err: any) {
+  // Skip if no migration files exist yet (dev / push-based workflow)
+  if (!err?.message?.includes("ENOENT")) {
+    app.log.warn({ err }, "DB migration warning — continuing");
+  }
+}
 
 // ─── Start ───────────────────────────────────────────────
 try {

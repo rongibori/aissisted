@@ -6,6 +6,7 @@ import { useAuth } from "../../lib/auth-context";
 import { protocol, biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
+import { Sparkline } from "../../components/sparkline";
 
 interface Recommendation {
   id: string;
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [currentProtocol, setCurrentProtocol] = useState<Protocol | null>(null);
   const [latestBiomarkers, setLatestBiomarkers] = useState<Biomarker[]>([]);
+  const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
@@ -52,7 +54,26 @@ export default function DashboardPage() {
         setCurrentProtocol(protoData.value.protocol);
       }
       if (bioData.status === "fulfilled") {
-        setLatestBiomarkers(bioData.value.biomarkers);
+        const markers: Biomarker[] = bioData.value.biomarkers;
+        setLatestBiomarkers(markers);
+        // Fetch sparkline history in background
+        const names = markers.map((b) => b.name);
+        Promise.allSettled(
+          names.map((name) =>
+            biomarkersApi.history(name).then((h) => ({
+              name,
+              values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
+            }))
+          )
+        ).then((results) => {
+          const map: Record<string, number[]> = {};
+          for (const r of results) {
+            if (r.status === "fulfilled" && r.value.values.length > 1) {
+              map[r.value.name] = r.value.values;
+            }
+          }
+          setSparklines(map);
+        });
       }
     } finally {
       setLoading(false);
@@ -212,6 +233,18 @@ export default function DashboardPage() {
                         {b.name.replace(/_/g, " ")}
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {sparklines[b.name] && (
+                          <Sparkline
+                            values={sparklines[b.name]}
+                            width={48}
+                            height={20}
+                            color={
+                              status === "optimal" ? "#34d399"
+                              : status === "high" || status === "low" ? "#fbbf24"
+                              : "#6366f1"
+                            }
+                          />
+                        )}
                         {b.trend && b.trend !== "new" && (
                           <span className={`text-xs font-bold ${TREND_COLORS[b.trend]}`}>
                             {TREND_ICONS[b.trend]}

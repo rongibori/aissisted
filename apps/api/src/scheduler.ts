@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { db, schema, eq, lt } from "@aissisted/db";
 import { syncWhoopForUser } from "./integrations/whoop/sync.js";
+import { withRetry } from "./utils/retry.js";
 import type { FastifyBaseLogger } from "fastify";
 
 const AUDIT_RETENTION_DAYS = 90;
@@ -20,7 +21,9 @@ export function startScheduler(log: FastifyBaseLogger): void {
         .where(eq(schema.integrationTokens.provider, "whoop"));
 
       const results = await Promise.allSettled(
-        tokens.map((t) => syncWhoopForUser(t.userId))
+        tokens.map((t) =>
+          withRetry(() => syncWhoopForUser(t.userId), 2, 1000)
+        )
       );
 
       const succeeded = results.filter((r) => r.status === "fulfilled").length;
