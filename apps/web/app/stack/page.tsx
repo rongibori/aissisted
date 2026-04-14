@@ -24,6 +24,13 @@ interface Protocol {
   createdAt: string;
 }
 
+interface ProtocolSummary {
+  id: string;
+  summary: string;
+  warnings: string[];
+  createdAt: string;
+}
+
 const DOMAIN_COLORS: Record<string, string> = {
   sleep: "text-indigo-400 bg-indigo-950",
   inflammation: "text-red-400 bg-red-950",
@@ -36,17 +43,21 @@ function StackPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [currentProtocol, setCurrentProtocol] = useState<Protocol | null>(null);
+  const [history, setHistory] = useState<ProtocolSummary[]>([]);
   const [fetching, setFetching] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const data = await protocolApi.latest();
-      setCurrentProtocol(data.protocol);
-    } catch {
-      setCurrentProtocol(null);
+      const [latestData, historyData] = await Promise.allSettled([
+        protocolApi.latest(),
+        protocolApi.history(),
+      ]);
+      if (latestData.status === "fulfilled") setCurrentProtocol(latestData.value.protocol);
+      if (historyData.status === "fulfilled") setHistory(historyData.value.protocols);
     } finally {
       setFetching(false);
     }
@@ -174,6 +185,39 @@ function StackPage() {
                 </Card>
               ))}
             </div>
+
+            {/* Protocol history */}
+            {history.length > 1 && (
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowHistory((s) => !s)}
+                  className="text-sm text-[#7a7a98] hover:text-[#e8e8f0] transition-colors mb-3 flex items-center gap-1"
+                >
+                  {showHistory ? "▲" : "▼"} Protocol history ({history.length})
+                </button>
+                {showHistory && (
+                  <div className="flex flex-col gap-2">
+                    {history.slice(1).map((p) => (
+                      <div
+                        key={p.id}
+                        className="p-3 bg-[#1c1c26] rounded-lg border border-[#2a2a38]"
+                      >
+                        <p className="text-xs text-[#7a7a98] mb-1">
+                          {new Date(p.createdAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p className="text-sm text-[#c0c0d8] leading-relaxed line-clamp-2">
+                          {p.summary}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <p className="text-xs text-center text-[#7a7a98] mt-6">
               Not medical advice. Discuss with your physician before starting

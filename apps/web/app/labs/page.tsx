@@ -6,6 +6,7 @@ import { Nav } from "../../components/nav";
 import { biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Input, Spinner, EmptyState, Badge } from "../../components/ui";
 import { getRangeStatus, STATUS_LABELS, STATUS_COLORS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
+import { Sparkline } from "../../components/sparkline";
 
 interface Biomarker {
   id: string;
@@ -32,6 +33,7 @@ const COMMON_BIOMARKERS = [
 function LabsPage() {
   const { user, loading } = useAuth();
   const [allBiomarkers, setAllBiomarkers] = useState<Biomarker[]>([]);
+  const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
   const [fetching, setFetching] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,8 +50,26 @@ function LabsPage() {
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const data = await biomarkersApi.list();
+      const data = await biomarkersApi.list({ latest: true });
       setAllBiomarkers(data.biomarkers);
+      // Fetch sparkline history for each unique biomarker in the background
+      const names = data.biomarkers.map((b: Biomarker) => b.name);
+      Promise.allSettled(
+        names.map((name: string) =>
+          biomarkersApi.history(name).then((h) => ({
+            name,
+            values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
+          }))
+        )
+      ).then((results) => {
+        const map: Record<string, number[]> = {};
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value.values.length > 1) {
+            map[r.value.name] = r.value.values;
+          }
+        }
+        setSparklines(map);
+      });
     } finally {
       setFetching(false);
     }
@@ -234,7 +254,21 @@ function LabsPage() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    {sparklines[b.name] && (
+                      <Sparkline
+                        values={sparklines[b.name]}
+                        width={64}
+                        height={24}
+                        color={
+                          getRangeStatus(b.name, b.value) === "optimal"
+                            ? "#34d399"
+                            : getRangeStatus(b.name, b.value) === "high"
+                            ? "#fbbf24"
+                            : "#60a5fa"
+                        }
+                      />
+                    )}
                     {b.trend && b.trend !== "new" && (
                       <span className={`text-sm font-bold ${TREND_COLORS[b.trend]}`}>
                         {TREND_ICONS[b.trend]}

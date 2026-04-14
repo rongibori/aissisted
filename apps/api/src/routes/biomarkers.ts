@@ -60,4 +60,16 @@ export async function biomarkerRoutes(app: FastifyInstance) {
       reply.send({ data: { biomarkers } });
     }
   );
+
+  // GET /biomarkers/history/:name — time series for a specific biomarker
+  app.get(
+    "/biomarkers/history/:name",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+      const { name } = request.params as { name: string };
+      const biomarkers = await biomarkerService.getBiomarkers(sub, { name, limit: 50 });
+      reply.send({ data: { biomarkers } });
+    }
+  );
 }

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import * as protocolService from "../services/protocol.service.js";
+import { getUserProtocols } from "../services/protocol.service.js";
 
 export async function protocolRoutes(app: FastifyInstance) {
   // POST /protocol/run — generate a new protocol for the authenticated user
@@ -37,6 +38,17 @@ export async function protocolRoutes(app: FastifyInstance) {
       }
 
       reply.send({ data: { protocol } });
+    }
+  );
+
+  // GET /protocol/history — list all protocols for user (summary only)
+  app.get(
+    "/protocol/history",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+      const protocols = await getUserProtocols(sub);
+      reply.send({ data: { protocols } });
     }
   );
 

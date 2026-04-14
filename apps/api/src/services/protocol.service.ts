@@ -165,6 +165,25 @@ export async function getLatestProtocol(userId: string) {
   return getProtocol(protocol.id);
 }
 
+export async function getUserProtocols(userId: string, limit = 20) {
+  const protocols = await db
+    .select({
+      id: schema.protocols.id,
+      summary: schema.protocols.summary,
+      warnings: schema.protocols.warnings,
+      createdAt: schema.protocols.createdAt,
+    })
+    .from(schema.protocols)
+    .where(eq(schema.protocols.userId, userId))
+    .orderBy(desc(schema.protocols.createdAt))
+    .limit(limit);
+
+  return protocols.map((p) => ({
+    ...p,
+    warnings: JSON.parse(p.warnings) as string[],
+  }));
+}
+
 function buildFallbackSummary(
   topRecs: { recommendation: { name: string } }[],
   goals: string[]

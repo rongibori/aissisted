@@ -89,6 +89,9 @@ export const biomarkers = {
       `/biomarkers${params.toString() ? `?${params}` : ""}`
     );
   },
+
+  history: (name: string) =>
+    request<{ biomarkers: any[] }>(`/biomarkers/history/${encodeURIComponent(name)}`),
 };
 
 // ─── Protocol ────────────────────────────────────────────
@@ -99,6 +102,8 @@ export const protocol = {
   latest: () => request<{ protocol: any }>("/protocol/latest"),
 
   get: (id: string) => request<{ protocol: any }>(`/protocol/${id}`),
+
+  history: () => request<{ protocols: any[] }>("/protocol/history"),
 };
 
 // ─── Chat ────────────────────────────────────────────────
