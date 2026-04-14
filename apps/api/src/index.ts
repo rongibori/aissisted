@@ -1,7 +1,10 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerJwt } from "./middleware/auth.js";
+import { registerAuditLog } from "./middleware/audit.js";
 import { authRoutes } from "./routes/auth.js";
 import { profileRoutes } from "./routes/profile.js";
 import { biomarkerRoutes } from "./routes/biomarkers.js";
@@ -21,7 +24,24 @@ await app.register(cors, {
   credentials: true,
 });
 
+// Security headers (CSP, HSTS, X-Frame-Options, etc.)
+await app.register(helmet, {
+  contentSecurityPolicy: config.isDev ? false : undefined,
+});
+
+// Rate limiting: 100 req/min per IP globally, stricter on auth routes
+await app.register(rateLimit, {
+  global: true,
+  max: 100,
+  timeWindow: "1 minute",
+  keyGenerator: (req) => req.ip,
+  errorResponseBuilder: () => ({
+    error: { message: "Too many requests. Please slow down.", code: "RATE_LIMITED" },
+  }),
+});
+
 await registerJwt(app);
+await registerAuditLog(app);
 
 // ─── Health ──────────────────────────────────────────────
 app.get("/health", async () => ({

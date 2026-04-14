@@ -9,6 +9,7 @@ import {
   buildSignalsFromBiomarkers,
   buildSignalsFromGoals,
 } from "../engine/evaluator.js";
+import { checkInteractions, formatInteractionWarnings } from "../engine/interactions.js";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
@@ -52,20 +53,25 @@ export async function generateProtocol(userId: string) {
     })),
   };
 
+  // 4b. Run supplement-supplement + drug-supplement interaction check
+  const supplementNames = topRecs.map((r) => r.recommendation.name);
+  const interactions = checkInteractions(supplementNames, medications, conditions);
+  const interactionWarnings = formatInteractionWarnings(interactions);
+
   // 5. Synthesize with Claude
   let summary = "";
-  let warnings: string[] = [];
+  let warnings: string[] = [...interactionWarnings];
 
   if (config.anthropicApiKey) {
     try {
       const message = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: `You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any warnings or cautions specific to this user's profile. Respond in JSON: { "summary": "...", "warnings": ["..."] }`,
+        system: `You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any additional warnings or cautions specific to this user's profile (beyond those already listed). Respond in JSON: { "summary": "...", "warnings": ["..."] }`,
         messages: [
           {
             role: "user",
-            content: JSON.stringify(signalsSummary),
+            content: JSON.stringify({ ...signalsSummary, interactionWarnings }),
           },
         ],
       });
@@ -74,7 +80,13 @@ export async function generateProtocol(userId: string) {
         message.content[0].type === "text" ? message.content[0].text : "";
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       summary = parsed.summary ?? "";
-      warnings = parsed.warnings ?? [];
+      // Merge interaction warnings with any additional Claude warnings (deduplicated)
+      const claudeWarnings: string[] = parsed.warnings ?? [];
+      const allWarnings = [...interactionWarnings];
+      for (const w of claudeWarnings) {
+        if (!allWarnings.includes(w)) allWarnings.push(w);
+      }
+      warnings = allWarnings;
     } catch {
       summary = buildFallbackSummary(topRecs, goals);
     }
