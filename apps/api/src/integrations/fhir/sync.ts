@@ -15,6 +15,7 @@ import {
   normalizeAllergies,
 } from "./normalizer.js";
 import { persistRawBiomarkers } from "../../services/biomarker.service.js";
+import { maybeReanalyze } from "../../services/analysis.service.js";
 
 // ─── Token storage ────────────────────────────────────────
 
@@ -208,9 +209,12 @@ export async function syncFhirForUser(
     storeRawFhirResources(userId, "AllergyIntolerance", allergyResources),
   ]).catch(() => {});
 
-  // 3. Normalize and persist observations
+  // 3. Normalize and persist observations (unit-converter applied inside normalizeObservations)
   const normalized = normalizeObservations(observations);
   const count = await persistRawBiomarkers(userId, normalized);
+
+  // Trigger background health-state re-analysis if new data arrived
+  maybeReanalyze(userId, count).catch(() => {});
 
   // 4. Normalize and persist allergies
   const allergies = normalizeAllergies(allergyResources);

@@ -1,6 +1,7 @@
 import { getLatestRecovery, getLatestSleep } from "./client.js";
 import { recoveryToSignals, sleepToSignals } from "./normalizer.js";
 import { persistRawBiomarkers } from "../../services/biomarker.service.js";
+import { maybeReanalyze } from "../../services/analysis.service.js";
 
 export async function syncWhoopForUser(userId: string): Promise<number> {
   const [recovery, sleep] = await Promise.all([
@@ -34,5 +35,7 @@ export async function syncWhoopForUser(userId: string): Promise<number> {
     }
   }
 
-  return persistRawBiomarkers(userId, entries);
+  const count = await persistRawBiomarkers(userId, entries);
+  maybeReanalyze(userId, count).catch(() => {});
+  return count;
 }

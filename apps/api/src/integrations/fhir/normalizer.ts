@@ -3,6 +3,7 @@ import type {
   FhirDiagnosticReport,
   FhirAllergyIntolerance,
 } from "./client.js";
+import { normalizeBiomarkerUnits } from "../../engine/unit-converter.js";
 
 /**
  * Maps LOINC codes to canonical biomarker names used by the rules engine.
@@ -177,7 +178,8 @@ export function normalizeObservations(
     tryAdd(obs);
   }
 
-  return result;
+  // Normalize units to canonical values (mmol/L → mg/dL etc.)
+  return normalizeBiomarkerUnits(result);
 }
 
 /**

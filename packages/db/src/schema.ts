@@ -336,3 +336,87 @@ export const consentRecordsRelations = relations(consentRecords, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ─── Health Signals ───────────────────────────────────────
+// Explicit, versioned signals derived from biomarker analysis.
+// Each signal record is immutable (append-only); effective_to is set when superseded.
+
+export const SIGNAL_TYPES = [
+  "deficiency",
+  "excess",
+  "trend_worsening",
+  "trend_improving",
+  "trend_stable",
+  "data_gap",
+  "critical_value",
+] as const;
+export type SignalType = (typeof SIGNAL_TYPES)[number];
+
+export const SIGNAL_DOMAINS = [
+  "cardiovascular",
+  "metabolic",
+  "hormonal",
+  "micronutrient",
+  "renal",
+  "inflammatory",
+  "general",
+] as const;
+export type SignalDomain = (typeof SIGNAL_DOMAINS)[number];
+
+export const healthSignals = sqliteTable("health_signals", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  signalType: text("signal_type", { enum: SIGNAL_TYPES }).notNull(),
+  domain: text("domain", { enum: SIGNAL_DOMAINS }).notNull(),
+  biomarkerName: text("biomarker_name"),
+  severity: text("severity", { enum: ["info", "warn", "critical"] }).notNull(),
+  value: real("value"),
+  explanation: text("explanation").notNull(),
+  sourceIds: text("source_ids"), // JSON array of source biomarker row IDs
+  effectiveFrom: text("effective_from").notNull(),
+  effectiveTo: text("effective_to"), // null = still active
+  createdAt: text("created_at").notNull(),
+});
+
+export const healthSignalsRelations = relations(healthSignals, ({ one }) => ({
+  user: one(users, {
+    fields: [healthSignals.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Health State Snapshots ───────────────────────────────
+// Machine-readable summary of a user's overall health state at a point in time.
+// Computed by the analysis engine after each sync or on-demand.
+
+export const healthStateSnapshots = sqliteTable("health_state_snapshots", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  // Primary mode label (dominant health concern or "optimal")
+  mode: text("mode").notNull(),
+  // 0-1: proportion of key biomarkers present and in range
+  confidenceScore: real("confidence_score").notNull(),
+  // JSON: { cardiovascular: 0.3, metabolic: 0.7, ... } — 0=optimal, 1=severe
+  domainScores: text("domain_scores").notNull(),
+  // JSON array of active signal keys (e.g. ["ldl_high", "vitamin_d_deficient"])
+  activeSignals: text("active_signals").notNull(),
+  // JSON array of safety/clinical warnings
+  warnings: text("warnings").notNull(),
+  // JSON array of missing key lab flags
+  missingDataFlags: text("missing_data_flags").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const healthStateSnapshotsRelations = relations(
+  healthStateSnapshots,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [healthStateSnapshots.userId],
+      references: [users.id],
+    }),
+  })
+);

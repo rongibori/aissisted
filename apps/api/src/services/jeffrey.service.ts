@@ -10,6 +10,8 @@ import { generateProtocol, getLatestProtocol } from "./protocol.service.js";
 import { getProfile } from "./profile.service.js";
 import { getLatestBiomarkers } from "./biomarker.service.js";
 import { getRangeStatus } from "../engine/biomarker-ranges.js";
+import { getLatestHealthState } from "./analysis.service.js";
+import { logSupplement, getAdherenceScore } from "./adherence.service.js";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
@@ -56,23 +58,76 @@ export async function chat(
     try {
       const protocol = await generateProtocol(userId);
       protocolTriggered = true;
-      contextInjection = `\n\n[PROTOCOL GENERATED]\n${JSON.stringify(protocol?.recommendations?.map((r) => ({ name: r.name, dosage: r.dosage, timing: r.timing })), null, 2)}\n\nSummary: ${protocol?.summary}`;
+      contextInjection = `\n\n[PROTOCOL GENERATED]\n${JSON.stringify(protocol?.recommendations?.map((r) => ({ name: r.name, dosage: r.dosage, timing: r.timing, timeSlot: r.timeSlot })), null, 2)}\n\nSummary: ${protocol?.summary}`;
     } catch {
       contextInjection =
         "\n\n[Note: Protocol generation failed — user may need to add biomarker data first]";
     }
   }
 
+  if (intent.type === "log_supplement") {
+    // Extract supplement name from entities or raw message
+    const supplementName =
+      (intent.entities?.supplement_name as string) ??
+      (intent.entities?.name as string) ??
+      extractSupplementFromMessage(message);
+
+    if (supplementName) {
+      const skipped = /skip|skipped|miss|missed|forgot/i.test(message);
+      try {
+        await logSupplement(userId, {
+          supplementName,
+          skipped,
+          takenAt: skipped ? undefined : new Date().toISOString(),
+          note: message.slice(0, 200),
+        });
+        contextInjection = `\n\n[SUPPLEMENT LOGGED: ${supplementName} — ${skipped ? "skipped" : "taken"}]`;
+      } catch {
+        contextInjection = `\n\n[Note: Could not log supplement automatically]`;
+      }
+    }
+  }
+
+  if (intent.type === "check_adherence") {
+    try {
+      const score = await getAdherenceScore(userId, 7);
+      contextInjection = `\n\n[ADHERENCE DATA (last 7 days): ${score.score}% — ${score.taken} taken, ${score.skipped} skipped out of ${score.total} total logged]`;
+    } catch {
+      contextInjection = `\n\n[Note: No adherence data recorded yet]`;
+    }
+  }
+
+  if (intent.type === "health_state_check") {
+    try {
+      const healthState = await getLatestHealthState(userId);
+      if (healthState) {
+        const signalSummary = healthState.activeSignals
+          .filter((s) => s.severity !== "info")
+          .slice(0, 5)
+          .map((s) => `${s.key}: ${s.explanation}`)
+          .join("; ");
+        contextInjection = `\n\n[HEALTH STATE: mode=${healthState.mode}, confidence=${Math.round(healthState.confidenceScore * 100)}%\nActive signals: ${signalSummary || "none"}\nWarnings: ${healthState.warnings.join("; ") || "none"}\nMissing data: ${healthState.missingDataFlags.slice(0, 4).join(", ") || "none"}]`;
+      } else {
+        contextInjection = `\n\n[No health state computed yet — user may need to add lab data first]`;
+      }
+    } catch {
+      contextInjection = `\n\n[Health state unavailable]`;
+    }
+  }
+
   // 5. Gather user context for Jeffrey
-  const [profile, biomarkers, latestProtocol] = await Promise.all([
+  const [profile, biomarkers, latestProtocol, healthState] = await Promise.all([
     getProfile(userId),
     getLatestBiomarkers(userId),
     intent.type !== "generate_protocol"
       ? getLatestProtocol(userId)
       : Promise.resolve(null),
+    intent.type === "health_state_check" || intent.type === "generate_protocol"
+      ? getLatestHealthState(userId).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
-  const userContext = buildUserContext(profile, biomarkers, latestProtocol);
+  const userContext = buildUserContext(profile, biomarkers, latestProtocol, healthState);
 
   // 6. Get conversation history for multi-turn context
   const history = await getConversationHistory(conversation.id, 12);
@@ -143,10 +198,19 @@ export async function chat(
   };
 }
 
+function extractSupplementFromMessage(message: string): string | undefined {
+  // Crude extraction: grab the noun after "took", "taking", "skipped" etc.
+  const match = message.match(
+    /(?:took|taking|skipped|missed|my)\s+([\w\s-]+?)(?:\s+today|\s+this|\s+just|\.|\,|$)/i
+  );
+  return match?.[1]?.trim();
+}
+
 function buildUserContext(
   profile: Awaited<ReturnType<typeof getProfile>>,
   biomarkers: Awaited<ReturnType<typeof getLatestBiomarkers>>,
-  protocol: Awaited<ReturnType<typeof getLatestProtocol>>
+  protocol: Awaited<ReturnType<typeof getLatestProtocol>>,
+  healthState: Awaited<ReturnType<typeof getLatestHealthState>> | null
 ): string {
   const parts: string[] = [];
 
@@ -184,6 +248,27 @@ function buildUserContext(
     parts.push(`Protocol summary: ${protocol.summary}`);
   }
 
+  if (healthState) {
+    const domainHighlights = Object.entries(healthState.domainScores)
+      .filter(([, score]) => score >= 0.35)
+      .sort(([, a], [, b]) => b - a)
+      .map(([domain, score]) => `${domain}=${Math.round(score * 100)}%`)
+      .join(", ");
+    parts.push(
+      `Health state: mode=${healthState.mode}, confidence=${Math.round(healthState.confidenceScore * 100)}%${domainHighlights ? `, elevated domains: ${domainHighlights}` : ""}`
+    );
+    const criticalSignals = healthState.activeSignals
+      .filter((s) => s.severity === "critical" || s.severity === "warn")
+      .slice(0, 3)
+      .map((s) => s.explanation);
+    if (criticalSignals.length > 0) {
+      parts.push(`Active health signals: ${criticalSignals.join("; ")}`);
+    }
+    if (healthState.warnings.length > 0) {
+      parts.push(`Clinical warnings: ${healthState.warnings.slice(0, 2).join("; ")}`);
+    }
+  }
+
   return parts.join("\n") || "No health data available yet.";
 }
 
@@ -199,6 +284,12 @@ function buildFallbackReply(intentType: string, message: string): string {
       "I'd be happy to explain that supplement. Please add your ANTHROPIC_API_KEY to enable full AI responses, and I'll give you the complete breakdown.",
     general_health_question:
       "That's a great question. To get full AI-powered responses from Jeffrey, please configure your ANTHROPIC_API_KEY in the environment.",
+    log_supplement:
+      "Got it — I've recorded that supplement log. Keep it up! Your adherence score updates as you log.",
+    check_adherence:
+      "I've pulled your recent adherence data. Log each supplement as you take it and I'll track your consistency over time.",
+    health_state_check:
+      "I've summarized your current health state based on your latest lab data. Add more biomarkers for a higher confidence score.",
   };
 
   return (
