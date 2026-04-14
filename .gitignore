@@ -13,3 +13,4 @@ coverage
 *.tsbuildinfo
 packages/db/data
 packages/db/drizzle
+apps/api/data/*.db

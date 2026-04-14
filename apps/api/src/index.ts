@@ -1,6 +1,11 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { config } from "./config.js";
+import { registerJwt } from "./middleware/auth.js";
+import { authRoutes } from "./routes/auth.js";
+import { profileRoutes } from "./routes/profile.js";
+import { biomarkerRoutes } from "./routes/biomarkers.js";
+import { protocolRoutes } from "./routes/protocol.js";
 
 const app = Fastify({
   logger: {
@@ -8,17 +13,26 @@ const app = Fastify({
   },
 });
 
+// ─── Plugins ────────────────────────────────────────────
 await app.register(cors, {
   origin: config.isDev ? true : ["https://aissisted.com"],
   credentials: true,
 });
 
-// ─── Health check ────────────────────────────────────────
+await registerJwt(app);
+
+// ─── Health ──────────────────────────────────────────────
 app.get("/health", async () => ({
   status: "ok",
   timestamp: new Date().toISOString(),
   version: "0.1.0",
 }));
+
+// ─── Routes ──────────────────────────────────────────────
+await app.register(authRoutes);
+await app.register(profileRoutes);
+await app.register(biomarkerRoutes);
+await app.register(protocolRoutes);
 
 // ─── Start ───────────────────────────────────────────────
 try {
