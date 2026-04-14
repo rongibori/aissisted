@@ -1,7 +1,7 @@
 node_modules
 .pnpm-store
 .next
-turbo
+.turbo
 dist
 build
 coverage
@@ -10,3 +10,6 @@ coverage
 !.env.example
 .DS_Store
 *.log
+*.tsbuildinfo
+packages/db/data
+packages/db/drizzle

@@ -10,6 +10,12 @@
       "outputs": ["dist/**", ".next/**"]
     },
     "lint": {},
-    "typecheck": {}
+    "typecheck": {},
+    "db:generate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    }
   }
 }
