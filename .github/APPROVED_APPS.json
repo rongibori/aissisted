@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Claude Code",
+    "provider": "Anthropic",
+    "purpose": "AI-assisted development via Claude Code Remote",
+    "scopes": ["contents:write", "pull_requests:write", "metadata:read"]
+  }
+]
