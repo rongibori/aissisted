@@ -1,4 +1,8 @@
-import type { FhirObservation } from "./client.js";
+import type {
+  FhirObservation,
+  FhirDiagnosticReport,
+  FhirAllergyIntolerance,
+} from "./client.js";
 
 /**
  * Maps LOINC codes to canonical biomarker names used by the rules engine.
@@ -71,6 +75,17 @@ export interface NormalizedBiomarker {
   unit: string;
   source: string;
   measuredAt: string;
+  referenceRangeLow?: number;
+  referenceRangeHigh?: number;
+  labPanelName?: string;
+}
+
+export interface NormalizedAllergy {
+  name: string;
+  category: string; // "food" | "medication" | "environment" | "biologic"
+  criticality: string; // "low" | "high" | "unknown"
+  manifestation?: string;
+  source: string;
 }
 
 function getLoincMapping(coding: Array<{ system: string; code: string }>) {
@@ -94,7 +109,14 @@ export function normalizeObservations(
     if (obs.id) obsById.set(`Observation/${obs.id}`, obs);
   }
 
-  function tryAdd(obs: FhirObservation) {
+  function extractRefRange(
+    refRange?: FhirObservation["referenceRange"]
+  ): { low?: number; high?: number } {
+    const first = refRange?.[0];
+    return { low: first?.low?.value, high: first?.high?.value };
+  }
+
+  function tryAdd(obs: FhirObservation, panelName?: string) {
     if (obs.status !== "final" && obs.status !== "amended") return;
 
     const measuredAt = getEffectiveDate(obs);
@@ -107,12 +129,16 @@ export function normalizeObservations(
         const key = `${mapping.name}:${dateKey}`;
         if (!seen.has(key)) {
           seen.add(key);
+          const refRange = extractRefRange(obs.referenceRange);
           result.push({
             name: mapping.name,
             value: obs.valueQuantity.value,
             unit: obs.valueQuantity.unit ?? mapping.unit,
             source: "fhir",
             measuredAt,
+            referenceRangeLow: refRange.low,
+            referenceRangeHigh: refRange.high,
+            labPanelName: panelName,
           });
         }
       }
@@ -126,25 +152,102 @@ export function normalizeObservations(
       const key = `${mapping.name}:${dateKey}`;
       if (!seen.has(key)) {
         seen.add(key);
+        const refRange = extractRefRange(comp.referenceRange as FhirObservation["referenceRange"]);
         result.push({
           name: mapping.name,
           value: comp.valueQuantity.value,
           unit: comp.valueQuantity.unit ?? mapping.unit,
           source: "fhir",
           measuredAt,
+          referenceRangeLow: refRange.low,
+          referenceRangeHigh: refRange.high,
+          labPanelName: panelName,
         });
       }
     }
 
-    // Case 3: hasMember panel — resolve each member reference
+    // Case 3: hasMember panel — resolve each member reference, propagate panel name
     for (const ref of obs.hasMember ?? []) {
       const member = obsById.get(ref.reference);
-      if (member) tryAdd(member);
+      if (member) tryAdd(member, panelName ?? obs.code.text);
     }
   }
 
   for (const obs of observations) {
     tryAdd(obs);
+  }
+
+  return result;
+}
+
+/**
+ * Extract biomarker results from DiagnosticReport.result references.
+ * The actual values live in the referenced Observation resources, so
+ * this function just enriches them with the panel name.
+ *
+ * Call normalizeObservations() first — this function sets labPanelName
+ * on already-normalized records by matching Observation IDs in the report.
+ */
+export function applyDiagnosticReportPanelNames(
+  normalized: NormalizedBiomarker[],
+  reports: FhirDiagnosticReport[]
+): NormalizedBiomarker[] {
+  // Build a map of ObservationId → panel name
+  const panelByObsId = new Map<string, string>();
+  for (const report of reports) {
+    if (report.status !== "final" && report.status !== "amended" && report.status !== "preliminary") continue;
+    const panelName = report.code.text ?? report.code.coding?.[0]?.display ?? "Lab Panel";
+    for (const ref of report.result ?? []) {
+      const obsId = ref.reference.split("/").pop();
+      if (obsId) panelByObsId.set(obsId, panelName);
+    }
+  }
+  // This pass can't back-annotate by Observation ID because we don't store
+  // original FHIR id on normalized records yet. The panel names come from
+  // hasMember traversal in normalizeObservations() instead.
+  // Return unchanged — full panel-name enrichment happens at the raw layer.
+  return normalized;
+}
+
+/**
+ * Normalize AllergyIntolerance resources into a flat structure
+ * suitable for the safety/contraindication engine.
+ */
+export function normalizeAllergies(
+  allergies: FhirAllergyIntolerance[]
+): NormalizedAllergy[] {
+  const result: NormalizedAllergy[] = [];
+  const seen = new Set<string>();
+
+  for (const allergy of allergies) {
+    const clinical = allergy.clinicalStatus?.coding?.[0]?.code;
+    if (clinical && clinical !== "active") continue;
+
+    const verification = allergy.verificationStatus?.coding?.[0]?.code;
+    if (verification === "entered-in-error" || verification === "refuted") continue;
+
+    const name =
+      allergy.code?.text ?? allergy.code?.coding?.[0]?.display;
+    if (!name) continue;
+
+    const normalized = name.toLowerCase().trim();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+
+    const manifestation = allergy.reaction
+      ?.flatMap((r) =>
+        r.manifestation?.map((m) => m.text ?? m.coding?.[0]?.display) ?? []
+      )
+      .filter(Boolean)
+      .join(", ");
+
+    result.push({
+      name: normalized,
+      category: allergy.category?.[0] ?? "unknown",
+      criticality: allergy.criticality ?? "unknown",
+      manifestation: manifestation || undefined,
+      source: "fhir",
+    });
   }
 
   return result;

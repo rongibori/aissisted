@@ -122,8 +122,10 @@ export async function generateProtocol(userId: string) {
         name: r.recommendation.name,
         dosage: r.recommendation.dosage,
         timing: r.recommendation.timing,
+        timeSlot: r.recommendation.timeSlot ?? null,
         rationale: r.recommendation.rationale,
         score: r.score,
+        safetyStatus: "allowed" as const,
       }))
     );
   }

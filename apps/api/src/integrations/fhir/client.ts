@@ -36,6 +36,8 @@ export function buildFhirAuthUrl(smartConfig: SmartConfiguration, state: string)
       "patient/Patient.read",
       "patient/Condition.read",
       "patient/MedicationRequest.read",
+      "patient/DiagnosticReport.read",
+      "patient/AllergyIntolerance.read",
     ].join(" "),
     state,
     aud: config.fhir.baseUrl,
@@ -190,54 +192,145 @@ export interface FhirObservation {
     system?: string;
     code?: string;
   };
+  /** Clinical reference range from the originating lab */
+  referenceRange?: Array<{
+    low?: { value: number; unit?: string };
+    high?: { value: number; unit?: string };
+    text?: string;
+  }>;
   /** Panel grouping — member observations returned separately in the Bundle */
   hasMember?: Array<{ reference: string }>;
   component?: Array<{
     code: { coding: Array<{ system: string; code: string; display?: string }> };
     valueQuantity?: { value: number; unit: string };
+    referenceRange?: Array<{ low?: { value: number }; high?: { value: number } }>;
   }>;
 }
 
-export interface FhirBundle {
+// ─── DiagnosticReport ─────────────────────────────────────
+
+export interface FhirDiagnosticReport {
+  resourceType: "DiagnosticReport";
+  id: string;
+  status: string;
+  category?: Array<{ coding?: Array<{ code: string; system: string }> }>;
+  code: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  subject: { reference: string };
+  effectiveDateTime?: string;
+  issued?: string;
+  result?: Array<{ reference: string }>; // references to Observation resources
+  presentedForm?: Array<{ contentType: string; data?: string; url?: string }>;
+}
+
+// ─── AllergyIntolerance ──────────────────────────────────
+
+export interface FhirAllergyIntolerance {
+  resourceType: "AllergyIntolerance";
+  id: string;
+  clinicalStatus?: { coding?: Array<{ code: string }> };
+  verificationStatus?: { coding?: Array<{ code: string }> };
+  category?: string[]; // "food", "medication", "environment", "biologic"
+  criticality?: "low" | "high" | "unable-to-assess";
+  code?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  reaction?: Array<{
+    manifestation?: Array<{ coding?: Array<{ display?: string }>; text?: string }>;
+    severity?: "mild" | "moderate" | "severe";
+  }>;
+}
+
+export interface FhirBundle<R = FhirObservation> {
   resourceType: "Bundle";
   total?: number;
-  entry?: Array<{ resource: FhirObservation }>;
+  entry?: Array<{ resource: R }>;
   link?: Array<{ relation: string; url: string }>;
 }
 
-export async function fetchObservations(
+/** Generic paginated FHIR fetcher. Pass pageLimit=0 for full history. */
+async function fetchAllPages<R>(
   accessToken: string,
-  patientId: string,
-  pageLimit = 3
-): Promise<FhirObservation[]> {
-  const observations: FhirObservation[] = [];
-  let url: string | null =
-    `${config.fhir.baseUrl}/Observation?patient=${patientId}&_count=100&_sort=-date`;
-
+  initialUrl: string,
+  resourceType: string,
+  pageLimit = 0 // 0 = unlimited (full history)
+): Promise<R[]> {
+  const results: R[] = [];
+  let url: string | null = initialUrl;
   let pages = 0;
-  while (url && pages < pageLimit) {
+  const MAX_PAGES = pageLimit > 0 ? pageLimit : 500; // safety cap at 50,000 records
+
+  while (url && pages < MAX_PAGES) {
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/fhir+json",
       },
     });
-
     if (!res.ok) break;
 
-    const bundle = (await res.json()) as FhirBundle;
-
+    const bundle = (await res.json()) as FhirBundle<R>;
     for (const entry of bundle.entry ?? []) {
-      if (entry.resource?.resourceType === "Observation") {
-        observations.push(entry.resource);
-      }
+      const r = entry.resource as any;
+      if (r?.resourceType === resourceType) results.push(r as R);
     }
 
-    // Follow next page link
     const nextLink = bundle.link?.find((l) => l.relation === "next");
     url = nextLink?.url ?? null;
     pages++;
   }
+  return results;
+}
 
-  return observations;
+/**
+ * Fetch Observation resources for a patient.
+ * @param fullHistory  When true, follows all next-page links (full longitudinal history).
+ *                     When false, fetches up to 3 pages (~300 records) for incremental syncs.
+ */
+export async function fetchObservations(
+  accessToken: string,
+  patientId: string,
+  fullHistory = false
+): Promise<FhirObservation[]> {
+  return fetchAllPages<FhirObservation>(
+    accessToken,
+    `${config.fhir.baseUrl}/Observation?patient=${patientId}&_count=100&_sort=-date`,
+    "Observation",
+    fullHistory ? 0 : 3
+  );
+}
+
+/**
+ * Fetch DiagnosticReport resources (lab panels, pathology, imaging reports).
+ * The result references contain Observation IDs already fetched separately.
+ */
+export async function fetchDiagnosticReports(
+  accessToken: string,
+  patientId: string,
+  fullHistory = false
+): Promise<FhirDiagnosticReport[]> {
+  return fetchAllPages<FhirDiagnosticReport>(
+    accessToken,
+    `${config.fhir.baseUrl}/DiagnosticReport?patient=${patientId}&_count=50&_sort=-date&category=LAB`,
+    "DiagnosticReport",
+    fullHistory ? 0 : 3
+  );
+}
+
+/**
+ * Fetch AllergyIntolerance resources.
+ */
+export async function fetchAllergyIntolerance(
+  accessToken: string,
+  patientId: string
+): Promise<FhirAllergyIntolerance[]> {
+  return fetchAllPages<FhirAllergyIntolerance>(
+    accessToken,
+    `${config.fhir.baseUrl}/AllergyIntolerance?patient=${patientId}&_count=100`,
+    "AllergyIntolerance",
+    5
+  );
 }

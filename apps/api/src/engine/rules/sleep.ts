@@ -17,6 +17,7 @@ export const sleepRules: Rule[] = [
       name: "Magnesium Glycinate",
       dosage: "400mg",
       timing: "30 minutes before bed",
+      timeSlot: "presleep" as const,
       rationale:
         "Magnesium glycinate supports GABA receptor activity, reduces cortisol, and promotes deep sleep. Indicated by low HRV and poor sleep quality scores.",
     },
@@ -38,6 +39,7 @@ export const sleepRules: Rule[] = [
       name: "Melatonin",
       dosage: "0.5–1mg",
       timing: "60 minutes before target sleep time",
+      timeSlot: "presleep" as const,
       rationale:
         "Low-dose melatonin advances circadian phase and reduces sleep onset latency without suppressing endogenous melatonin production.",
     },
@@ -59,6 +61,7 @@ export const sleepRules: Rule[] = [
       name: "L-Theanine",
       dosage: "200mg",
       timing: "1 hour before bed",
+      timeSlot: "presleep" as const,
       rationale:
         "L-Theanine promotes alpha brain wave activity and reduces anxiety without sedation, improving sleep quality and morning recovery scores.",
     },

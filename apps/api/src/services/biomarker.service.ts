@@ -99,6 +99,9 @@ export async function persistRawBiomarkers(
     unit: string;
     source: string;
     measuredAt: string;
+    referenceRangeLow?: number;
+    referenceRangeHigh?: number;
+    labPanelName?: string;
   }>
 ): Promise<number> {
   if (entries.length === 0) return 0;
@@ -113,6 +116,9 @@ export async function persistRawBiomarkers(
         value: entry.value,
         unit: entry.unit,
         source: entry.source,
+        referenceRangeLow: entry.referenceRangeLow ?? null,
+        referenceRangeHigh: entry.referenceRangeHigh ?? null,
+        labPanelName: entry.labPanelName ?? null,
         measuredAt: entry.measuredAt,
         createdAt: now,
       });

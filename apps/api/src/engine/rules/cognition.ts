@@ -19,6 +19,7 @@ export const cognitionRules: Rule[] = [
       name: "Lion's Mane Mushroom",
       dosage: "1000mg",
       timing: "Morning with breakfast",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Lion's Mane stimulates NGF (nerve growth factor) synthesis, promoting neuroplasticity and myelination. Backed by RCTs showing improved mild cognitive impairment.",
     },
@@ -40,6 +41,7 @@ export const cognitionRules: Rule[] = [
       name: "Bacopa Monnieri (55% Bacosides)",
       dosage: "300mg",
       timing: "With dinner (takes 8–12 weeks for full effect)",
+      timeSlot: "evening" as const,
       rationale:
         "Bacopa modulates acetylcholine and serotonin, reduces beta-amyloid deposits, and improves memory consolidation. Effects are cumulative over 12 weeks.",
     },
@@ -63,6 +65,7 @@ export const cognitionRules: Rule[] = [
       name: "Alpha-GPC",
       dosage: "300mg",
       timing: "Morning or pre-workout",
+      timeSlot: "morning_fasted" as const,
       rationale:
         "Alpha-GPC crosses the blood-brain barrier and directly raises acetylcholine levels, enhancing working memory, attention, and processing speed.",
     },

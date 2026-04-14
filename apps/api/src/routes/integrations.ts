@@ -193,10 +193,10 @@ export async function integrationsRoutes(app: FastifyInstance) {
         // Store tokens via the sync module (handles provider filter correctly)
         await storeFhirTokens(userId, { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn }, patientId);
 
-        // Immediately sync lab results, conditions, and medications
-        const result = await syncFhirForUser(userId);
+        // Full longitudinal history on initial connect
+        const result = await syncFhirForUser(userId, true);
         app.log.info(
-          `FHIR initial sync for ${userId}: ${result.observations} observations, conditions=${result.conditionsUpdated}, meds=${result.medicationsUpdated}`
+          `FHIR initial sync for ${userId}: ${result.observations} obs, ${result.diagnosticReports} reports, allergies=${result.allergiesUpdated}`
         );
 
         reply.redirect("/dashboard?connected=fhir");

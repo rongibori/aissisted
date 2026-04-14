@@ -5,10 +5,15 @@ import type { SmartConfiguration } from "./client.js";
 import {
   getSmartConfig,
   fetchObservations,
+  fetchDiagnosticReports,
+  fetchAllergyIntolerance,
   fetchConditions,
   fetchMedicationRequests,
 } from "./client.js";
-import { normalizeObservations } from "./normalizer.js";
+import {
+  normalizeObservations,
+  normalizeAllergies,
+} from "./normalizer.js";
 import { persistRawBiomarkers } from "../../services/biomarker.service.js";
 
 // ─── Token storage ────────────────────────────────────────
@@ -91,7 +96,9 @@ async function refreshFhirToken(
   return data.access_token;
 }
 
-export async function getFhirAccessToken(userId: string): Promise<{ token: string; patientId: string }> {
+export async function getFhirAccessToken(
+  userId: string
+): Promise<{ token: string; patientId: string }> {
   const stored = await db
     .select()
     .from(schema.integrationTokens)
@@ -115,31 +122,107 @@ export async function getFhirAccessToken(userId: string): Promise<{ token: strin
   return { token, patientId: meta.patientId ?? "" };
 }
 
+// ─── Raw FHIR storage ─────────────────────────────────────
+
+async function storeRawFhirResources(
+  userId: string,
+  resourceType: string,
+  resources: Array<{ id: string; [key: string]: any }>
+): Promise<void> {
+  const now = new Date().toISOString();
+  for (const resource of resources) {
+    if (!resource.id) continue;
+    try {
+      await db.insert(schema.rawFhirResources).values({
+        id: randomUUID(),
+        userId,
+        provider: "epic",
+        resourceType,
+        resourceId: resource.id,
+        payload: JSON.stringify(resource),
+        syncedAt: now,
+      });
+    } catch {
+      // Skip if already stored (duplicate resourceId for this user)
+    }
+  }
+}
+
+// ─── Allergy persistence ──────────────────────────────────
+
+async function persistAllergies(userId: string, allergyNames: string[]): Promise<void> {
+  if (allergyNames.length === 0) return;
+
+  const profile = await db
+    .select({ allergies: schema.healthProfiles.allergies })
+    .from(schema.healthProfiles)
+    .where(eq(schema.healthProfiles.userId, userId))
+    .get();
+
+  if (!profile) return;
+
+  const existing: string[] = JSON.parse(profile.allergies);
+  const merged = Array.from(new Set([...existing, ...allergyNames]));
+
+  await db
+    .update(schema.healthProfiles)
+    .set({ allergies: JSON.stringify(merged), updatedAt: new Date().toISOString() })
+    .where(eq(schema.healthProfiles.userId, userId));
+}
+
 // ─── Sync ────────────────────────────────────────────────
 
 export interface FhirSyncResult {
   observations: number;
   conditionsUpdated: boolean;
   medicationsUpdated: boolean;
+  allergiesUpdated: boolean;
+  diagnosticReports: number;
 }
 
-export async function syncFhirForUser(userId: string): Promise<FhirSyncResult> {
+/**
+ * Sync FHIR data for a user.
+ * @param fullHistory  When true, pulls complete longitudinal history (initial sync).
+ *                     When false, fetches recent pages only (incremental sync).
+ */
+export async function syncFhirForUser(
+  userId: string,
+  fullHistory = false
+): Promise<FhirSyncResult> {
   const { token, patientId } = await getFhirAccessToken(userId);
 
-  // Fetch observations (lab results)
-  const observations = await fetchObservations(token, patientId);
+  // 1. Fetch all FHIR resources in parallel
+  const [observations, diagnosticReports, allergyResources, conditionNames, medsNames] =
+    await Promise.all([
+      fetchObservations(token, patientId, fullHistory),
+      fetchDiagnosticReports(token, patientId, fullHistory),
+      fetchAllergyIntolerance(token, patientId),
+      fetchConditions(token, patientId),
+      fetchMedicationRequests(token, patientId),
+    ]);
+
+  // 2. Store raw FHIR blobs (compliance layer — fire-and-forget, non-blocking on error)
+  Promise.allSettled([
+    storeRawFhirResources(userId, "Observation", observations),
+    storeRawFhirResources(userId, "DiagnosticReport", diagnosticReports),
+    storeRawFhirResources(userId, "AllergyIntolerance", allergyResources),
+  ]).catch(() => {});
+
+  // 3. Normalize and persist observations
   const normalized = normalizeObservations(observations);
   const count = await persistRawBiomarkers(userId, normalized);
 
-  // Fetch and persist Conditions → profile.conditions
-  const conditionNames = await fetchConditions(token, patientId);
-  const medsNames = await fetchMedicationRequests(token, patientId);
+  // 4. Normalize and persist allergies
+  const allergies = normalizeAllergies(allergyResources);
+  const allergyNames = allergies.map((a) => a.name);
+  const allergiesUpdated = allergyNames.length > 0;
+  if (allergiesUpdated) await persistAllergies(userId, allergyNames);
 
+  // 5. Merge conditions and medications into profile
   const conditionsUpdated = conditionNames.length > 0;
   const medicationsUpdated = medsNames.length > 0;
 
   if (conditionsUpdated || medicationsUpdated) {
-    // Merge into existing profile without overwriting manual entries
     const profile = await db
       .select()
       .from(schema.healthProfiles)
@@ -150,19 +233,26 @@ export async function syncFhirForUser(userId: string): Promise<FhirSyncResult> {
       const existingConditions: string[] = JSON.parse(profile.conditions);
       const existingMeds: string[] = JSON.parse(profile.medications);
 
-      const mergedConditions = Array.from(new Set([...existingConditions, ...conditionNames]));
-      const mergedMeds = Array.from(new Set([...existingMeds, ...medsNames]));
-
       await db
         .update(schema.healthProfiles)
         .set({
-          conditions: JSON.stringify(mergedConditions),
-          medications: JSON.stringify(mergedMeds),
+          conditions: JSON.stringify(
+            Array.from(new Set([...existingConditions, ...conditionNames]))
+          ),
+          medications: JSON.stringify(
+            Array.from(new Set([...existingMeds, ...medsNames]))
+          ),
           updatedAt: new Date().toISOString(),
         })
         .where(eq(schema.healthProfiles.userId, userId));
     }
   }
 
-  return { observations: count, conditionsUpdated, medicationsUpdated };
+  return {
+    observations: count,
+    conditionsUpdated,
+    medicationsUpdated,
+    allergiesUpdated,
+    diagnosticReports: diagnosticReports.length,
+  };
 }

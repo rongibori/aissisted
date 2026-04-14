@@ -17,6 +17,7 @@ export const inflammationRules: Rule[] = [
       name: "Omega-3 (EPA/DHA)",
       dosage: "2–3g EPA+DHA",
       timing: "With largest meal of the day",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Elevated CRP indicates systemic inflammation. EPA and DHA are precursors to anti-inflammatory resolvins and protectins, reducing NF-κB signaling.",
     },
@@ -38,6 +39,7 @@ export const inflammationRules: Rule[] = [
       name: "Curcumin (with Piperine)",
       dosage: "500mg curcumin + 5mg piperine",
       timing: "Twice daily with food",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Curcumin inhibits NF-κB and COX-2 pathways. Piperine increases bioavailability by 2000%. Indicated by markedly elevated CRP or IL-6.",
     },
@@ -61,6 +63,7 @@ export const inflammationRules: Rule[] = [
       name: "Vitamin D3 + K2",
       dosage: "5000 IU D3 + 100mcg K2 MK-7",
       timing: "With morning meal containing fat",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Vitamin D deficiency is strongly associated with dysregulated immune response and elevated inflammatory markers. K2 directs calcium to bones, preventing arterial calcification.",
     },

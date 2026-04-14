@@ -35,6 +35,7 @@ export const healthProfiles = sqliteTable("health_profiles", {
   goals: text("goals").notNull().default("[]"), // JSON array
   conditions: text("conditions").notNull().default("[]"),
   medications: text("medications").notNull().default("[]"),
+  allergies: text("allergies").notNull().default("[]"),
   supplements: text("supplements").notNull().default("[]"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
@@ -61,6 +62,11 @@ export const biomarkers = sqliteTable("biomarkers", {
   value: real("value").notNull(),
   unit: text("unit").notNull(),
   source: text("source"),
+  // Clinical reference range from the source lab or FHIR Observation
+  referenceRangeLow: real("reference_range_low"),
+  referenceRangeHigh: real("reference_range_high"),
+  // Lab panel this result belongs to (e.g. "CBC", "Lipid Panel")
+  labPanelName: text("lab_panel_name"),
   measuredAt: text("measured_at").notNull(),
   createdAt: text("created_at").notNull(),
 });
@@ -93,6 +99,17 @@ export const protocolsRelations = relations(protocols, ({ one, many }) => ({
   recommendations: many(recommendations),
 }));
 
+export const TIME_SLOTS = [
+  "morning_fasted",
+  "morning_with_food",
+  "midday",
+  "afternoon",
+  "evening",
+  "presleep",
+] as const;
+
+export type TimeSlot = (typeof TIME_SLOTS)[number];
+
 export const recommendations = sqliteTable("recommendations", {
   id: text("id").primaryKey(),
   protocolId: text("protocol_id")
@@ -101,8 +118,13 @@ export const recommendations = sqliteTable("recommendations", {
   name: text("name").notNull(),
   dosage: text("dosage").notNull(),
   timing: text("timing").notNull(),
+  // Structured time slot for scheduling — canonical enum value
+  timeSlot: text("time_slot", { enum: TIME_SLOTS }),
   rationale: text("rationale").notNull(),
   score: real("score").notNull().default(0),
+  // Safety: explicit status per-item (allowed / blocked / warning)
+  safetyStatus: text("safety_status", { enum: ["allowed", "blocked", "warning"] }).default("allowed"),
+  safetyNote: text("safety_note"),
 });
 
 export const recommendationsRelations = relations(
@@ -237,6 +259,80 @@ export const auditLog = sqliteTable("audit_log", {
 export const auditLogRelations = relations(auditLog, ({ one }) => ({
   user: one(users, {
     fields: [auditLog.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Raw FHIR Resources (immutable compliance layer) ─────
+// Stores the original JSON payloads exactly as received from Epic/FHIR.
+// Never modified — append-only. Used for audit, re-processing, and debugging.
+
+export const rawFhirResources = sqliteTable("raw_fhir_resources", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), // "epic", "cerner", etc.
+  resourceType: text("resource_type").notNull(), // "Observation", "DiagnosticReport", etc.
+  resourceId: text("resource_id").notNull(), // FHIR resource id
+  payload: text("payload").notNull(), // raw JSON
+  syncedAt: text("synced_at").notNull(),
+});
+
+export const rawFhirResourcesRelations = relations(rawFhirResources, ({ one }) => ({
+  user: one(users, {
+    fields: [rawFhirResources.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Supplement Adherence Logs ────────────────────────────
+// Records each supplement taken (or skipped) for adherence tracking.
+
+export const supplementLogs = sqliteTable("supplement_logs", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  protocolId: text("protocol_id").references(() => protocols.id, { onDelete: "set null" }),
+  recommendationId: text("recommendation_id"),
+  supplementName: text("supplement_name").notNull(),
+  dosage: text("dosage"),
+  timeSlot: text("time_slot", { enum: TIME_SLOTS }),
+  takenAt: text("taken_at"), // null = skipped
+  skipped: integer("skipped", { mode: "boolean" }).notNull().default(false),
+  note: text("note"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const supplementLogsRelations = relations(supplementLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [supplementLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Consent Records (HIPAA) ─────────────────────────────
+// Tracks when and what a user consented to (data processing, HIPAA BAA, etc.)
+
+export const consentRecords = sqliteTable("consent_records", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  consentType: text("consent_type", {
+    enum: ["hipaa_notice", "data_processing", "fhir_data_access", "research_opt_in"],
+  }).notNull(),
+  version: text("version").notNull(), // e.g. "1.0"
+  grantedAt: text("granted_at").notNull(),
+  revokedAt: text("revoked_at"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+export const consentRecordsRelations = relations(consentRecords, ({ one }) => ({
+  user: one(users, {
+    fields: [consentRecords.userId],
     references: [users.id],
   }),
 }));

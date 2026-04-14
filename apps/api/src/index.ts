@@ -11,6 +11,7 @@ import { biomarkerRoutes } from "./routes/biomarkers.js";
 import { protocolRoutes } from "./routes/protocol.js";
 import { chatRoutes } from "./routes/chat.js";
 import { integrationsRoutes } from "./routes/integrations.js";
+import { adherenceRoutes } from "./routes/adherence.js";
 import { startScheduler } from "./scheduler.js";
 import { db, schema } from "@aissisted/db";
 import { migrate } from "drizzle-orm/libsql/migrator";
@@ -73,6 +74,7 @@ await app.register(biomarkerRoutes);
 await app.register(protocolRoutes);
 await app.register(chatRoutes);
 await app.register(integrationsRoutes);
+await app.register(adherenceRoutes);
 
 // ─── DB Migration ────────────────────────────────────────
 try {
