@@ -1,0 +1,1 @@
+{"app_name": "Claude Code","required_scopes": ["repo"],"redirect_uri": "https://claude.ai/oauth/callback"}
