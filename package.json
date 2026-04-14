@@ -7,10 +7,17 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "db:generate": "turbo run db:generate --filter=@aissisted/db",
+    "db:push": "turbo run db:push --filter=@aissisted/db"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
     "typescript": "^5.6.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
