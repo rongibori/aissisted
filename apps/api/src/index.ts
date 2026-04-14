@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth.js";
 import { profileRoutes } from "./routes/profile.js";
 import { biomarkerRoutes } from "./routes/biomarkers.js";
 import { protocolRoutes } from "./routes/protocol.js";
+import { chatRoutes } from "./routes/chat.js";
 
 const app = Fastify({
   logger: {
@@ -33,6 +34,7 @@ await app.register(authRoutes);
 await app.register(profileRoutes);
 await app.register(biomarkerRoutes);
 await app.register(protocolRoutes);
+await app.register(chatRoutes);
 
 // ─── Start ───────────────────────────────────────────────
 try {
