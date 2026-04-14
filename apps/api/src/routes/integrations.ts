@@ -14,8 +14,8 @@ import { parseAppleHealthXml } from "../integrations/apple-health/parser.js";
 import { normalizeAppleHealthRecords } from "../integrations/apple-health/normalizer.js";
 
 // FHIR
-import { getSmartConfig, buildFhirAuthUrl, exchangeFhirCode, fetchObservations } from "../integrations/fhir/client.js";
-import { normalizeObservations } from "../integrations/fhir/normalizer.js";
+import { getSmartConfig, buildFhirAuthUrl, exchangeFhirCode } from "../integrations/fhir/client.js";
+import { storeFhirTokens, syncFhirForUser } from "../integrations/fhir/sync.js";
 
 
 export async function integrationsRoutes(app: FastifyInstance) {
@@ -187,43 +187,39 @@ export async function integrationsRoutes(app: FastifyInstance) {
 
       try {
         const smartConfig = await getSmartConfig();
-        const { accessToken, patientId } = await exchangeFhirCode(smartConfig, code);
+        const { accessToken, refreshToken, expiresIn, patientId } =
+          await exchangeFhirCode(smartConfig, code);
 
-        // Store token
-        const now = new Date().toISOString();
-        const existing = await db
-          .select()
-          .from(schema.integrationTokens)
-          .where(eq(schema.integrationTokens.userId, userId))
-          .get();
+        // Store tokens via the sync module (handles provider filter correctly)
+        await storeFhirTokens(userId, { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn }, patientId);
 
-        const tokenData = {
-          accessToken,
-          metadata: JSON.stringify({ patientId }),
-          updatedAt: now,
-        };
-
-        if (existing) {
-          await db.update(schema.integrationTokens).set(tokenData).where(eq(schema.integrationTokens.userId, userId));
-        } else {
-          await db.insert(schema.integrationTokens).values({
-            id: randomUUID(),
-            userId,
-            provider: "fhir",
-            ...tokenData,
-            createdAt: now,
-          });
-        }
-
-        // Fetch and persist observations
-        const observations = await fetchObservations(accessToken, patientId);
-        const normalized = normalizeObservations(observations);
-        await persistRawBiomarkers(userId, normalized);
+        // Immediately sync lab results, conditions, and medications
+        const result = await syncFhirForUser(userId);
+        app.log.info(
+          `FHIR initial sync for ${userId}: ${result.observations} observations, conditions=${result.conditionsUpdated}, meds=${result.medicationsUpdated}`
+        );
 
         reply.redirect("/dashboard?connected=fhir");
       } catch (err: any) {
         app.log.error(err, "FHIR callback error");
         reply.redirect("/?error=fhir_token_exchange_failed");
+      }
+    }
+  );
+
+  /** POST /integrations/fhir/sync — manual re-sync */
+  app.post(
+    "/integrations/fhir/sync",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+      try {
+        const result = await syncFhirForUser(sub);
+        reply.send({ data: result });
+      } catch (err: any) {
+        reply
+          .status(400)
+          .send({ error: { message: err.message, code: "FHIR_SYNC_FAILED" } });
       }
     }
   );

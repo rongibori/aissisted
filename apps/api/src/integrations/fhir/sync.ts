@@ -1,0 +1,168 @@
+import { randomUUID } from "crypto";
+import { config } from "../../config.js";
+import { db, schema, eq, and } from "@aissisted/db";
+import type { SmartConfiguration } from "./client.js";
+import {
+  getSmartConfig,
+  fetchObservations,
+  fetchConditions,
+  fetchMedicationRequests,
+} from "./client.js";
+import { normalizeObservations } from "./normalizer.js";
+import { persistRawBiomarkers } from "../../services/biomarker.service.js";
+
+// ─── Token storage ────────────────────────────────────────
+
+export interface FhirTokens {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  patient?: string;
+}
+
+const whereUserFhir = (userId: string) =>
+  and(
+    eq(schema.integrationTokens.userId, userId),
+    eq(schema.integrationTokens.provider, "fhir")
+  );
+
+export async function storeFhirTokens(
+  userId: string,
+  tokens: FhirTokens,
+  patientId: string
+): Promise<void> {
+  const expiresAt = tokens.expires_in
+    ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
+    : undefined;
+  const now = new Date().toISOString();
+
+  const existing = await db
+    .select({ id: schema.integrationTokens.id })
+    .from(schema.integrationTokens)
+    .where(whereUserFhir(userId))
+    .get();
+
+  const payload = {
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token ?? null,
+    expiresAt: expiresAt ?? null,
+    metadata: JSON.stringify({ patientId }),
+    updatedAt: now,
+  };
+
+  if (existing) {
+    await db
+      .update(schema.integrationTokens)
+      .set(payload)
+      .where(whereUserFhir(userId));
+  } else {
+    await db.insert(schema.integrationTokens).values({
+      id: randomUUID(),
+      userId,
+      provider: "fhir",
+      ...payload,
+      createdAt: now,
+    });
+  }
+}
+
+async function refreshFhirToken(
+  userId: string,
+  stored: { refreshToken: string | null; metadata: string | null }
+): Promise<string> {
+  const smartConfig = await getSmartConfig();
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: stored.refreshToken!,
+    client_id: config.fhir.clientId,
+  });
+
+  const res = await fetch(smartConfig.token_endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  if (!res.ok) throw new Error("FHIR token refresh failed");
+
+  const data = (await res.json()) as FhirTokens;
+  const meta = stored.metadata ? JSON.parse(stored.metadata) : {};
+  await storeFhirTokens(userId, data, meta.patientId ?? "");
+  return data.access_token;
+}
+
+export async function getFhirAccessToken(userId: string): Promise<{ token: string; patientId: string }> {
+  const stored = await db
+    .select()
+    .from(schema.integrationTokens)
+    .where(whereUserFhir(userId))
+    .get();
+
+  if (!stored?.accessToken) throw new Error("Epic/FHIR not connected");
+
+  let token = stored.accessToken;
+
+  // Refresh if expired or expiring within 5 min
+  if (stored.expiresAt) {
+    const expiresAt = new Date(stored.expiresAt).getTime();
+    if (expiresAt - Date.now() < 5 * 60 * 1000) {
+      if (!stored.refreshToken) throw new Error("FHIR access token expired — please reconnect");
+      token = await refreshFhirToken(userId, stored);
+    }
+  }
+
+  const meta = stored.metadata ? JSON.parse(stored.metadata) : {};
+  return { token, patientId: meta.patientId ?? "" };
+}
+
+// ─── Sync ────────────────────────────────────────────────
+
+export interface FhirSyncResult {
+  observations: number;
+  conditionsUpdated: boolean;
+  medicationsUpdated: boolean;
+}
+
+export async function syncFhirForUser(userId: string): Promise<FhirSyncResult> {
+  const { token, patientId } = await getFhirAccessToken(userId);
+
+  // Fetch observations (lab results)
+  const observations = await fetchObservations(token, patientId);
+  const normalized = normalizeObservations(observations);
+  const count = await persistRawBiomarkers(userId, normalized);
+
+  // Fetch and persist Conditions → profile.conditions
+  const conditionNames = await fetchConditions(token, patientId);
+  const medsNames = await fetchMedicationRequests(token, patientId);
+
+  const conditionsUpdated = conditionNames.length > 0;
+  const medicationsUpdated = medsNames.length > 0;
+
+  if (conditionsUpdated || medicationsUpdated) {
+    // Merge into existing profile without overwriting manual entries
+    const profile = await db
+      .select()
+      .from(schema.healthProfiles)
+      .where(eq(schema.healthProfiles.userId, userId))
+      .get();
+
+    if (profile) {
+      const existingConditions: string[] = JSON.parse(profile.conditions);
+      const existingMeds: string[] = JSON.parse(profile.medications);
+
+      const mergedConditions = Array.from(new Set([...existingConditions, ...conditionNames]));
+      const mergedMeds = Array.from(new Set([...existingMeds, ...medsNames]));
+
+      await db
+        .update(schema.healthProfiles)
+        .set({
+          conditions: JSON.stringify(mergedConditions),
+          medications: JSON.stringify(mergedMeds),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(schema.healthProfiles.userId, userId));
+    }
+  }
+
+  return { observations: count, conditionsUpdated, medicationsUpdated };
+}

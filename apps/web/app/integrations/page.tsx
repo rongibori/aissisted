@@ -31,10 +31,11 @@ const PROVIDERS = [
   {
     id: "fhir",
     name: "Epic / MyChart",
-    description: "SMART on FHIR — fetch lab results directly from your EHR.",
+    description: "SMART on FHIR — fetch lab results, conditions, and medications directly from your EHR.",
     icon: "🏥",
     connect: () => integrationsApi.fhirConnect(),
-    canSync: false,
+    canSync: true,
+    sync: () => integrationsApi.fhirSync().then((r) => ({ synced: r.observations })),
   },
 ];
 

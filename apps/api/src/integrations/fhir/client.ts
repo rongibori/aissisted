@@ -27,7 +27,16 @@ export function buildFhirAuthUrl(smartConfig: SmartConfiguration, state: string)
     response_type: "code",
     client_id: config.fhir.clientId,
     redirect_uri: config.fhir.redirectUri,
-    scope: "launch/patient openid fhirUser patient/Observation.read patient/Patient.read",
+    scope: [
+      "launch/patient",
+      "openid",
+      "fhirUser",
+      "offline_access",
+      "patient/Observation.read",
+      "patient/Patient.read",
+      "patient/Condition.read",
+      "patient/MedicationRequest.read",
+    ].join(" "),
     state,
     aud: config.fhir.baseUrl,
   });
@@ -37,7 +46,7 @@ export function buildFhirAuthUrl(smartConfig: SmartConfiguration, state: string)
 export async function exchangeFhirCode(
   smartConfig: SmartConfiguration,
   code: string
-): Promise<{ accessToken: string; patientId: string }> {
+): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; patientId: string }> {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
@@ -55,13 +64,111 @@ export async function exchangeFhirCode(
 
   const data = await res.json() as {
     access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
     patient?: string;
   };
 
   return {
     accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresIn: data.expires_in,
     patientId: data.patient ?? "",
   };
+}
+
+// ─── Condition resources ──────────────────────────────────
+
+interface FhirCondition {
+  resourceType: "Condition";
+  clinicalStatus?: { coding?: Array<{ code: string }> };
+  code?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+}
+
+/**
+ * Fetch active Conditions and return plain-text names suitable for
+ * auto-populating the user's conditions list.
+ */
+export async function fetchConditions(
+  accessToken: string,
+  patientId: string
+): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `${config.fhir.baseUrl}/Condition?patient=${patientId}&clinical-status=active&_count=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/fhir+json",
+        },
+      }
+    );
+    if (!res.ok) return [];
+    const bundle = await res.json() as { entry?: Array<{ resource: FhirCondition }> };
+    const names: string[] = [];
+    for (const entry of bundle.entry ?? []) {
+      const r = entry.resource;
+      if (r.resourceType !== "Condition") continue;
+      const status = r.clinicalStatus?.coding?.[0]?.code;
+      if (status && status !== "active") continue;
+      const display = r.code?.text ?? r.code?.coding?.[0]?.display;
+      if (display) names.push(display.toLowerCase());
+    }
+    return [...new Set(names)];
+  } catch {
+    return [];
+  }
+}
+
+// ─── MedicationRequest resources ─────────────────────────
+
+interface FhirMedRequest {
+  resourceType: "MedicationRequest";
+  status?: string;
+  medicationCodeableConcept?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  medicationReference?: { display?: string };
+}
+
+/**
+ * Fetch active MedicationRequests and return medication names.
+ */
+export async function fetchMedicationRequests(
+  accessToken: string,
+  patientId: string
+): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `${config.fhir.baseUrl}/MedicationRequest?patient=${patientId}&status=active&_count=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/fhir+json",
+        },
+      }
+    );
+    if (!res.ok) return [];
+    const bundle = await res.json() as { entry?: Array<{ resource: FhirMedRequest }> };
+    const names: string[] = [];
+    for (const entry of bundle.entry ?? []) {
+      const r = entry.resource;
+      if (r.resourceType !== "MedicationRequest") continue;
+      if (r.status && r.status !== "active") continue;
+      const display =
+        r.medicationCodeableConcept?.text ??
+        r.medicationCodeableConcept?.coding?.[0]?.display ??
+        r.medicationReference?.display;
+      if (display) names.push(display.toLowerCase());
+    }
+    return [...new Set(names)];
+  } catch {
+    return [];
+  }
 }
 
 // ─── FHIR Resources ──────────────────────────────────────
@@ -83,6 +190,8 @@ export interface FhirObservation {
     system?: string;
     code?: string;
   };
+  /** Panel grouping — member observations returned separately in the Bundle */
+  hasMember?: Array<{ reference: string }>;
   component?: Array<{
     code: { coding: Array<{ system: string; code: string; display?: string }> };
     valueQuantity?: { value: number; unit: string };

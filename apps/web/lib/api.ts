@@ -163,6 +163,12 @@ export const integrations = {
       method: "POST",
     }),
 
+  fhirSync: () =>
+    request<{ observations: number; conditionsUpdated: boolean; medicationsUpdated: boolean }>(
+      "/integrations/fhir/sync",
+      { method: "POST" }
+    ),
+
   appleHealthUpload: (xml: string) =>
     request<{ parsed: number; imported: number }>(
       "/integrations/apple-health/upload",
