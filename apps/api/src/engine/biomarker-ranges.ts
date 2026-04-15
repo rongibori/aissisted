@@ -225,6 +225,82 @@ export const BIOMARKER_RANGES: Record<string, BiomarkerRange> = {
   },
 };
 
+/**
+ * Sex-specific overrides for biomarkers whose reference ranges differ
+ * meaningfully between biological males and females.
+ * Applied via getRangeStatusForProfile() when sex is known.
+ */
+const SEX_SPECIFIC_RANGES: Record<
+  "male" | "female",
+  Partial<Record<string, BiomarkerRange>>
+> = {
+  male: {
+    hemoglobin_g_dl: {
+      unit: "g/dL",
+      low: 13.5,
+      highNormal: 17.5,
+      optimalLow: 14,
+      optimalHigh: 17,
+      criticalLow: 7,
+      criticalHigh: 20,
+    },
+    testosterone_ng_dl: {
+      unit: "ng/dL",
+      low: 300,
+      highNormal: 1000,
+      optimalLow: 500,
+      optimalHigh: 900,
+      criticalLow: 100,
+      criticalHigh: 1500,
+    },
+    dhea_s_mcg_dl: {
+      unit: "mcg/dL",
+      low: 80,
+      highNormal: 560,
+      optimalLow: 150,
+      optimalHigh: 400,
+      criticalLow: 20,
+    },
+  },
+  female: {
+    hemoglobin_g_dl: {
+      unit: "g/dL",
+      low: 12.0,
+      highNormal: 15.5,
+      optimalLow: 12.5,
+      optimalHigh: 15,
+      criticalLow: 7,
+      criticalHigh: 20,
+    },
+    testosterone_ng_dl: {
+      unit: "ng/dL",
+      low: 15,
+      highNormal: 70,
+      optimalLow: 20,
+      optimalHigh: 60,
+      criticalLow: 5,
+      criticalHigh: 200,
+    },
+    dhea_s_mcg_dl: {
+      unit: "mcg/dL",
+      low: 45,
+      highNormal: 340,
+      optimalLow: 80,
+      optimalHigh: 250,
+      criticalLow: 10,
+    },
+    ferritin_ng_ml: {
+      unit: "ng/mL",
+      low: 12,
+      highNormal: 150,
+      optimalLow: 30,
+      optimalHigh: 100,
+      criticalLow: 5,
+      criticalHigh: 500,
+    },
+  },
+};
+
 export function getRangeStatus(
   name: string,
   value: number
@@ -246,6 +322,39 @@ export function getRangeStatus(
   }
 
   return { status: "optimal", isCritical: false };
+}
+
+/**
+ * Sex-aware version of getRangeStatus.
+ * Applies sex-specific reference ranges for hemoglobin, testosterone, DHEA-S, ferritin.
+ * Falls back to the sex-neutral BIOMARKER_RANGES for everything else.
+ */
+export function getRangeStatusForProfile(
+  name: string,
+  value: number,
+  sex?: "male" | "female" | "other" | null
+): { status: RangeStatus; isCritical: boolean } {
+  if (sex === "male" || sex === "female") {
+    const sexRange = SEX_SPECIFIC_RANGES[sex][name];
+    if (sexRange) {
+      // Apply sex-specific range
+      const isCritical =
+        (sexRange.criticalLow !== undefined && value < sexRange.criticalLow) ||
+        (sexRange.criticalHigh !== undefined && value > sexRange.criticalHigh);
+
+      if (value < sexRange.low) return { status: "low", isCritical };
+      if (value > sexRange.highNormal) return { status: "high", isCritical };
+
+      if (sexRange.optimalLow !== undefined && sexRange.optimalHigh !== undefined) {
+        if (value >= sexRange.optimalLow && value <= sexRange.optimalHigh) {
+          return { status: "optimal", isCritical: false };
+        }
+      }
+      return { status: "optimal", isCritical: false };
+    }
+  }
+  // Fallback to sex-neutral ranges
+  return getRangeStatus(name, value);
 }
 
 export function validateBiomarkerValue(

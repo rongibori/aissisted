@@ -5,7 +5,15 @@ import { AuthProvider, useAuth } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
 import { biomarkers as biomarkersApi } from "../../lib/api";
 import { Card, Button, Input, Spinner, EmptyState, Badge } from "../../components/ui";
-import { getRangeStatus, STATUS_LABELS, STATUS_COLORS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
+import {
+  getRangeStatus,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  TREND_ICONS,
+  TREND_COLORS,
+  TREND_LABELS,
+  type TrendDirection,
+} from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
 
 interface Biomarker {
@@ -15,8 +23,19 @@ interface Biomarker {
   unit: string;
   source?: string;
   measuredAt: string;
-  trend?: TrendDirection;
-  previousValue?: number;
+}
+
+interface TrendRecord {
+  biomarkerName: string;
+  latestValue: number;
+  latestUnit: string;
+  latestMeasuredAt: string;
+  readingCount: number;
+  slope30d: number | null;
+  rollingAvg7d: number | null;
+  rollingAvg30d: number | null;
+  rollingAvg90d: number | null;
+  trendDirection: TrendDirection;
 }
 
 const COMMON_BIOMARKERS = [
@@ -28,11 +47,25 @@ const COMMON_BIOMARKERS = [
   { name: "cortisol_mcg_dl", label: "Cortisol", unit: "mcg/dL" },
   { name: "tsh_miu_l", label: "TSH", unit: "mIU/L" },
   { name: "hemoglobin_g_dl", label: "Hemoglobin", unit: "g/dL" },
+  { name: "ldl_mg_dl", label: "LDL", unit: "mg/dL" },
+  { name: "hdl_mg_dl", label: "HDL", unit: "mg/dL" },
+  { name: "triglycerides_mg_dl", label: "Triglycerides", unit: "mg/dL" },
+  { name: "glucose_mg_dl", label: "Glucose", unit: "mg/dL" },
 ];
+
+function formatSlope(slope30d: number | null, unit: string): string | null {
+  if (slope30d === null || Math.abs(slope30d) < 0.001) return null;
+  const sign = slope30d > 0 ? "+" : "";
+  const val = Math.abs(slope30d) < 1
+    ? slope30d.toFixed(2)
+    : slope30d.toFixed(1);
+  return `${sign}${val} ${unit}/mo`;
+}
 
 function LabsPage() {
   const { user, loading } = useAuth();
   const [allBiomarkers, setAllBiomarkers] = useState<Biomarker[]>([]);
+  const [trends, setTrends] = useState<Map<string, TrendRecord>>(new Map());
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
   const [fetching, setFetching] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -50,26 +83,48 @@ function LabsPage() {
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const data = await biomarkersApi.list({ latest: true });
-      setAllBiomarkers(data.biomarkers);
-      // Fetch sparkline history for each unique biomarker in the background
-      const names = data.biomarkers.map((b: Biomarker) => b.name);
-      Promise.allSettled(
-        names.map((name: string) =>
-          biomarkersApi.history(name).then((h) => ({
-            name,
-            values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
-          }))
-        )
-      ).then((results) => {
-        const map: Record<string, number[]> = {};
-        for (const r of results) {
-          if (r.status === "fulfilled" && r.value.values.length > 1) {
-            map[r.value.name] = r.value.values;
+      // Fetch latest biomarkers + pre-computed trends in parallel
+      const [biomarkersData, trendsData] = await Promise.all([
+        biomarkersApi.list({ latest: true }),
+        biomarkersApi.trends().catch(() => ({ trends: [] })),
+      ]);
+
+      setAllBiomarkers(biomarkersData.biomarkers);
+
+      // Build trend map for O(1) lookup
+      const trendMap = new Map<string, TrendRecord>();
+      for (const t of trendsData.trends) {
+        trendMap.set(t.biomarkerName, t);
+      }
+      setTrends(trendMap);
+
+      // Fetch sparkline history for biomarkers that have multiple readings
+      // (only for those with readingCount > 1 from trends, to avoid wasteful requests)
+      const needsSparkline = biomarkersData.biomarkers
+        .map((b: Biomarker) => b.name)
+        .filter((name: string) => {
+          const t = trendMap.get(name);
+          return t ? t.readingCount > 1 : false;
+        });
+
+      if (needsSparkline.length > 0) {
+        Promise.allSettled(
+          needsSparkline.map((name: string) =>
+            biomarkersApi.history(name).then((h) => ({
+              name,
+              values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
+            }))
+          )
+        ).then((results) => {
+          const map: Record<string, number[]> = {};
+          for (const r of results) {
+            if (r.status === "fulfilled" && r.value.values.length > 1) {
+              map[r.value.name] = r.value.values;
+            }
           }
-        }
-        setSparklines(map);
-      });
+          setSparklines(map);
+        });
+      }
     } finally {
       setFetching(false);
     }
@@ -238,57 +293,97 @@ function LabsPage() {
         ) : (
           <Card>
             <div className="divide-y divide-[#2a2a38]">
-              {allBiomarkers.map((b) => (
-                <div
-                  key={b.id}
-                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-[#e8e8f0] capitalize">
-                      {b.name.replace(/_/g, " ")}
-                    </p>
-                    <p className="text-xs text-[#7a7a98]">
-                      {new Date(b.measuredAt).toLocaleDateString()}
-                      {b.source && b.source !== "manual" && (
-                        <> · {b.source}</>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {sparklines[b.name] && (
-                      <Sparkline
-                        values={sparklines[b.name]}
-                        width={64}
-                        height={24}
-                        color={
-                          getRangeStatus(b.name, b.value) === "optimal"
-                            ? "#34d399"
-                            : getRangeStatus(b.name, b.value) === "high"
-                            ? "#fbbf24"
-                            : "#60a5fa"
-                        }
-                      />
-                    )}
-                    {b.trend && b.trend !== "new" && (
-                      <span className={`text-sm font-bold ${TREND_COLORS[b.trend]}`}>
-                        {TREND_ICONS[b.trend]}
-                      </span>
-                    )}
-                    <span className="text-sm font-medium text-[#e8e8f0]">
-                      {b.value} {b.unit}
-                    </span>
-                    {(() => {
-                      const status = getRangeStatus(b.name, b.value);
-                      if (status === "unknown") return null;
-                      return (
-                        <span className={`text-xs px-2 py-0.5 rounded border font-medium ${STATUS_COLORS[status]}`}>
-                          {STATUS_LABELS[status]}
+              {allBiomarkers.map((b) => {
+                const trend = trends.get(b.name);
+                const status = getRangeStatus(b.name, b.value);
+                const slopeLabel = trend ? formatSlope(trend.slope30d, b.unit) : null;
+                const dir = trend?.trendDirection ?? "new";
+                const showTrendIcon = dir !== "new" && dir !== "insufficient_data";
+
+                return (
+                  <div
+                    key={b.id}
+                    className="py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-[#e8e8f0] capitalize">
+                          {b.name.replace(/_/g, " ")}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-[#7a7a98]">
+                            {new Date(b.measuredAt).toLocaleDateString()}
+                            {b.source && b.source !== "manual" && (
+                              <> · {b.source}</>
+                            )}
+                          </p>
+                          {trend && trend.readingCount > 1 && (
+                            <span className="text-xs text-[#5a5a72]">
+                              {trend.readingCount} readings
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {sparklines[b.name] && (
+                          <Sparkline
+                            values={sparklines[b.name]}
+                            width={64}
+                            height={24}
+                            color={
+                              status === "optimal"
+                                ? "#34d399"
+                                : status === "high"
+                                ? "#fbbf24"
+                                : "#60a5fa"
+                            }
+                          />
+                        )}
+                        {showTrendIcon && (
+                          <span
+                            className={`text-sm font-bold ${TREND_COLORS[dir as TrendDirection]}`}
+                            title={TREND_LABELS[dir as TrendDirection]}
+                          >
+                            {TREND_ICONS[dir as TrendDirection]}
+                          </span>
+                        )}
+                        <span className="text-sm font-medium text-[#e8e8f0]">
+                          {b.value} {b.unit}
                         </span>
-                      );
-                    })()}
+                        {status !== "unknown" && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded border font-medium ${STATUS_COLORS[status]}`}
+                          >
+                            {STATUS_LABELS[status]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Slope annotation — only for worsening trends with meaningful slope */}
+                    {slopeLabel && dir === "worsening" && (
+                      <p className="text-xs text-red-400 mt-1 ml-0">
+                        {slopeLabel} over last 30 days
+                      </p>
+                    )}
+                    {slopeLabel && dir === "improving" && (
+                      <p className="text-xs text-emerald-400 mt-1 ml-0">
+                        {slopeLabel} over last 30 days
+                      </p>
+                    )}
+
+                    {/* Rolling averages — only when multiple readings exist */}
+                    {trend && trend.readingCount >= 3 && trend.rollingAvg30d !== null && (
+                      <p className="text-xs text-[#5a5a72] mt-0.5">
+                        30-day avg: {trend.rollingAvg30d.toFixed(1)} {b.unit}
+                        {trend.rollingAvg7d !== null && (
+                          <> · 7-day avg: {trend.rollingAvg7d.toFixed(1)}</>
+                        )}
+                      </p>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         )}

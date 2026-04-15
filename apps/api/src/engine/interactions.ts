@@ -243,3 +243,161 @@ export function formatInteractionWarnings(interactions: InteractionResult[]): st
     return `${prefix}: ${i.description}`;
   });
 }
+
+// ─── Allergy-based supplement contraindications ───────────
+
+/**
+ * Maps common allergens to supplement ingredient keywords.
+ * When a user's allergy list contains any of these allergens,
+ * the listed supplements are flagged as contraindicated.
+ *
+ * In production this would be sourced from a curated database.
+ */
+const ALLERGEN_SUPPLEMENT_MAP: Array<{
+  allergen: string;
+  supplements: string[];
+  reason: string;
+}> = [
+  {
+    allergen: "fish",
+    supplements: ["omega-3", "fish oil", "krill oil", "cod liver", "dha", "epa", "fish"],
+    reason: "Contains fish-derived fatty acids",
+  },
+  {
+    allergen: "shellfish",
+    supplements: ["glucosamine", "chondroitin", "krill", "shellfish"],
+    reason: "May contain shellfish-derived ingredients",
+  },
+  {
+    allergen: "soy",
+    supplements: ["soy isoflavone", "soy lecithin", "soy protein", "soy"],
+    reason: "Contains soy-derived ingredients",
+  },
+  {
+    allergen: "dairy",
+    supplements: ["whey", "casein", "colostrum", "lactoferrin", "milk"],
+    reason: "Contains dairy or milk derivatives",
+  },
+  {
+    allergen: "milk",
+    supplements: ["whey", "casein", "colostrum", "lactoferrin"],
+    reason: "Contains milk-derived ingredients",
+  },
+  {
+    allergen: "lactose",
+    supplements: ["whey", "casein", "colostrum"],
+    reason: "Lactose-intolerant users may react to dairy-derived supplements",
+  },
+  {
+    allergen: "bee",
+    supplements: ["bee pollen", "royal jelly", "propolis", "bee"],
+    reason: "Contains bee-derived products",
+  },
+  {
+    allergen: "pollen",
+    supplements: ["bee pollen"],
+    reason: "Contains pollen which may trigger allergic reactions",
+  },
+  {
+    allergen: "gluten",
+    supplements: ["wheat germ", "wheat grass", "brewer's yeast", "malt"],
+    reason: "May contain gluten from grain-derived ingredients",
+  },
+  {
+    allergen: "wheat",
+    supplements: ["wheat germ", "wheat grass", "wheat"],
+    reason: "Contains wheat-derived ingredients",
+  },
+  {
+    allergen: "iodine",
+    supplements: ["kelp", "seaweed", "sea minerals", "spirulina", "iodine", "bladderwrack"],
+    reason: "High iodine content — contraindicated in iodine allergy or hyperthyroidism",
+  },
+  {
+    allergen: "yeast",
+    supplements: ["brewer's yeast", "nutritional yeast", "saccharomyces", "yeast"],
+    reason: "Yeast-derived supplement",
+  },
+  {
+    allergen: "pork",
+    supplements: ["porcine", "pig gelatin"],
+    reason: "Contains porcine-derived ingredients",
+  },
+  {
+    allergen: "beef",
+    supplements: ["bovine", "beef gelatin", "beef collagen", "bovine collagen"],
+    reason: "Contains bovine-derived ingredients",
+  },
+  {
+    allergen: "tree nut",
+    supplements: ["almond oil", "walnut oil", "macadamia"],
+    reason: "Contains tree nut-derived oil",
+  },
+  {
+    allergen: "peanut",
+    supplements: ["peanut", "groundnut"],
+    reason: "Contains peanut-derived ingredients",
+  },
+];
+
+export interface AllergyBlock {
+  supplement: string;
+  allergen: string;
+  reason: string;
+  severity: "contraindicated";
+}
+
+/**
+ * Check a list of supplement names against the user's known allergies.
+ * Returns any supplements that are contraindicated based on allergen content.
+ *
+ * @param supplements  Names of supplements in the recommended stack
+ * @param allergies    User's known allergies (from FHIR AllergyIntolerance or profile)
+ */
+export function checkAllergyContraindications(
+  supplements: string[],
+  allergies: string[]
+): AllergyBlock[] {
+  if (allergies.length === 0) return [];
+
+  const lowerAllergies = allergies.map((a) => a.toLowerCase().trim());
+  const blocks: AllergyBlock[] = [];
+
+  for (const supplement of supplements) {
+    const lowerSupp = supplement.toLowerCase();
+
+    for (const entry of ALLERGEN_SUPPLEMENT_MAP) {
+      // Does user have this allergen?
+      const hasAllergy = lowerAllergies.some(
+        (a) => a.includes(entry.allergen) || entry.allergen.includes(a)
+      );
+      if (!hasAllergy) continue;
+
+      // Does this supplement contain the allergen?
+      const suppMatches = entry.supplements.some(
+        (s) => lowerSupp.includes(s) || s.includes(lowerSupp)
+      );
+      if (suppMatches) {
+        blocks.push({
+          supplement,
+          allergen: entry.allergen,
+          reason: entry.reason,
+          severity: "contraindicated",
+        });
+        break; // one block per supplement
+      }
+    }
+  }
+
+  return blocks;
+}
+
+/**
+ * Format allergy blocks as human-readable warning strings.
+ */
+export function formatAllergyWarnings(blocks: AllergyBlock[]): string[] {
+  return blocks.map(
+    (b) =>
+      `⛔ ALLERGY BLOCK: ${b.supplement} — ${b.reason} (allergen: ${b.allergen})`
+  );
+}

@@ -4,13 +4,20 @@ import { db, schema, eq } from "@aissisted/db";
 import { config } from "../config.js";
 import { getLatestBiomarkers } from "./biomarker.service.js";
 import { getProfile } from "./profile.service.js";
+import { writeAuditLog } from "./audit.service.js";
 import {
   evaluate,
   buildSignalsFromBiomarkers,
   buildSignalsFromGoals,
 } from "../engine/evaluator.js";
 import { desc } from "@aissisted/db";
-import { checkInteractions, formatInteractionWarnings } from "../engine/interactions.js";
+import {
+  checkInteractions,
+  formatInteractionWarnings,
+  checkAllergyContraindications,
+  formatAllergyWarnings,
+} from "../engine/interactions.js";
+import { gte, and } from "@aissisted/db";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
@@ -24,6 +31,7 @@ export async function generateProtocol(userId: string) {
   const conditions = profile?.conditions ?? [];
   const medications = profile?.medications ?? [];
   const goals = profile?.goals ?? [];
+  const allergies: string[] = JSON.parse((profile as any)?.allergies ?? "[]");
 
   const biomarkerSignals = buildSignalsFromBiomarkers(biomarkers);
   const goalSignals = buildSignalsFromGoals(goals);
@@ -32,8 +40,47 @@ export async function generateProtocol(userId: string) {
   // 2. Run rules engine
   const scored = evaluate(allSignals, conditions, medications);
 
+  // 2b. Load last-30-day adherence logs to personalize scoring
+  const cutoff30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const recentLogs = await db
+    .select({
+      supplementName: schema.supplementLogs.supplementName,
+      skipped: schema.supplementLogs.skipped,
+      takenAt: schema.supplementLogs.takenAt,
+    })
+    .from(schema.supplementLogs)
+    .where(
+      and(
+        eq(schema.supplementLogs.userId, userId),
+        gte(schema.supplementLogs.createdAt, cutoff30)
+      )
+    );
+
+  // Build per-supplement adherence rate (lower score for consistently skipped)
+  const adherenceMap = new Map<string, { taken: number; skipped: number }>();
+  for (const log of recentLogs) {
+    const key = log.supplementName.toLowerCase();
+    const curr = adherenceMap.get(key) ?? { taken: 0, skipped: 0 };
+    if (log.skipped) curr.skipped++;
+    else if (log.takenAt) curr.taken++;
+    adherenceMap.set(key, curr);
+  }
+
+  const scoredAdjusted = scored.map((r) => {
+    const key = r.recommendation.name.toLowerCase();
+    const adhData = adherenceMap.get(key);
+    if (!adhData || adhData.taken + adhData.skipped < 3) return r;
+    const rate = adhData.taken / (adhData.taken + adhData.skipped);
+    if (rate < 0.3) return { ...r, score: r.score * 0.75 }; // frequently skipped
+    if (rate >= 0.8) return { ...r, score: Math.min(r.score * 1.08, 1.0) }; // consistently taken
+    return r;
+  });
+
+  // Re-sort after score adjustment
+  scoredAdjusted.sort((a, b) => b.score - a.score);
+
   // 3. Take top 6 recommendations
-  const topRecs = scored.slice(0, 6);
+  const topRecs = scoredAdjusted.slice(0, 6);
 
   // 4. Build signals summary for Claude
   const signalsSummary = {
@@ -54,14 +101,25 @@ export async function generateProtocol(userId: string) {
     })),
   };
 
-  // 4b. Run supplement-supplement + drug-supplement interaction check
+  // 4b. Run safety checks: interactions + allergy blocking
   const supplementNames = topRecs.map((r) => r.recommendation.name);
   const interactions = checkInteractions(supplementNames, medications, conditions);
   const interactionWarnings = formatInteractionWarnings(interactions);
 
+  const allergyBlocks = checkAllergyContraindications(supplementNames, allergies);
+  const allergyWarnings = formatAllergyWarnings(allergyBlocks);
+  const blockedByAllergy = new Set(allergyBlocks.map((b) => b.supplement.toLowerCase()));
+
+  // Contraindicated by drug interaction (severity = contraindicated)
+  const blockedByInteraction = new Set(
+    interactions
+      .filter((i) => i.severity === "contraindicated")
+      .flatMap((i) => [i.supplement, i.interactsWith])
+  );
+
   // 5. Synthesize with Claude
   let summary = "";
-  let warnings: string[] = [...interactionWarnings];
+  let warnings: string[] = [...interactionWarnings, ...allergyWarnings];
 
   if (config.anthropicApiKey) {
     try {
@@ -116,17 +174,43 @@ export async function generateProtocol(userId: string) {
 
   if (topRecs.length > 0) {
     await db.insert(schema.recommendations).values(
-      topRecs.map((r) => ({
-        id: randomUUID(),
-        protocolId,
-        name: r.recommendation.name,
-        dosage: r.recommendation.dosage,
-        timing: r.recommendation.timing,
-        rationale: r.recommendation.rationale,
-        score: r.score,
-      }))
+      topRecs.map((r) => {
+        const nameLower = r.recommendation.name.toLowerCase();
+        const isBlockedAllergy = blockedByAllergy.has(nameLower);
+        const isBlockedInteraction = blockedByInteraction.has(nameLower);
+        const isBlocked = isBlockedAllergy || isBlockedInteraction;
+
+        const allergyNote = isBlockedAllergy
+          ? allergyBlocks.find((b) => b.supplement.toLowerCase() === nameLower)?.reason
+          : undefined;
+        const interactionNote = isBlockedInteraction
+          ? interactions.find(
+              (i) => i.severity === "contraindicated" &&
+                (i.supplement === nameLower || i.interactsWith === nameLower)
+            )?.description
+          : undefined;
+
+        return {
+          id: randomUUID(),
+          protocolId,
+          name: r.recommendation.name,
+          dosage: r.recommendation.dosage,
+          timing: r.recommendation.timing,
+          timeSlot: r.recommendation.timeSlot ?? null,
+          rationale: r.recommendation.rationale,
+          score: r.score,
+          safetyStatus: isBlocked ? ("blocked" as const) : ("allowed" as const),
+          safetyNote: allergyNote ?? interactionNote ?? null,
+        };
+      })
     );
   }
+
+  writeAuditLog(userId, "protocol.generated", "protocols", protocolId, {
+    recommendationCount: topRecs.length,
+    warningCount: warnings.length,
+    hasClaude: !!config.anthropicApiKey,
+  }).catch(() => {});
 
   return getProtocol(protocolId);
 }

@@ -19,6 +19,7 @@ export const energyRules: Rule[] = [
       name: "CoQ10 (Ubiquinol)",
       dosage: "200mg",
       timing: "With breakfast containing fat",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Ubiquinol (reduced CoQ10) is essential for electron transport chain efficiency. Low recovery scores and HRV suggest mitochondrial underfueling.",
     },
@@ -39,6 +40,7 @@ export const energyRules: Rule[] = [
       name: "Methylcobalamin (B12)",
       dosage: "1000mcg",
       timing: "Morning, sublingual or with breakfast",
+      timeSlot: "morning_fasted" as const,
       rationale:
         "Methylcobalamin is the active form of B12, directly entering the methylation cycle. Deficiency causes fatigue, neurological symptoms, and megaloblastic anemia.",
     },
@@ -60,6 +62,7 @@ export const energyRules: Rule[] = [
       name: "Iron Bisglycinate",
       dosage: "18–36mg elemental iron",
       timing: "On empty stomach with Vitamin C",
+      timeSlot: "morning_fasted" as const,
       rationale:
         "Low ferritin impairs oxygen transport and mitochondrial function long before anemia develops. Bisglycinate form minimizes GI side effects.",
     },

@@ -51,6 +51,12 @@ export const auth = {
       method: "POST",
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
+
+  deleteAccount: (password: string) =>
+    request<{ message: string }>("/auth/account", {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    }),
 };
 
 // ─── Profile ─────────────────────────────────────────────
@@ -98,6 +104,27 @@ export const biomarkers = {
 
   history: (name: string) =>
     request<{ biomarkers: any[] }>(`/biomarkers/history/${encodeURIComponent(name)}`),
+
+  trends: (refresh = false) =>
+    request<{ trends: Array<{
+      id: string;
+      userId: string;
+      biomarkerName: string;
+      latestValue: number;
+      latestUnit: string;
+      latestMeasuredAt: string;
+      firstMeasuredAt: string | null;
+      readingCount: number;
+      slope30d: number | null;
+      rollingAvg7d: number | null;
+      rollingAvg30d: number | null;
+      rollingAvg90d: number | null;
+      trendDirection: "worsening" | "improving" | "stable" | "new" | "insufficient_data";
+      computedAt: string;
+    }> }>(`/biomarkers/trends${refresh ? "?refresh=true" : ""}`),
+
+  trendFor: (name: string) =>
+    request<{ trend: any }>(`/biomarkers/trends/${encodeURIComponent(name)}`),
 };
 
 // ─── Protocol ────────────────────────────────────────────
@@ -137,7 +164,25 @@ export const chat = {
     }>("/chat/recent"),
 
   conversations: () =>
-    request<{ conversations: any[] }>("/chat/conversations"),
+    request<{
+      conversations: Array<{
+        id: string;
+        title: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+    }>("/chat/conversations"),
+
+  loadMessages: (conversationId: string) =>
+    request<{
+      conversationId: string;
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant" | "system";
+        content: string;
+        createdAt: string;
+      }>;
+    }>(`/chat/conversations/${conversationId}/messages`),
 };
 
 // ─── Integrations ────────────────────────────────────────
@@ -157,6 +202,12 @@ export const integrations = {
       method: "POST",
     }),
 
+  fhirSync: () =>
+    request<{ observations: number; conditionsUpdated: boolean; medicationsUpdated: boolean }>(
+      "/integrations/fhir/sync",
+      { method: "POST" }
+    ),
+
   appleHealthUpload: (xml: string) =>
     request<{ parsed: number; imported: number }>(
       "/integrations/apple-health/upload",
@@ -174,4 +225,65 @@ export const health = {
     fetch(`${API_URL}/health`)
       .then((r) => r.json())
       .catch(() => ({ status: "offline" })),
+};
+
+// ─── Adherence ───────────────────────────────────────────
+export const adherence = {
+  log: (data: {
+    supplementName: string;
+    dosage?: string;
+    timeSlot?: string;
+    takenAt?: string;
+    skipped?: boolean;
+    protocolId?: string;
+    recommendationId?: string;
+    note?: string;
+  }) =>
+    request<{ log: any }>("/adherence/log", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  today: () => request<{ logs: any[] }>("/adherence/today"),
+
+  score: (days = 30) =>
+    request<{ score: number; taken: number; skipped: number; total: number; periodDays: number }>(
+      `/adherence/score?days=${days}`
+    ),
+
+  history: () => request<{ logs: any[] }>("/adherence/history"),
+};
+
+// ─── Health State ─────────────────────────────────────────
+export const healthState = {
+  get: (refresh = false) =>
+    request<{
+      id: string;
+      userId: string;
+      mode: string;
+      confidenceScore: number;
+      domainScores: {
+        cardiovascular: number;
+        metabolic: number;
+        hormonal: number;
+        micronutrient: number;
+        renal: number;
+        inflammatory: number;
+      };
+      activeSignals: Array<{
+        key: string;
+        domain: string;
+        biomarkerName: string;
+        signalType: string;
+        severity: "info" | "warn" | "critical";
+        explanation: string;
+        value?: number;
+      }>;
+      warnings: string[];
+      missingDataFlags: string[];
+      createdAt: string;
+    }>(`/health-state${refresh ? "?refresh=true" : ""}`),
+
+  refresh: () =>
+    request<any>("/health-state/refresh", { method: "POST" }),
 };

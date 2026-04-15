@@ -8,6 +8,9 @@ export type IntentType =
   | "ask_biomarker"
   | "general_health_question"
   | "greeting"
+  | "log_supplement"       // "I just took my vitamin D"
+  | "check_adherence"      // "How am I doing with my supplements?"
+  | "health_state_check"   // "What's my health status?" / "How am I doing overall?"
   | "unknown";
 
 export interface ParsedIntent {
@@ -26,9 +29,12 @@ Classify the user message into one of these intent types:
 - ask_biomarker: user is asking about a specific biomarker or lab value
 - general_health_question: general health or wellness question
 - greeting: hi, hello, hey
+- log_supplement: user is reporting they took (or skipped) a supplement (e.g. "I just took my D3", "took omega-3", "skipped my magnesium")
+- check_adherence: user is asking about their supplement adherence or consistency (e.g. "how am I doing?", "am I being consistent?")
+- health_state_check: user wants an overview of their current health status or risk profile (e.g. "what's my health state?", "how am I doing overall?", "any concerns?")
 - unknown: cannot be classified
 
-Extract relevant entities (supplement name, biomarker name, goal text, etc).
+Extract relevant entities (supplement name, biomarker name, goal text, dosage, skipped: true/false, etc).
 
 Respond ONLY with JSON: { "type": "...", "confidence": 0.0-1.0, "entities": {} }`;
 
@@ -70,6 +76,15 @@ function classifyLocally(message: string): ParsedIntent {
   }
   if (/(b12|crp|ferritin|testosterone|vitamin d|cortisol|hrv|hdl|ldl|glucose|a1c|tsh)/i.test(lower)) {
     return { type: "ask_biomarker", confidence: 0.8, entities: {} };
+  }
+  if (/(just took|i took|taking|took my|skipped|missed).*(supplement|vitamin|mineral|omega|mg|mcg|capsule|pill)/i.test(lower)) {
+    return { type: "log_supplement", confidence: 0.8, entities: {} };
+  }
+  if (/(adherence|consistent|keeping up|how am i doing|on track).*(supplement|protocol|stack)/i.test(lower)) {
+    return { type: "check_adherence", confidence: 0.8, entities: {} };
+  }
+  if (/(health state|overall health|how am i doing|my health|any concerns|health status|risk|health score)/i.test(lower)) {
+    return { type: "health_state_check", confidence: 0.8, entities: {} };
   }
 
   return { type: "general_health_question", confidence: 0.5, entities: {} };

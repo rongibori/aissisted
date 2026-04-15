@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { AuthProvider } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
@@ -14,12 +14,30 @@ interface Message {
   protocolTriggered?: boolean;
 }
 
+interface ConversationMeta {
+  id: string;
+  title: string | null;
+  updatedAt: string;
+}
+
 const WELCOME: Message = {
   id: "welcome",
   role: "assistant",
   content:
     "Hi! I'm Jeffrey, your Aissisted health concierge. I can help you understand your biomarkers, build a personalized supplement protocol, and answer health questions. What would you like to explore today?",
 };
+
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 function ChatPage() {
   const { user, loading } = useAuth();
@@ -28,14 +46,26 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const [restoring, setRestoring] = useState(true);
   const [conversationId, setConversationId] = useState<string | undefined>();
+  const [conversations, setConversations] = useState<ConversationMeta[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const loadConversationList = useCallback(async () => {
+    try {
+      const data = await chatApi.conversations();
+      setConversations(data.conversations);
+    } catch {
+      // non-critical
+    }
+  }, []);
 
   // Restore last conversation from server
   useEffect(() => {
     if (loading || !user) return;
-    chatApi.recent()
-      .then((data) => {
+    Promise.all([
+      chatApi.recent().then((data) => {
         if (data.conversationId && data.messages.length > 0) {
           setConversationId(data.conversationId);
           const restored = data.messages
@@ -47,10 +77,10 @@ function ChatPage() {
             }));
           setMessages(restored.length > 0 ? restored : [WELCOME]);
         }
-      })
-      .catch(() => {}) // silently fall back to welcome message
-      .finally(() => setRestoring(false));
-  }, [user, loading]);
+      }).catch(() => {}),
+      loadConversationList(),
+    ]).finally(() => setRestoring(false));
+  }, [user, loading, loadConversationList]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,7 +111,9 @@ function ChatPage() {
           protocolTriggered: result.protocolTriggered,
         },
       ]);
-    } catch (err: any) {
+      // Refresh conversation list after sending (title may have been set)
+      loadConversationList();
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -96,9 +128,35 @@ function ChatPage() {
     }
   };
 
+  const openConversation = async (id: string) => {
+    if (id === conversationId) {
+      setSidebarOpen(false);
+      return;
+    }
+    setLoadingHistory(true);
+    setSidebarOpen(false);
+    try {
+      const data = await chatApi.loadMessages(id);
+      setConversationId(id);
+      const msgs = data.messages
+        .filter((m) => m.role !== "system")
+        .map((m) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+      setMessages(msgs.length > 0 ? msgs : [WELCOME]);
+    } catch {
+      // keep current conversation
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const newConversation = () => {
     setConversationId(undefined);
     setMessages([WELCOME]);
+    setSidebarOpen(false);
     inputRef.current?.focus();
   };
 
@@ -120,87 +178,153 @@ function ChatPage() {
   return (
     <>
       <Nav />
-      <div className="pt-14 flex flex-col h-screen">
-        {/* Header */}
-        <div className="border-b border-[#2a2a38] px-6 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">
-            J
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-[#e8e8f0]">Jeffrey</p>
-            <p className="text-xs text-[#7a7a98]">AI Health Concierge</p>
-          </div>
-          <button
-            onClick={newConversation}
-            className="text-xs text-[#7a7a98] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a38] hover:border-[#7a7a98]"
-            title="Start new conversation"
-          >
-            + New chat
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+      <div className="pt-14 flex h-screen overflow-hidden">
+        {/* Conversation history sidebar */}
+        <div
+          className={`flex-shrink-0 bg-[#12121a] border-r border-[#2a2a38] flex flex-col transition-all duration-200 overflow-hidden ${
+            sidebarOpen ? "w-64" : "w-0"
+          }`}
+        >
+          <div className="p-3 border-b border-[#2a2a38] flex items-center justify-between">
+            <span className="text-xs font-semibold text-[#7a7a98] uppercase tracking-wider">
+              History
+            </span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="text-[#7a7a98] hover:text-[#e8e8f0] text-sm"
             >
-              <div
-                className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-indigo-600 text-white rounded-tr-sm"
-                    : "bg-[#1c1c26] text-[#e8e8f0] rounded-tl-sm"
-                }`}
-              >
-                {msg.content}
-                {msg.protocolTriggered && (
-                  <p className="text-xs mt-2 opacity-70">
-                    ✓ Protocol updated — check your Dashboard
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto py-2">
+            <button
+              onClick={newConversation}
+              className="w-full text-left px-3 py-2 text-xs text-indigo-400 hover:bg-[#1c1c26] transition-colors"
+            >
+              + New conversation
+            </button>
+            {conversations.length === 0 ? (
+              <p className="text-xs text-[#5a5a72] px-3 py-2">No past conversations</p>
+            ) : (
+              conversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  onClick={() => openConversation(conv.id)}
+                  className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-[#1c1c26] ${
+                    conv.id === conversationId ? "bg-[#1c1c26]" : ""
+                  }`}
+                >
+                  <p className={`text-xs font-medium truncate ${
+                    conv.id === conversationId ? "text-[#e8e8f0]" : "text-[#9a9ab8]"
+                  }`}>
+                    {conv.title ?? "Untitled"}
                   </p>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {sending && (
-            <div className="flex justify-start">
-              <div className="bg-[#1c1c26] rounded-2xl rounded-tl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:300ms]" />
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={bottomRef} />
+                  <p className="text-[10px] text-[#5a5a72] mt-0.5">
+                    {formatRelativeTime(conv.updatedAt)}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
         </div>
 
-        {/* Input */}
-        <div className="border-t border-[#2a2a38] px-6 py-4">
-          <div className="flex gap-3 items-end max-w-3xl mx-auto">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask Jeffrey anything about your health…"
-              rows={1}
-              className="flex-1 bg-[#1c1c26] border border-[#2a2a38] rounded-xl px-4 py-3 text-sm text-[#e8e8f0] placeholder-[#7a7a98] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              style={{ maxHeight: "120px" }}
-            />
-            <Button
-              onClick={send}
-              disabled={!input.trim() || sending}
-              className="shrink-0"
+        {/* Main chat area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="border-b border-[#2a2a38] px-4 py-3 flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="text-[#7a7a98] hover:text-[#e8e8f0] transition-colors text-sm px-1"
+              title="Conversation history"
             >
-              Send
-            </Button>
+              ☰
+            </button>
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              J
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[#e8e8f0]">Jeffrey</p>
+              <p className="text-xs text-[#7a7a98]">AI Health Concierge</p>
+            </div>
+            <button
+              onClick={newConversation}
+              className="text-xs text-[#7a7a98] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a38] hover:border-[#7a7a98] shrink-0"
+            >
+              + New
+            </button>
           </div>
-          <p className="text-xs text-center text-[#7a7a98] mt-2">
-            Not medical advice. Consult your physician before making changes.
-          </p>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {loadingHistory ? (
+              <div className="flex justify-center pt-16">
+                <Spinner size="md" />
+              </div>
+            ) : (
+              <>
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "bg-indigo-600 text-white rounded-tr-sm"
+                          : "bg-[#1c1c26] text-[#e8e8f0] rounded-tl-sm"
+                      }`}
+                    >
+                      {msg.content}
+                      {msg.protocolTriggered && (
+                        <p className="text-xs mt-2 opacity-70">
+                          ✓ Protocol updated — check your Dashboard
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {sending && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#1c1c26] rounded-2xl rounded-tl-sm px-4 py-3">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:0ms]" />
+                        <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:150ms]" />
+                        <span className="w-1.5 h-1.5 bg-[#7a7a98] rounded-full animate-bounce [animation-delay:300ms]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-[#2a2a38] px-6 py-4">
+            <div className="flex gap-3 items-end max-w-3xl mx-auto">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask Jeffrey anything about your health…"
+                rows={1}
+                className="flex-1 bg-[#1c1c26] border border-[#2a2a38] rounded-xl px-4 py-3 text-sm text-[#e8e8f0] placeholder-[#7a7a98] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                style={{ maxHeight: "120px" }}
+              />
+              <Button
+                onClick={send}
+                disabled={!input.trim() || sending}
+                className="shrink-0"
+              >
+                Send
+              </Button>
+            </div>
+            <p className="text-xs text-center text-[#7a7a98] mt-2">
+              Not medical advice. Consult your physician before making changes.
+            </p>
+          </div>
         </div>
       </div>
     </>

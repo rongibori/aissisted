@@ -3,12 +3,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
-import { protocol, biomarkers as biomarkersApi } from "../../lib/api";
+import { protocol, biomarkers as biomarkersApi, profile as profileApi } from "../../lib/api";
 import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
-
-interface Recommendation {
+import { HealthStateWidget } from "../../components/health-state-widget";
   id: string;
   name: string;
   dosage: string;
@@ -31,7 +30,13 @@ interface Biomarker {
   value: number;
   unit: string;
   measuredAt: string;
-  trend?: TrendDirection;
+}
+
+interface TrendRecord {
+  biomarkerName: string;
+  readingCount: number;
+  trendDirection: TrendDirection;
+  rollingAvg30d: number | null;
 }
 
 export default function DashboardPage() {
@@ -39,41 +44,66 @@ export default function DashboardPage() {
   const router = useRouter();
   const [currentProtocol, setCurrentProtocol] = useState<Protocol | null>(null);
   const [latestBiomarkers, setLatestBiomarkers] = useState<Biomarker[]>([]);
+  const [trendMap, setTrendMap] = useState<Map<string, TrendRecord>>(new Map());
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
+  const [hasProfile, setHasProfile] = useState(true);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [protoData, bioData] = await Promise.allSettled([
+      const [protoData, bioData, profileData, trendsData] = await Promise.allSettled([
         protocol.latest(),
         biomarkersApi.list({ latest: true }),
+        profileApi.get(),
+        biomarkersApi.trends().catch(() => ({ trends: [] })),
       ]);
       if (protoData.status === "fulfilled") {
         setCurrentProtocol(protoData.value.protocol);
       }
+      if (profileData.status === "rejected") {
+        setHasProfile(false);
+      } else if (profileData.status === "fulfilled") {
+        const p = profileData.value.profile;
+        setHasProfile(!!(p?.firstName));
+      }
+      if (trendsData.status === "fulfilled") {
+        const map = new Map<string, TrendRecord>();
+        for (const t of trendsData.value.trends) {
+          map.set(t.biomarkerName, t);
+        }
+        setTrendMap(map);
+      }
       if (bioData.status === "fulfilled") {
         const markers: Biomarker[] = bioData.value.biomarkers;
         setLatestBiomarkers(markers);
-        // Fetch sparkline history in background
-        const names = markers.map((b) => b.name);
-        Promise.allSettled(
-          names.map((name) =>
-            biomarkersApi.history(name).then((h) => ({
-              name,
-              values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
-            }))
-          )
-        ).then((results) => {
-          const map: Record<string, number[]> = {};
-          for (const r of results) {
-            if (r.status === "fulfilled" && r.value.values.length > 1) {
-              map[r.value.name] = r.value.values;
+        // Only fetch sparkline history for markers with multiple readings
+        const trends = trendsData.status === "fulfilled" ? trendsData.value.trends : [];
+        const multipleReadings = markers
+          .map((b) => b.name)
+          .filter((name) => {
+            const t = trends.find((tr: TrendRecord) => tr.biomarkerName === name);
+            return t ? t.readingCount > 1 : false;
+          });
+        if (multipleReadings.length > 0) {
+          Promise.allSettled(
+            multipleReadings.map((name) =>
+              biomarkersApi.history(name).then((h) => ({
+                name,
+                values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
+              }))
+            )
+          ).then((results) => {
+            const map: Record<string, number[]> = {};
+            for (const r of results) {
+              if (r.status === "fulfilled" && r.value.values.length > 1) {
+                map[r.value.name] = r.value.values;
+              }
             }
-          }
-          setSparklines(map);
-        });
+            setSparklines(map);
+          });
+        }
       }
     } finally {
       setLoading(false);
@@ -116,6 +146,64 @@ export default function DashboardPage() {
           Generate Protocol
         </Button>
       </div>
+
+      {/* Onboarding checklist — shown until all three steps are done */}
+      {(!hasProfile || latestBiomarkers.length === 0 || !currentProtocol) && (
+        <div className="mb-6 p-4 bg-indigo-950 border border-indigo-800 rounded-xl">
+          <p className="text-sm font-medium text-indigo-300 mb-3">
+            Complete your setup to unlock your personalized protocol
+          </p>
+          <div className="flex flex-col gap-2">
+            {[
+              {
+                done: hasProfile,
+                label: "Complete your profile",
+                action: () => router.push("/profile"),
+                cta: "Go to Profile",
+              },
+              {
+                done: latestBiomarkers.length > 0,
+                label: "Add at least one biomarker reading",
+                action: () => router.push("/labs"),
+                cta: "Add labs",
+              },
+              {
+                done: !!currentProtocol,
+                label: "Generate your first protocol",
+                action: handleGenerate,
+                cta: "Generate now",
+              },
+            ].map((step) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                    step.done
+                      ? "bg-emerald-600 text-white"
+                      : "bg-[#2a2a38] text-[#7a7a98]"
+                  }`}
+                >
+                  {step.done ? "✓" : "○"}
+                </span>
+                <span
+                  className={`text-sm flex-1 ${
+                    step.done ? "line-through text-[#7a7a98]" : "text-[#e8e8f0]"
+                  }`}
+                >
+                  {step.label}
+                </span>
+                {!step.done && (
+                  <button
+                    onClick={step.action}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 shrink-0"
+                  >
+                    {step.cta} →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Protocol Summary */}
@@ -194,6 +282,9 @@ export default function DashboardPage() {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-5">
+          {/* Health State */}
+          <HealthStateWidget />
+
           {/* Biomarkers */}
           <Card>
             <div className="flex items-center justify-between mb-4">
@@ -224,6 +315,9 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-2">
                 {latestBiomarkers.slice(0, 6).map((b) => {
                   const status = getRangeStatus(b.name, b.value);
+                  const trend = trendMap.get(b.name);
+                  const dir = trend?.trendDirection;
+                  const showTrend = dir && dir !== "new" && dir !== "insufficient_data";
                   return (
                     <div
                       key={b.id}
@@ -245,9 +339,9 @@ export default function DashboardPage() {
                             }
                           />
                         )}
-                        {b.trend && b.trend !== "new" && (
-                          <span className={`text-xs font-bold ${TREND_COLORS[b.trend]}`}>
-                            {TREND_ICONS[b.trend]}
+                        {showTrend && (
+                          <span className={`text-xs font-bold ${TREND_COLORS[dir as TrendDirection]}`}>
+                            {TREND_ICONS[dir as TrendDirection]}
                           </span>
                         )}
                         <span className="text-[#e8e8f0] font-medium">
@@ -295,6 +389,14 @@ export default function DashboardPage() {
                 onClick={() => router.push("/stack")}
               >
                 💊 View my stack
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => router.push("/adherence")}
+              >
+                ✓ Log supplements
               </Button>
             </div>
           </Card>

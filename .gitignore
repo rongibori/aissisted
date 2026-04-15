@@ -12,5 +12,5 @@ coverage
 *.log
 *.tsbuildinfo
 packages/db/data
-packages/db/drizzle
+# packages/db/drizzle — migration SQL files ARE tracked (needed for production deploys)
 apps/api/data/*.db

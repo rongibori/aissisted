@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import * as authService from "../services/auth.service.js";
-import { changePassword } from "../services/auth.service.js";
+import { changePassword, deleteAccount } from "../services/auth.service.js";
 
 export async function authRoutes(app: FastifyInstance) {
   // POST /auth/register
@@ -81,6 +81,36 @@ export async function authRoutes(app: FastifyInstance) {
         const { sub } = request.user as { sub: string };
         const user = await authService.getUserById(sub);
         reply.send({ data: { user } });
+      } catch (err: any) {
+        reply
+          .status(err.status ?? 500)
+          .send({ error: { message: err.message, code: err.code ?? "ERROR" } });
+      }
+    }
+  );
+
+  // DELETE /auth/account — permanently delete account (requires password confirmation)
+  app.delete(
+    "/auth/account",
+    {
+      preHandler: [requireAuth],
+      config: { rateLimit: { max: 3, timeWindow: "1 hour" } },
+      schema: {
+        body: {
+          type: "object",
+          required: ["password"],
+          properties: {
+            password: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+      const { password } = request.body as { password: string };
+      try {
+        await deleteAccount(sub, password);
+        reply.send({ data: { message: "Account deleted" } });
       } catch (err: any) {
         reply
           .status(err.status ?? 500)

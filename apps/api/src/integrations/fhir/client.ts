@@ -27,7 +27,18 @@ export function buildFhirAuthUrl(smartConfig: SmartConfiguration, state: string)
     response_type: "code",
     client_id: config.fhir.clientId,
     redirect_uri: config.fhir.redirectUri,
-    scope: "launch/patient openid fhirUser patient/Observation.read patient/Patient.read",
+    scope: [
+      "launch/patient",
+      "openid",
+      "fhirUser",
+      "offline_access",
+      "patient/Observation.read",
+      "patient/Patient.read",
+      "patient/Condition.read",
+      "patient/MedicationRequest.read",
+      "patient/DiagnosticReport.read",
+      "patient/AllergyIntolerance.read",
+    ].join(" "),
     state,
     aud: config.fhir.baseUrl,
   });
@@ -37,7 +48,7 @@ export function buildFhirAuthUrl(smartConfig: SmartConfiguration, state: string)
 export async function exchangeFhirCode(
   smartConfig: SmartConfiguration,
   code: string
-): Promise<{ accessToken: string; patientId: string }> {
+): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; patientId: string }> {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
@@ -55,13 +66,86 @@ export async function exchangeFhirCode(
 
   const data = await res.json() as {
     access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
     patient?: string;
   };
 
   return {
     accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresIn: data.expires_in,
     patientId: data.patient ?? "",
   };
+}
+
+// ─── Condition resources ──────────────────────────────────
+
+export interface FhirCondition {
+  resourceType: "Condition";
+  id?: string;
+  clinicalStatus?: { coding?: Array<{ code: string }> };
+  verificationStatus?: { coding?: Array<{ code: string }> };
+  code?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  onsetDateTime?: string;
+  onsetPeriod?: { start?: string };
+  abatementDateTime?: string;
+}
+
+/**
+ * Fetch Conditions and return structured FHIR resources.
+ * Includes all clinical statuses (active, resolved, inactive) for full history.
+ */
+export async function fetchConditions(
+  accessToken: string,
+  patientId: string
+): Promise<FhirCondition[]> {
+  return fetchAllPages<FhirCondition>(
+    accessToken,
+    `${config.fhir.baseUrl}/Condition?patient=${patientId}&_count=100`,
+    "Condition",
+    5
+  );
+}
+
+// ─── MedicationRequest resources ─────────────────────────
+
+export interface FhirMedicationRequest {
+  resourceType: "MedicationRequest";
+  id?: string;
+  status?: string;
+  authoredOn?: string;
+  medicationCodeableConcept?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  medicationReference?: { display?: string };
+  dosageInstruction?: Array<{
+    text?: string;
+    timing?: { code?: { text?: string } };
+    doseAndRate?: Array<{
+      doseQuantity?: { value?: number; unit?: string };
+    }>;
+  }>;
+}
+
+/**
+ * Fetch MedicationRequests and return structured FHIR resources.
+ * Includes active and recently stopped medications for longitudinal tracking.
+ */
+export async function fetchMedicationRequests(
+  accessToken: string,
+  patientId: string
+): Promise<FhirMedicationRequest[]> {
+  return fetchAllPages<FhirMedicationRequest>(
+    accessToken,
+    `${config.fhir.baseUrl}/MedicationRequest?patient=${patientId}&_count=100`,
+    "MedicationRequest",
+    5
+  );
 }
 
 // ─── FHIR Resources ──────────────────────────────────────
@@ -83,52 +167,191 @@ export interface FhirObservation {
     system?: string;
     code?: string;
   };
+  /** Clinical reference range from the originating lab */
+  referenceRange?: Array<{
+    low?: { value: number; unit?: string };
+    high?: { value: number; unit?: string };
+    text?: string;
+  }>;
+  /** Abnormal flag: "H"=high, "L"=low, "HH"=panic high, "LL"=panic low, "A"=abnormal */
+  interpretation?: Array<{
+    coding?: Array<{ system?: string; code: string; display?: string }>;
+    text?: string;
+  }>;
+  /** Panel grouping — member observations returned separately in the Bundle */
+  hasMember?: Array<{ reference: string }>;
   component?: Array<{
     code: { coding: Array<{ system: string; code: string; display?: string }> };
     valueQuantity?: { value: number; unit: string };
+    referenceRange?: Array<{ low?: { value: number }; high?: { value: number } }>;
   }>;
 }
 
-export interface FhirBundle {
+// ─── DiagnosticReport ─────────────────────────────────────
+
+export interface FhirDiagnosticReport {
+  resourceType: "DiagnosticReport";
+  id: string;
+  status: string;
+  category?: Array<{ coding?: Array<{ code: string; system: string }> }>;
+  code: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  subject: { reference: string };
+  effectiveDateTime?: string;
+  issued?: string;
+  result?: Array<{ reference: string }>; // references to Observation resources
+  presentedForm?: Array<{ contentType: string; data?: string; url?: string }>;
+}
+
+// ─── AllergyIntolerance ──────────────────────────────────
+
+export interface FhirAllergyIntolerance {
+  resourceType: "AllergyIntolerance";
+  id: string;
+  clinicalStatus?: { coding?: Array<{ code: string }> };
+  verificationStatus?: { coding?: Array<{ code: string }> };
+  category?: string[]; // "food", "medication", "environment", "biologic"
+  criticality?: "low" | "high" | "unable-to-assess";
+  code?: {
+    coding?: Array<{ system: string; code: string; display?: string }>;
+    text?: string;
+  };
+  reaction?: Array<{
+    manifestation?: Array<{ coding?: Array<{ display?: string }>; text?: string }>;
+    severity?: "mild" | "moderate" | "severe";
+  }>;
+}
+
+export interface FhirBundle<R = FhirObservation> {
   resourceType: "Bundle";
   total?: number;
-  entry?: Array<{ resource: FhirObservation }>;
+  entry?: Array<{ resource: R }>;
   link?: Array<{ relation: string; url: string }>;
 }
 
-export async function fetchObservations(
+/** Generic paginated FHIR fetcher. Pass pageLimit=0 for full history. */
+async function fetchAllPages<R>(
   accessToken: string,
-  patientId: string,
-  pageLimit = 3
-): Promise<FhirObservation[]> {
-  const observations: FhirObservation[] = [];
-  let url: string | null =
-    `${config.fhir.baseUrl}/Observation?patient=${patientId}&_count=100&_sort=-date`;
-
+  initialUrl: string,
+  resourceType: string,
+  pageLimit = 0 // 0 = unlimited (full history)
+): Promise<R[]> {
+  const results: R[] = [];
+  let url: string | null = initialUrl;
   let pages = 0;
-  while (url && pages < pageLimit) {
+  const MAX_PAGES = pageLimit > 0 ? pageLimit : 500; // safety cap at 50,000 records
+
+  while (url && pages < MAX_PAGES) {
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/fhir+json",
       },
     });
-
     if (!res.ok) break;
 
-    const bundle = (await res.json()) as FhirBundle;
-
+    const bundle = (await res.json()) as FhirBundle<R>;
     for (const entry of bundle.entry ?? []) {
-      if (entry.resource?.resourceType === "Observation") {
-        observations.push(entry.resource);
-      }
+      const r = entry.resource as any;
+      if (r?.resourceType === resourceType) results.push(r as R);
     }
 
-    // Follow next page link
     const nextLink = bundle.link?.find((l) => l.relation === "next");
     url = nextLink?.url ?? null;
     pages++;
   }
+  return results;
+}
 
-  return observations;
+/**
+ * Fetch Observation resources for a patient.
+ * @param fullHistory  When true, follows all next-page links (full longitudinal history).
+ *                     When false, fetches up to 3 pages (~300 records) for incremental syncs.
+ */
+export async function fetchObservations(
+  accessToken: string,
+  patientId: string,
+  fullHistory = false
+): Promise<FhirObservation[]> {
+  return fetchAllPages<FhirObservation>(
+    accessToken,
+    `${config.fhir.baseUrl}/Observation?patient=${patientId}&_count=100&_sort=-date`,
+    "Observation",
+    fullHistory ? 0 : 3
+  );
+}
+
+/**
+ * Fetch DiagnosticReport resources (lab panels, pathology, imaging reports).
+ * The result references contain Observation IDs already fetched separately.
+ */
+export async function fetchDiagnosticReports(
+  accessToken: string,
+  patientId: string,
+  fullHistory = false
+): Promise<FhirDiagnosticReport[]> {
+  return fetchAllPages<FhirDiagnosticReport>(
+    accessToken,
+    `${config.fhir.baseUrl}/DiagnosticReport?patient=${patientId}&_count=50&_sort=-date&category=LAB`,
+    "DiagnosticReport",
+    fullHistory ? 0 : 3
+  );
+}
+
+/**
+ * Fetch AllergyIntolerance resources.
+ */
+export async function fetchAllergyIntolerance(
+  accessToken: string,
+  patientId: string
+): Promise<FhirAllergyIntolerance[]> {
+  return fetchAllPages<FhirAllergyIntolerance>(
+    accessToken,
+    `${config.fhir.baseUrl}/AllergyIntolerance?patient=${patientId}&_count=100`,
+    "AllergyIntolerance",
+    5
+  );
+}
+
+// ─── Patient resource ─────────────────────────────────────
+
+export interface FhirPatient {
+  resourceType: "Patient";
+  id: string;
+  /** ISO date string e.g. "1985-03-14" */
+  birthDate?: string;
+  /** FHIR administrative gender */
+  gender?: "male" | "female" | "other" | "unknown";
+  name?: Array<{
+    use?: string;
+    family?: string;
+    given?: string[];
+  }>;
+  telecom?: Array<{ system: string; value: string }>;
+}
+
+/**
+ * Fetch the Patient resource for the given FHIR patient ID.
+ * Returns null on any error — demographics are enrichment, not critical path.
+ */
+export async function fetchPatient(
+  accessToken: string,
+  patientId: string
+): Promise<FhirPatient | null> {
+  try {
+    const res = await fetch(`${config.fhir.baseUrl}/Patient/${patientId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/fhir+json",
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as FhirPatient;
+    if (data.resourceType !== "Patient") return null;
+    return data;
+  } catch {
+    return null;
+  }
 }

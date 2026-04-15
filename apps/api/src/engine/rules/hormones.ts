@@ -19,6 +19,7 @@ export const hormoneRules: Rule[] = [
       name: "Zinc Bisglycinate",
       dosage: "30mg",
       timing: "Before bed or with dinner",
+      timeSlot: "presleep" as const,
       rationale:
         "Zinc is essential for LH receptor function and testosterone synthesis. Deficiency directly impairs the HPG axis.",
     },
@@ -40,6 +41,7 @@ export const hormoneRules: Rule[] = [
       name: "Ashwagandha (KSM-66)",
       dosage: "600mg",
       timing: "With dinner",
+      timeSlot: "evening" as const,
       rationale:
         "KSM-66 ashwagandha reduces cortisol by ~27% in clinical trials and has been shown to increase testosterone by 17% in men with elevated stress markers.",
     },
@@ -66,6 +68,7 @@ export const hormoneRules: Rule[] = [
       name: "DHEA",
       dosage: "25mg",
       timing: "With morning meal",
+      timeSlot: "morning_with_food" as const,
       rationale:
         "Low DHEA-S is associated with accelerated aging, low energy, and poor recovery. DHEA is a precursor to both testosterone and estrogen.",
     },
