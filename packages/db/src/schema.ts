@@ -61,10 +61,15 @@ export const biomarkers = sqliteTable("biomarkers", {
   name: text("name").notNull(),
   value: real("value").notNull(),
   unit: text("unit").notNull(),
+  // Data provenance: "fhir" | "whoop" | "apple_health" | "manual"
   source: text("source"),
   // Clinical reference range from the source lab or FHIR Observation
   referenceRangeLow: real("reference_range_low"),
   referenceRangeHigh: real("reference_range_high"),
+  // Abnormal flag from source lab ("H", "L", "HH", "LL", "A", or null)
+  abnormalFlag: text("abnormal_flag"),
+  // Confidence score: 1.0=FHIR lab, 0.8=wearable, 0.6=manual
+  confidence: real("confidence").notNull().default(1.0),
   // Lab panel this result belongs to (e.g. "CBC", "Lipid Panel")
   labPanelName: text("lab_panel_name"),
   measuredAt: text("measured_at").notNull(),
@@ -276,6 +281,10 @@ export const rawFhirResources = sqliteTable("raw_fhir_resources", {
   resourceType: text("resource_type").notNull(), // "Observation", "DiagnosticReport", etc.
   resourceId: text("resource_id").notNull(), // FHIR resource id
   payload: text("payload").notNull(), // raw JSON
+  // SHA-256 hash of payload for dedup across repeated pulls
+  payloadHash: text("payload_hash"),
+  // Which sync run produced this record
+  syncBatchId: text("sync_batch_id"),
   syncedAt: text("synced_at").notNull(),
 });
 
@@ -465,6 +474,123 @@ export const biomarkerTrends = sqliteTable("biomarker_trends", {
 export const biomarkerTrendsRelations = relations(biomarkerTrends, ({ one }) => ({
   user: one(users, {
     fields: [biomarkerTrends.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Medications (Longitudinal) ───────────────────────────
+// Structured medication records derived from FHIR MedicationRequest
+// or entered manually. Separate from health_profiles.medications JSON
+// so we can track start/end dates, dosage changes, and FHIR provenance.
+
+export const MEDICATION_STATUSES = [
+  "active",
+  "inactive",
+  "stopped",
+  "unknown",
+] as const;
+export type MedicationStatus = (typeof MEDICATION_STATUSES)[number];
+
+export const medications = sqliteTable("medications", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  // Normalized/canonical name (lowercase, trimmed)
+  normalizedName: text("normalized_name").notNull(),
+  dosage: text("dosage"),
+  frequency: text("frequency"),
+  status: text("status", { enum: MEDICATION_STATUSES }).notNull().default("active"),
+  // Dates from FHIR MedicationRequest
+  startDate: text("start_date"),
+  endDate: text("end_date"),
+  // Source provenance
+  source: text("source", { enum: ["fhir", "manual", "inferred"] }).notNull().default("manual"),
+  sourceResourceId: text("source_resource_id"), // FHIR MedicationRequest id
+  // Raw FHIR codes for future deduplication
+  rxnormCode: text("rxnorm_code"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const medicationsRelations = relations(medications, ({ one }) => ({
+  user: one(users, {
+    fields: [medications.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Conditions (Longitudinal) ────────────────────────────
+// Structured condition/diagnosis records from FHIR Condition resources
+// or entered manually. Tracks onset, abatement, clinical status,
+// and ICD/SNOMED codes for downstream safety and protocol logic.
+
+export const CONDITION_STATUSES = [
+  "active",
+  "resolved",
+  "inactive",
+  "unknown",
+] as const;
+export type ConditionStatus = (typeof CONDITION_STATUSES)[number];
+
+export const conditions = sqliteTable("conditions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  normalizedName: text("normalized_name").notNull(),
+  status: text("status", { enum: CONDITION_STATUSES }).notNull().default("active"),
+  onsetDate: text("onset_date"),
+  abatementDate: text("abatement_date"),
+  // Source
+  source: text("source", { enum: ["fhir", "manual", "inferred"] }).notNull().default("manual"),
+  sourceResourceId: text("source_resource_id"), // FHIR Condition id
+  // Codes
+  icd10Code: text("icd10_code"),
+  snomedCode: text("snomed_code"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const conditionsRelations = relations(conditions, ({ one }) => ({
+  user: one(users, {
+    fields: [conditions.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─── Sync Batches ─────────────────────────────────────────
+// Tracks each FHIR or wearable sync run for auditability,
+// reprocessing, and deduplication across pulls.
+
+export const SYNC_SOURCES = ["fhir", "whoop", "apple_health", "manual"] as const;
+export type SyncSource = (typeof SYNC_SOURCES)[number];
+
+export const SYNC_STATUSES = ["running", "completed", "failed", "partial"] as const;
+export type SyncStatus = (typeof SYNC_STATUSES)[number];
+
+export const syncBatches = sqliteTable("sync_batches", {
+  id: text("id").primaryKey(), // UUID, stamped on raw_fhir_resources.syncBatchId
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  source: text("source", { enum: SYNC_SOURCES }).notNull(),
+  status: text("status", { enum: SYNC_STATUSES }).notNull().default("running"),
+  // Counts
+  resourcesFetched: integer("resources_fetched").notNull().default(0),
+  biomarkersInserted: integer("biomarkers_inserted").notNull().default(0),
+  // fullHistory = true means backfill, false = incremental
+  fullHistory: integer("full_history", { mode: "boolean" }).notNull().default(false),
+  errorMessage: text("error_message"),
+  startedAt: text("started_at").notNull(),
+  completedAt: text("completed_at"),
+});
+
+export const syncBatchesRelations = relations(syncBatches, ({ one }) => ({
+  user: one(users, {
+    fields: [syncBatches.userId],
     references: [users.id],
   }),
 }));

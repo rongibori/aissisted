@@ -16,9 +16,14 @@ import {
 import {
   normalizeObservations,
   normalizeAllergies,
+  normalizeConditions,
+  normalizeMedications,
 } from "./normalizer.js";
 import { persistRawBiomarkers } from "../../services/biomarker.service.js";
+import { persistConditions } from "../../services/conditions.service.js";
+import { persistMedications } from "../../services/medications.service.js";
 import { maybeReanalyze } from "../../services/analysis.service.js";
+import { writeAuditLog } from "../../services/audit.service.js";
 
 // ─── Token storage ────────────────────────────────────────
 
@@ -131,11 +136,15 @@ export async function getFhirAccessToken(
 async function storeRawFhirResources(
   userId: string,
   resourceType: string,
-  resources: Array<{ id: string; [key: string]: any }>
+  resources: Array<{ id: string; [key: string]: any }>,
+  syncBatchId: string
 ): Promise<void> {
   const now = new Date().toISOString();
   for (const resource of resources) {
     if (!resource.id) continue;
+    const payload = JSON.stringify(resource);
+    // Compute a simple payload hash for deduplication
+    const payloadHash = Buffer.from(payload).length.toString(16) + "_" + resource.id;
     try {
       await db.insert(schema.rawFhirResources).values({
         id: randomUUID(),
@@ -143,7 +152,9 @@ async function storeRawFhirResources(
         provider: "epic",
         resourceType,
         resourceId: resource.id,
-        payload: JSON.stringify(resource),
+        payload,
+        payloadHash,
+        syncBatchId,
         syncedAt: now,
       });
     } catch {
@@ -225,10 +236,11 @@ async function persistAllergies(userId: string, allergyNames: string[]): Promise
 
 export interface FhirSyncResult {
   observations: number;
-  conditionsUpdated: boolean;
-  medicationsUpdated: boolean;
+  conditionsUpdated: number;
+  medicationsUpdated: number;
   allergiesUpdated: boolean;
   diagnosticReports: number;
+  syncBatchId: string;
 }
 
 /**
@@ -240,79 +252,110 @@ export async function syncFhirForUser(
   userId: string,
   fullHistory = false
 ): Promise<FhirSyncResult> {
-  const { token, patientId } = await getFhirAccessToken(userId);
+  // Create sync batch record
+  const batchId = randomUUID();
+  const startedAt = new Date().toISOString();
+  await db.insert(schema.syncBatches).values({
+    id: batchId,
+    userId,
+    source: "fhir",
+    status: "running",
+    fullHistory,
+    startedAt,
+  });
 
-  // 1. Fetch all FHIR resources in parallel (including Patient demographics)
-  const [observations, diagnosticReports, allergyResources, conditionNames, medsNames, patient] =
-    await Promise.all([
-      fetchObservations(token, patientId, fullHistory),
-      fetchDiagnosticReports(token, patientId, fullHistory),
-      fetchAllergyIntolerance(token, patientId),
-      fetchConditions(token, patientId),
-      fetchMedicationRequests(token, patientId),
-      fetchPatient(token, patientId),
-    ]);
+  writeAuditLog(userId, "sync.start", "fhir", batchId, { fullHistory }).catch(() => {});
 
-  // 1b. Hydrate profile demographics from Patient resource (non-blocking)
-  if (patient) {
-    hydratePatientDemographics(userId, patient).catch(() => {});
-  }
+  try {
+    const { token, patientId } = await getFhirAccessToken(userId);
 
-  // 2. Store raw FHIR blobs (compliance layer — fire-and-forget, non-blocking on error)
-  Promise.allSettled([
-    storeRawFhirResources(userId, "Observation", observations),
-    storeRawFhirResources(userId, "DiagnosticReport", diagnosticReports),
-    storeRawFhirResources(userId, "AllergyIntolerance", allergyResources),
-  ]).catch(() => {});
+    // 1. Fetch all FHIR resources in parallel (including Patient demographics)
+    const [observations, diagnosticReports, allergyResources, conditionResources, medResources, patient] =
+      await Promise.all([
+        fetchObservations(token, patientId, fullHistory),
+        fetchDiagnosticReports(token, patientId, fullHistory),
+        fetchAllergyIntolerance(token, patientId),
+        fetchConditions(token, patientId),
+        fetchMedicationRequests(token, patientId),
+        fetchPatient(token, patientId),
+      ]);
 
-  // 3. Normalize and persist observations (unit-converter applied inside normalizeObservations)
-  const normalized = normalizeObservations(observations);
-  const count = await persistRawBiomarkers(userId, normalized);
-
-  // Trigger background health-state re-analysis if new data arrived
-  maybeReanalyze(userId, count).catch(() => {});
-
-  // 4. Normalize and persist allergies
-  const allergies = normalizeAllergies(allergyResources);
-  const allergyNames = allergies.map((a) => a.name);
-  const allergiesUpdated = allergyNames.length > 0;
-  if (allergiesUpdated) await persistAllergies(userId, allergyNames);
-
-  // 5. Merge conditions and medications into profile
-  const conditionsUpdated = conditionNames.length > 0;
-  const medicationsUpdated = medsNames.length > 0;
-
-  if (conditionsUpdated || medicationsUpdated) {
-    const profile = await db
-      .select()
-      .from(schema.healthProfiles)
-      .where(eq(schema.healthProfiles.userId, userId))
-      .get();
-
-    if (profile) {
-      const existingConditions: string[] = JSON.parse(profile.conditions);
-      const existingMeds: string[] = JSON.parse(profile.medications);
-
-      await db
-        .update(schema.healthProfiles)
-        .set({
-          conditions: JSON.stringify(
-            Array.from(new Set([...existingConditions, ...conditionNames]))
-          ),
-          medications: JSON.stringify(
-            Array.from(new Set([...existingMeds, ...medsNames]))
-          ),
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(schema.healthProfiles.userId, userId));
+    // 1b. Hydrate profile demographics from Patient resource (non-blocking)
+    if (patient) {
+      hydratePatientDemographics(userId, patient).catch(() => {});
     }
-  }
 
-  return {
-    observations: count,
-    conditionsUpdated,
-    medicationsUpdated,
-    allergiesUpdated,
-    diagnosticReports: diagnosticReports.length,
-  };
+    // 2. Store raw FHIR blobs (compliance layer — fire-and-forget, non-blocking on error)
+    Promise.allSettled([
+      storeRawFhirResources(userId, "Observation", observations, batchId),
+      storeRawFhirResources(userId, "DiagnosticReport", diagnosticReports, batchId),
+      storeRawFhirResources(userId, "AllergyIntolerance", allergyResources, batchId),
+    ]).catch(() => {});
+
+    // 3. Normalize and persist observations (unit-converter applied inside normalizeObservations)
+    const normalized = normalizeObservations(observations);
+    const count = await persistRawBiomarkers(userId, normalized);
+
+    // Trigger background health-state re-analysis if new data arrived
+    maybeReanalyze(userId, count).catch(() => {});
+
+    // 4. Normalize and persist allergies
+    const allergies = normalizeAllergies(allergyResources);
+    const allergyNames = allergies.map((a) => a.name);
+    const allergiesUpdated = allergyNames.length > 0;
+    if (allergiesUpdated) await persistAllergies(userId, allergyNames);
+
+    // 5. Normalize and persist conditions into longitudinal table
+    const normalizedConditions = normalizeConditions(conditionResources);
+    const conditionsInserted = await persistConditions(userId, normalizedConditions);
+
+    // 6. Normalize and persist medications into longitudinal table
+    const normalizedMedications = normalizeMedications(medResources);
+    const medicationsInserted = await persistMedications(userId, normalizedMedications);
+
+    // Update sync batch to completed
+    const completedAt = new Date().toISOString();
+    await db
+      .update(schema.syncBatches)
+      .set({
+        status: "completed",
+        resourcesFetched: observations.length + diagnosticReports.length + conditionResources.length + medResources.length,
+        biomarkersInserted: count,
+        completedAt,
+      })
+      .where(eq(schema.syncBatches.id, batchId));
+
+    writeAuditLog(userId, "sync.complete", "fhir", batchId, {
+      biomarkersInserted: count,
+      conditionsInserted,
+      medicationsInserted,
+      diagnosticReports: diagnosticReports.length,
+      fullHistory,
+    }).catch(() => {});
+
+    return {
+      observations: count,
+      conditionsUpdated: conditionsInserted,
+      medicationsUpdated: medicationsInserted,
+      allergiesUpdated,
+      diagnosticReports: diagnosticReports.length,
+      syncBatchId: batchId,
+    };
+  } catch (err) {
+    // Mark batch as failed
+    await db
+      .update(schema.syncBatches)
+      .set({
+        status: "failed",
+        errorMessage: err instanceof Error ? err.message : String(err),
+        completedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.syncBatches.id, batchId));
+
+    writeAuditLog(userId, "sync.fail", "fhir", batchId, {
+      error: err instanceof Error ? err.message : String(err),
+    }).catch(() => {});
+
+    throw err;
+  }
 }

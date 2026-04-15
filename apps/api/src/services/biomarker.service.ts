@@ -102,6 +102,8 @@ export async function persistRawBiomarkers(
     referenceRangeLow?: number;
     referenceRangeHigh?: number;
     labPanelName?: string;
+    abnormalFlag?: string;
+    confidence?: number;
   }>
 ): Promise<number> {
   if (entries.length === 0) return 0;
@@ -119,6 +121,8 @@ export async function persistRawBiomarkers(
         referenceRangeLow: entry.referenceRangeLow ?? null,
         referenceRangeHigh: entry.referenceRangeHigh ?? null,
         labPanelName: entry.labPanelName ?? null,
+        abnormalFlag: entry.abnormalFlag ?? null,
+        confidence: entry.confidence ?? 1.0,
         measuredAt: entry.measuredAt,
         createdAt: now,
       });

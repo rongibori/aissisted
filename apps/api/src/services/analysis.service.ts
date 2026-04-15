@@ -18,6 +18,7 @@ import {
   type RangeStatus,
 } from "../engine/biomarker-ranges.js";
 import { computeBiomarkerTrends } from "./trends.service.js";
+import { writeAuditLog } from "./audit.service.js";
 
 // ─── Public types ─────────────────────────────────────────
 
@@ -728,6 +729,13 @@ export async function computeHealthState(userId: string): Promise<HealthState> {
     missingDataFlags: JSON.stringify(missingDataFlags),
     createdAt,
   });
+
+  writeAuditLog(userId, "health_state.generated", "health_state_snapshots", id, {
+    mode,
+    confidenceScore,
+    signalCount: activeSignals.length,
+    warningCount: warnings.length,
+  }).catch(() => {});
 
   return {
     id,

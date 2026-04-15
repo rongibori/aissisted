@@ -2,7 +2,11 @@ import type {
   FhirObservation,
   FhirDiagnosticReport,
   FhirAllergyIntolerance,
+  FhirCondition,
+  FhirMedicationRequest,
 } from "./client.js";
+import type { ConditionInput } from "../../services/conditions.service.js";
+import type { MedicationInput } from "../../services/medications.service.js";
 import { normalizeBiomarkerUnits } from "../../engine/unit-converter.js";
 
 /**
@@ -36,7 +40,6 @@ const LOINC_MAP: Record<string, { name: string; unit: string }> = {
   "2143-6": { name: "cortisol_mcg_dl", unit: "mcg/dL" },
   "10501-5": { name: "dhea_s_mcg_dl", unit: "mcg/dL" },
   "2119-6": { name: "estradiol_pg_ml", unit: "pg/mL" },
-  "10501-5": { name: "dhea_s_mcg_dl", unit: "mcg/dL" },
   // Lipids
   "2089-1": { name: "ldl_mg_dl", unit: "mg/dL" },
   "2085-9": { name: "hdl_mg_dl", unit: "mg/dL" },
@@ -78,6 +81,7 @@ export interface NormalizedBiomarker {
   measuredAt: string;
   referenceRangeLow?: number;
   referenceRangeHigh?: number;
+  abnormalFlag?: string; // "H", "L", "HH", "LL", "A", etc. from FHIR interpretation
   labPanelName?: string;
 }
 
@@ -117,11 +121,18 @@ export function normalizeObservations(
     return { low: first?.low?.value, high: first?.high?.value };
   }
 
+  // Extract FHIR interpretation code ("H", "L", "HH", "LL", "A", etc.)
+  function getAbnormalFlag(obs: FhirObservation): string | undefined {
+    const code = obs.interpretation?.[0]?.coding?.[0]?.code;
+    return code ?? obs.interpretation?.[0]?.text ?? undefined;
+  }
+
   function tryAdd(obs: FhirObservation, panelName?: string) {
     if (obs.status !== "final" && obs.status !== "amended") return;
 
     const measuredAt = getEffectiveDate(obs);
     const dateKey = measuredAt.slice(0, 10);
+    const abnormalFlag = getAbnormalFlag(obs);
 
     // Case 1: scalar value in valueQuantity
     if (obs.valueQuantity?.value !== undefined) {
@@ -139,6 +150,7 @@ export function normalizeObservations(
             measuredAt,
             referenceRangeLow: refRange.low,
             referenceRangeHigh: refRange.high,
+            abnormalFlag,
             labPanelName: panelName,
           });
         }
@@ -209,6 +221,105 @@ export function applyDiagnosticReportPanelNames(
   // hasMember traversal in normalizeObservations() instead.
   // Return unchanged — full panel-name enrichment happens at the raw layer.
   return normalized;
+}
+
+/**
+ * Normalize FHIR Condition resources into structured condition records.
+ * Extracts clinical status, onset/abatement dates, and ICD-10/SNOMED codes.
+ */
+export function normalizeConditions(resources: FhirCondition[]): ConditionInput[] {
+  const seen = new Set<string>();
+  const result: ConditionInput[] = [];
+
+  for (const cond of resources) {
+    const clinical = cond.clinicalStatus?.coding?.[0]?.code;
+    // Map FHIR clinical status to internal status
+    const status =
+      clinical === "active" ? "active"
+      : clinical === "resolved" ? "resolved"
+      : clinical === "inactive" ? "inactive"
+      : "unknown";
+
+    const name = cond.code?.text ?? cond.code?.coding?.[0]?.display;
+    if (!name) continue;
+
+    const normalized = name.toLowerCase().trim();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+
+    // Extract ICD-10 and SNOMED codes
+    const icd10 = cond.code?.coding?.find((c) =>
+      c.system?.includes("icd-10") || c.system?.includes("ICD-10")
+    )?.code;
+    const snomed = cond.code?.coding?.find((c) =>
+      c.system?.includes("snomed") || c.system === "http://snomed.info/sct"
+    )?.code;
+
+    result.push({
+      name,
+      status: status as ConditionInput["status"],
+      onsetDate: cond.onsetDateTime ?? cond.onsetPeriod?.start,
+      abatementDate: cond.abatementDateTime,
+      source: "fhir",
+      sourceResourceId: cond.id,
+      icd10Code: icd10,
+      snomedCode: snomed,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Normalize FHIR MedicationRequest resources into structured medication records.
+ * Extracts status, dosage instructions, RxNorm codes, and date range.
+ */
+export function normalizeMedications(resources: FhirMedicationRequest[]): MedicationInput[] {
+  const seen = new Set<string>();
+  const result: MedicationInput[] = [];
+
+  for (const med of resources) {
+    if (med.status === "entered-in-error" || med.status === "cancelled") continue;
+
+    const name =
+      med.medicationCodeableConcept?.text ??
+      med.medicationCodeableConcept?.coding?.[0]?.display ??
+      med.medicationReference?.display;
+    if (!name) continue;
+
+    const normalized = name.toLowerCase().trim();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+
+    const status: MedicationInput["status"] =
+      med.status === "active" ? "active"
+      : med.status === "stopped" || med.status === "completed" ? "stopped"
+      : med.status === "on-hold" ? "inactive"
+      : "unknown";
+
+    const rxnorm = med.medicationCodeableConcept?.coding?.find((c) =>
+      c.system?.includes("rxnorm") || c.system === "http://www.nlm.nih.gov/research/umls/rxnorm"
+    )?.code;
+
+    const dosageInstruction = med.dosageInstruction?.[0];
+    const dosageText = dosageInstruction?.text ?? dosageInstruction?.doseAndRate?.[0]?.doseQuantity
+      ? `${dosageInstruction?.doseAndRate?.[0]?.doseQuantity?.value} ${dosageInstruction?.doseAndRate?.[0]?.doseQuantity?.unit}`
+      : undefined;
+    const frequency = dosageInstruction?.timing?.code?.text;
+
+    result.push({
+      name,
+      dosage: dosageText,
+      frequency,
+      status,
+      startDate: med.authoredOn,
+      source: "fhir",
+      sourceResourceId: med.id,
+      rxnormCode: rxnorm,
+    });
+  }
+
+  return result;
 }
 
 /**

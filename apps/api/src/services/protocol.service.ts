@@ -4,6 +4,7 @@ import { db, schema, eq } from "@aissisted/db";
 import { config } from "../config.js";
 import { getLatestBiomarkers } from "./biomarker.service.js";
 import { getProfile } from "./profile.service.js";
+import { writeAuditLog } from "./audit.service.js";
 import {
   evaluate,
   buildSignalsFromBiomarkers,
@@ -204,6 +205,12 @@ export async function generateProtocol(userId: string) {
       })
     );
   }
+
+  writeAuditLog(userId, "protocol.generated", "protocols", protocolId, {
+    recommendationCount: topRecs.length,
+    warningCount: warnings.length,
+    hasClaude: !!config.anthropicApiKey,
+  }).catch(() => {});
 
   return getProtocol(protocolId);
 }
