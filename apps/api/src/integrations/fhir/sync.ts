@@ -9,6 +9,8 @@ import {
   fetchAllergyIntolerance,
   fetchConditions,
   fetchMedicationRequests,
+  fetchPatient,
+  type FhirPatient,
 } from "./client.js";
 import {
   normalizeObservations,
@@ -149,6 +151,53 @@ async function storeRawFhirResources(
   }
 }
 
+// ─── Patient demographics hydration ──────────────────────
+
+/**
+ * Hydrate the user's health profile with demographics pulled from FHIR Patient.
+ * Never overwrites values the user set manually (only fills empty fields).
+ */
+async function hydratePatientDemographics(
+  userId: string,
+  patient: FhirPatient
+): Promise<void> {
+  const profile = await db
+    .select({
+      dateOfBirth: schema.healthProfiles.dateOfBirth,
+      sex: schema.healthProfiles.sex,
+    })
+    .from(schema.healthProfiles)
+    .where(eq(schema.healthProfiles.userId, userId))
+    .get();
+
+  if (!profile) return;
+
+  const fhirSex =
+    patient.gender === "male"
+      ? "male"
+      : patient.gender === "female"
+      ? "female"
+      : patient.gender === "other"
+      ? "other"
+      : undefined;
+
+  // Only set fields that are currently empty
+  const updates: Record<string, string | undefined> = {};
+  if (!profile.dateOfBirth && patient.birthDate) {
+    updates.dateOfBirth = patient.birthDate;
+  }
+  if (!profile.sex && fhirSex) {
+    updates.sex = fhirSex;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await db
+      .update(schema.healthProfiles)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(schema.healthProfiles.userId, userId));
+  }
+}
+
 // ─── Allergy persistence ──────────────────────────────────
 
 async function persistAllergies(userId: string, allergyNames: string[]): Promise<void> {
@@ -192,15 +241,21 @@ export async function syncFhirForUser(
 ): Promise<FhirSyncResult> {
   const { token, patientId } = await getFhirAccessToken(userId);
 
-  // 1. Fetch all FHIR resources in parallel
-  const [observations, diagnosticReports, allergyResources, conditionNames, medsNames] =
+  // 1. Fetch all FHIR resources in parallel (including Patient demographics)
+  const [observations, diagnosticReports, allergyResources, conditionNames, medsNames, patient] =
     await Promise.all([
       fetchObservations(token, patientId, fullHistory),
       fetchDiagnosticReports(token, patientId, fullHistory),
       fetchAllergyIntolerance(token, patientId),
       fetchConditions(token, patientId),
       fetchMedicationRequests(token, patientId),
+      fetchPatient(token, patientId),
     ]);
+
+  // 1b. Hydrate profile demographics from Patient resource (non-blocking)
+  if (patient) {
+    hydratePatientDemographics(userId, patient).catch(() => {});
+  }
 
   // 2. Store raw FHIR blobs (compliance layer — fire-and-forget, non-blocking on error)
   Promise.allSettled([

@@ -334,3 +334,44 @@ export async function fetchAllergyIntolerance(
     5
   );
 }
+
+// ─── Patient resource ─────────────────────────────────────
+
+export interface FhirPatient {
+  resourceType: "Patient";
+  id: string;
+  /** ISO date string e.g. "1985-03-14" */
+  birthDate?: string;
+  /** FHIR administrative gender */
+  gender?: "male" | "female" | "other" | "unknown";
+  name?: Array<{
+    use?: string;
+    family?: string;
+    given?: string[];
+  }>;
+  telecom?: Array<{ system: string; value: string }>;
+}
+
+/**
+ * Fetch the Patient resource for the given FHIR patient ID.
+ * Returns null on any error — demographics are enrichment, not critical path.
+ */
+export async function fetchPatient(
+  accessToken: string,
+  patientId: string
+): Promise<FhirPatient | null> {
+  try {
+    const res = await fetch(`${config.fhir.baseUrl}/Patient/${patientId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/fhir+json",
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as FhirPatient;
+    if (data.resourceType !== "Patient") return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
