@@ -11,6 +11,11 @@
     },
     "lint": {},
     "typecheck": {},
+    "test": {
+      "dependsOn": [],
+      "cache": false,
+      "outputs": []
+    },
     "db:generate": {
       "cache": false
     },
