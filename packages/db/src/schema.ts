@@ -420,3 +420,51 @@ export const healthStateSnapshotsRelations = relations(
     }),
   })
 );
+
+// ─── Biomarker Trends (Feature Layer) ────────────────────
+// Pre-computed per-biomarker trend records: rolling averages, slope,
+// trend direction. Upserted after each sync or on-demand re-analysis.
+// Provides the Feature Layer that sits between raw biomarker storage
+// and the health-state / protocol engines.
+
+export const TREND_DIRECTIONS = [
+  "worsening",
+  "improving",
+  "stable",
+  "new",
+  "insufficient_data",
+] as const;
+export type TrendDirection = (typeof TREND_DIRECTIONS)[number];
+
+export const biomarkerTrends = sqliteTable("biomarker_trends", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  biomarkerName: text("biomarker_name").notNull(),
+  // Latest observed value
+  latestValue: real("latest_value").notNull(),
+  latestUnit: text("latest_unit").notNull(),
+  latestMeasuredAt: text("latest_measured_at").notNull(),
+  // Earliest reading in the trend window
+  firstMeasuredAt: text("first_measured_at"),
+  // Number of distinct readings included in computation
+  readingCount: integer("reading_count").notNull().default(0),
+  // Linear slope: value change per 30 days (positive = rising)
+  slope30d: real("slope_30d"),
+  // Rolling averages
+  rollingAvg7d: real("rolling_avg_7d"),
+  rollingAvg30d: real("rolling_avg_30d"),
+  rollingAvg90d: real("rolling_avg_90d"),
+  // Derived direction relative to reference range
+  trendDirection: text("trend_direction", { enum: TREND_DIRECTIONS }).notNull().default("new"),
+  // When this record was last recomputed
+  computedAt: text("computed_at").notNull(),
+});
+
+export const biomarkerTrendsRelations = relations(biomarkerTrends, ({ one }) => ({
+  user: one(users, {
+    fields: [biomarkerTrends.userId],
+    references: [users.id],
+  }),
+}));

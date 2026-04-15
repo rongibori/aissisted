@@ -17,6 +17,7 @@ import {
   getRangeStatus,
   type RangeStatus,
 } from "../engine/biomarker-ranges.js";
+import { computeBiomarkerTrends } from "./trends.service.js";
 
 // ─── Public types ─────────────────────────────────────────
 
@@ -43,10 +44,17 @@ export interface ActiveSignal {
   key: string; // e.g. "ldl_high"
   domain: string;
   biomarkerName: string;
-  signalType: "deficiency" | "excess" | "trend_worsening" | "trend_improving" | "critical_value";
+  signalType:
+    | "deficiency"
+    | "excess"
+    | "trend_worsening"
+    | "trend_improving"
+    | "critical_value"
+    | "compound_risk";
   severity: "info" | "warn" | "critical";
   explanation: string;
   value?: number;
+  components?: string[]; // for compound signals: list of contributing biomarkers
 }
 
 export interface HealthState {
@@ -292,6 +300,179 @@ function detectSignals(
   return signals;
 }
 
+// ─── Compound cross-biomarker signals ────────────────────
+//
+// Each pattern fires only when ALL component biomarkers are present
+// and their combined values indicate a clinically meaningful co-occurrence.
+// These composite signals surface risk that per-biomarker analysis misses.
+
+interface CompoundPattern {
+  key: string;
+  domain: string;
+  components: string[];
+  severity: "info" | "warn" | "critical";
+  explanation: string;
+  condition: (m: Map<string, number>) => boolean;
+}
+
+const COMPOUND_PATTERNS: CompoundPattern[] = [
+  {
+    key: "cardiovascular_composite",
+    domain: "cardiovascular",
+    components: ["ldl_mg_dl", "crp_mg_l"],
+    severity: "warn",
+    explanation:
+      "Elevated LDL combined with elevated CRP indicates both lipid burden and active inflammation — heightened cardiovascular risk pattern",
+    condition: (m) =>
+      (m.get("ldl_mg_dl") ?? 0) > 130 &&
+      (m.get("crp_mg_l") ?? m.get("hs_crp_mg_l") ?? 0) > 2,
+  },
+  {
+    key: "cardiovascular_critical_triad",
+    domain: "cardiovascular",
+    components: ["ldl_mg_dl", "crp_mg_l", "triglycerides_mg_dl"],
+    severity: "critical",
+    explanation:
+      "Critical triad: very high LDL + elevated CRP + high triglycerides — aggressive cardiovascular risk requiring urgent clinical evaluation",
+    condition: (m) =>
+      (m.get("ldl_mg_dl") ?? 0) > 190 &&
+      (m.get("crp_mg_l") ?? m.get("hs_crp_mg_l") ?? 0) > 3 &&
+      (m.get("triglycerides_mg_dl") ?? 0) > 200,
+  },
+  {
+    key: "dyslipidemia_combined",
+    domain: "cardiovascular",
+    components: ["ldl_mg_dl", "triglycerides_mg_dl"],
+    severity: "warn",
+    explanation:
+      "High LDL with high triglycerides — combined dyslipidemia with elevated atherogenic risk; low HDL often co-occurs",
+    condition: (m) =>
+      (m.get("ldl_mg_dl") ?? 0) > 160 &&
+      (m.get("triglycerides_mg_dl") ?? 0) > 200,
+  },
+  {
+    key: "prediabetes_pattern",
+    domain: "metabolic",
+    components: ["glucose_mg_dl", "hba1c_pct"],
+    severity: "warn",
+    explanation:
+      "Fasting glucose and HbA1c both in prediabetic range — pattern consistent with insulin resistance and impaired glucose regulation",
+    condition: (m) =>
+      (m.get("glucose_mg_dl") ?? 0) > 100 &&
+      (m.get("hba1c_pct") ?? 0) > 5.7,
+  },
+  {
+    key: "metabolic_syndrome_cluster",
+    domain: "metabolic",
+    components: ["glucose_mg_dl", "triglycerides_mg_dl", "hdl_mg_dl"],
+    severity: "warn",
+    explanation:
+      "Elevated glucose, high triglycerides, and low HDL together — three of the five metabolic syndrome criteria present",
+    condition: (m) =>
+      (m.get("glucose_mg_dl") ?? 0) > 100 &&
+      (m.get("triglycerides_mg_dl") ?? 0) > 150 &&
+      (m.get("hdl_mg_dl") ?? 999) < 40,
+  },
+  {
+    key: "thyroid_dysregulation",
+    domain: "hormonal",
+    components: ["tsh_miu_l", "free_t4_ng_dl"],
+    severity: "warn",
+    explanation:
+      "Both TSH and free T4 are outside normal ranges — thyroid dysregulation pattern requiring clinical evaluation",
+    condition: (m) => {
+      const tsh = m.get("tsh_miu_l");
+      const t4 = m.get("free_t4_ng_dl");
+      return (
+        tsh !== undefined &&
+        t4 !== undefined &&
+        (tsh > 4 || tsh < 0.4) &&
+        (t4 > 1.5 || t4 < 0.8)
+      );
+    },
+  },
+  {
+    key: "iron_deficiency_anemia",
+    domain: "micronutrient",
+    components: ["ferritin_ng_ml", "hemoglobin_g_dl"],
+    severity: "warn",
+    explanation:
+      "Low ferritin with low hemoglobin — pattern consistent with iron deficiency anemia; fatigue, cognitive fog, and poor recovery likely",
+    condition: (m) =>
+      (m.get("ferritin_ng_ml") ?? 999) < 20 &&
+      (m.get("hemoglobin_g_dl") ?? 999) < 12.5,
+  },
+  {
+    key: "renal_concern_combined",
+    domain: "renal",
+    components: ["creatinine_mg_dl", "bun_mg_dl"],
+    severity: "warn",
+    explanation:
+      "Both creatinine and BUN elevated — combined renal filtration concern; high-dose nephrotoxic supplements (creatine, high vitamin C) should be reviewed",
+    condition: (m) =>
+      (m.get("creatinine_mg_dl") ?? 0) > 1.3 &&
+      (m.get("bun_mg_dl") ?? 0) > 25,
+  },
+  {
+    key: "androgen_insufficiency",
+    domain: "hormonal",
+    components: ["testosterone_ng_dl", "dhea_s_mcg_dl"],
+    severity: "warn",
+    explanation:
+      "Low testosterone and low DHEA-S together — compound androgen insufficiency pattern affecting energy, libido, lean mass, and cognitive function",
+    condition: (m) =>
+      (m.get("testosterone_ng_dl") ?? 999) < 300 &&
+      (m.get("dhea_s_mcg_dl") ?? 999) < 100,
+  },
+  {
+    key: "inflammatory_methylation",
+    domain: "inflammatory",
+    components: ["crp_mg_l", "homocysteine_umol_l"],
+    severity: "warn",
+    explanation:
+      "Elevated CRP and homocysteine — combined inflammatory + methylation dysfunction; associated with cardiovascular and neurocognitive risk",
+    condition: (m) =>
+      (m.get("crp_mg_l") ?? m.get("hs_crp_mg_l") ?? 0) > 3 &&
+      (m.get("homocysteine_umol_l") ?? 0) > 15,
+  },
+  {
+    key: "micronutrient_deficiency_cluster",
+    domain: "micronutrient",
+    components: ["vitamin_d_ng_ml", "b12_pg_ml", "ferritin_ng_ml"],
+    severity: "warn",
+    explanation:
+      "Vitamin D, B12, and ferritin all below optimal — overlapping micronutrient insufficiency affecting immunity, energy, and neurological function",
+    condition: (m) =>
+      (m.get("vitamin_d_ng_ml") ?? 999) < 30 &&
+      (m.get("b12_pg_ml") ?? 999) < 300 &&
+      (m.get("ferritin_ng_ml") ?? 999) < 30,
+  },
+];
+
+function detectCompoundSignals(biomap: Map<string, number>): ActiveSignal[] {
+  const signals: ActiveSignal[] = [];
+
+  for (const pattern of COMPOUND_PATTERNS) {
+    // Only fire if ALL component biomarkers are present
+    const allPresent = pattern.components.every((c) => biomap.has(c));
+    if (!allPresent) continue;
+
+    if (pattern.condition(biomap)) {
+      signals.push({
+        key: pattern.key,
+        domain: pattern.domain,
+        biomarkerName: pattern.components[0], // primary component
+        signalType: "compound_risk",
+        severity: pattern.severity,
+        explanation: pattern.explanation,
+        components: pattern.components,
+      });
+    }
+  }
+
+  return signals;
+}
+
 // ─── Missing data detection ───────────────────────────────
 
 function detectMissingData(
@@ -510,8 +691,10 @@ export async function computeHealthState(userId: string): Promise<HealthState> {
     inflammatory: scoreDomain(biomap, INFLAMMATORY_MARKERS),
   };
 
-  // 5. Detect signals and warnings
-  const activeSignals = detectSignals(biomap, history);
+  // 5. Detect signals and warnings (per-biomarker + compound cross-marker)
+  const perBiomarkerSignals = detectSignals(biomap, history);
+  const compoundSignals = detectCompoundSignals(biomap);
+  const activeSignals = [...perBiomarkerSignals, ...compoundSignals];
   const warnings = buildWarnings(biomap, conditions, medications);
 
   // 6. Missing data flags
@@ -596,7 +779,10 @@ export async function getLatestHealthState(
     if (!biomap.has(row.name)) biomap.set(row.name, row.value);
   }
 
-  const activeSignals = detectSignals(biomap, new Map());
+  const activeSignals = [
+    ...detectSignals(biomap, new Map()),
+    ...detectCompoundSignals(biomap),
+  ];
 
   return {
     id: latest.id,
@@ -635,5 +821,6 @@ export async function maybeReanalyze(
   if (tooOld) {
     // Run in background — do not await so sync pipeline is not blocked
     computeHealthState(userId).catch(() => {});
+    computeBiomarkerTrends(userId).catch(() => {});
   }
 }
