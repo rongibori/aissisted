@@ -12,6 +12,7 @@ import { getLatestBiomarkers } from "./biomarker.service.js";
 import { getRangeStatus } from "../engine/biomarker-ranges.js";
 import { getLatestHealthState } from "./analysis.service.js";
 import { logSupplement, getAdherenceScore } from "./adherence.service.js";
+import { getBiomarkerTrends, type BiomarkerTrendRecord } from "./trends.service.js";
 
 const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
@@ -116,7 +117,7 @@ export async function chat(
   }
 
   // 5. Gather user context for Jeffrey
-  const [profile, biomarkers, latestProtocol, healthState] = await Promise.all([
+  const [profile, biomarkers, latestProtocol, healthState, trendRecords] = await Promise.all([
     getProfile(userId),
     getLatestBiomarkers(userId),
     intent.type !== "generate_protocol"
@@ -125,9 +126,10 @@ export async function chat(
     intent.type === "health_state_check" || intent.type === "generate_protocol"
       ? getLatestHealthState(userId).catch(() => null)
       : Promise.resolve(null),
+    getBiomarkerTrends(userId).catch(() => [] as BiomarkerTrendRecord[]),
   ]);
 
-  const userContext = buildUserContext(profile, biomarkers, latestProtocol, healthState);
+  const userContext = buildUserContext(profile, biomarkers, latestProtocol, healthState, trendRecords);
 
   // 6. Get conversation history for multi-turn context
   const history = await getConversationHistory(conversation.id, 12);
@@ -210,9 +212,14 @@ function buildUserContext(
   profile: Awaited<ReturnType<typeof getProfile>>,
   biomarkers: Awaited<ReturnType<typeof getLatestBiomarkers>>,
   protocol: Awaited<ReturnType<typeof getLatestProtocol>>,
-  healthState: Awaited<ReturnType<typeof getLatestHealthState>> | null
+  healthState: Awaited<ReturnType<typeof getLatestHealthState>> | null,
+  trendRecords: BiomarkerTrendRecord[]
 ): string {
   const parts: string[] = [];
+
+  // Build a fast lookup map for trend records
+  const trendMap = new Map<string, BiomarkerTrendRecord>();
+  for (const t of trendRecords) trendMap.set(t.biomarkerName, t);
 
   if (profile) {
     parts.push(`User: ${profile.firstName} ${profile.lastName}`);
@@ -225,21 +232,53 @@ function buildUserContext(
 
   if (biomarkers.length) {
     const bList = biomarkers
-      .slice(0, 12)
+      .slice(0, 15)
       .map((b) => {
         const { status } = getRangeStatus(b.name, b.value);
         const statusNote =
-          status !== "unknown" && status !== "normal"
+          status !== "unknown" && status !== "optimal"
             ? ` [${status.toUpperCase()}]`
             : "";
-        const trendNote =
-          b.trend && b.trend !== "new" && b.trend !== "stable"
-            ? ` ${b.trend === "up" ? "↑" : "↓"}`
-            : "";
+
+        // Trend annotation from Feature Layer
+        const trend = trendMap.get(b.name);
+        let trendNote = "";
+        if (trend && trend.readingCount >= 3) {
+          if (trend.trendDirection === "worsening") {
+            const slopeDesc = trend.slope30d !== null
+              ? ` (${trend.slope30d > 0 ? "+" : ""}${trend.slope30d.toFixed(1)} ${b.unit}/30d)`
+              : "";
+            trendNote = ` ↓WORSENING${slopeDesc}`;
+          } else if (trend.trendDirection === "improving") {
+            trendNote = ` ↑IMPROVING`;
+          }
+          if (trend.rollingAvg30d !== null) {
+            trendNote += ` avg30d=${trend.rollingAvg30d.toFixed(1)}`;
+          }
+        } else if (trend && trend.readingCount === 1) {
+          trendNote = ` [new reading]`;
+        }
+
         return `${b.name}: ${b.value} ${b.unit}${statusNote}${trendNote}`;
       })
       .join("\n  ");
     parts.push(`Recent biomarkers:\n  ${bList}`);
+  }
+
+  // Trend-worsening summary (most actionable for Jeffrey)
+  const worseningTrends = trendRecords
+    .filter((t) => t.trendDirection === "worsening" && t.readingCount >= 3)
+    .slice(0, 4);
+  if (worseningTrends.length > 0) {
+    const summary = worseningTrends
+      .map((t) => {
+        const slope = t.slope30d !== null
+          ? ` (rate: ${t.slope30d > 0 ? "+" : ""}${t.slope30d.toFixed(2)} ${t.latestUnit}/30d)`
+          : "";
+        return `${t.biomarkerName}${slope}`;
+      })
+      .join(", ");
+    parts.push(`Worsening trends: ${summary}`);
   }
 
   if (protocol) {

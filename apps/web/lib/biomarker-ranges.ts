@@ -1,18 +1,35 @@
 export type RangeStatus = "low" | "optimal" | "high" | "unknown";
-export type TrendDirection = "up" | "down" | "stable" | "new";
+
+// Evaluative trend direction — maps to backend BiomarkerTrendRecord.trendDirection
+export type TrendDirection =
+  | "worsening"
+  | "improving"
+  | "stable"
+  | "new"
+  | "insufficient_data";
 
 export const TREND_ICONS: Record<TrendDirection, string> = {
-  up: "↑",
-  down: "↓",
+  worsening: "↓",
+  improving: "↑",
   stable: "→",
   new: "",
+  insufficient_data: "",
 };
 
 export const TREND_COLORS: Record<TrendDirection, string> = {
-  up: "text-emerald-400",
-  down: "text-red-400",
+  worsening: "text-red-400",
+  improving: "text-emerald-400",
   stable: "text-[#7a7a98]",
   new: "text-[#7a7a98]",
+  insufficient_data: "text-[#7a7a98]",
+};
+
+export const TREND_LABELS: Record<TrendDirection, string> = {
+  worsening: "Worsening",
+  improving: "Improving",
+  stable: "Stable",
+  new: "New",
+  insufficient_data: "Not enough data",
 };
 
 const RANGES: Record<string, { low: number; highNormal: number }> = {

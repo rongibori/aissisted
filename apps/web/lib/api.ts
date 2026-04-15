@@ -104,6 +104,27 @@ export const biomarkers = {
 
   history: (name: string) =>
     request<{ biomarkers: any[] }>(`/biomarkers/history/${encodeURIComponent(name)}`),
+
+  trends: (refresh = false) =>
+    request<{ trends: Array<{
+      id: string;
+      userId: string;
+      biomarkerName: string;
+      latestValue: number;
+      latestUnit: string;
+      latestMeasuredAt: string;
+      firstMeasuredAt: string | null;
+      readingCount: number;
+      slope30d: number | null;
+      rollingAvg7d: number | null;
+      rollingAvg30d: number | null;
+      rollingAvg90d: number | null;
+      trendDirection: "worsening" | "improving" | "stable" | "new" | "insufficient_data";
+      computedAt: string;
+    }> }>(`/biomarkers/trends${refresh ? "?refresh=true" : ""}`),
+
+  trendFor: (name: string) =>
+    request<{ trend: any }>(`/biomarkers/trends/${encodeURIComponent(name)}`),
 };
 
 // ─── Protocol ────────────────────────────────────────────
