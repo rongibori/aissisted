@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { config } from "../../config.js";
 import { db, schema, eq, and } from "@aissisted/db";
+import { encrypt, decrypt } from "../../utils/token-encryption.js";
 import type { SmartConfiguration } from "./client.js";
 import {
   getSmartConfig,
@@ -51,8 +52,8 @@ export async function storeFhirTokens(
     .get();
 
   const payload = {
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token ?? null,
+    accessToken: encrypt(tokens.access_token),
+    refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
     expiresAt: expiresAt ?? null,
     metadata: JSON.stringify({ patientId }),
     updatedAt: now,
@@ -81,7 +82,7 @@ async function refreshFhirToken(
   const smartConfig = await getSmartConfig();
   const body = new URLSearchParams({
     grant_type: "refresh_token",
-    refresh_token: stored.refreshToken!,
+    refresh_token: decrypt(stored.refreshToken!),
     client_id: config.fhir.clientId,
   });
 
@@ -110,7 +111,7 @@ export async function getFhirAccessToken(
 
   if (!stored?.accessToken) throw new Error("Epic/FHIR not connected");
 
-  let token = stored.accessToken;
+  let token = decrypt(stored.accessToken);
 
   // Refresh if expired or expiring within 5 min
   if (stored.expiresAt) {

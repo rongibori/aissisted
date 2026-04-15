@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { config } from "../../config.js";
 import { db, schema, eq, and } from "@aissisted/db";
+import { encrypt, decrypt } from "../../utils/token-encryption.js";
 
 export function buildAuthUrl(state: string): string {
   const params = new URLSearchParams({
@@ -57,7 +58,7 @@ export async function refreshToken(userId: string): Promise<string> {
 
   const body = new URLSearchParams({
     grant_type: "refresh_token",
-    refresh_token: stored.refreshToken,
+    refresh_token: decrypt(stored.refreshToken),
     client_id: config.whoop.clientId,
     client_secret: config.whoop.clientSecret,
   });
@@ -77,8 +78,8 @@ export async function refreshToken(userId: string): Promise<string> {
   await db
     .update(schema.integrationTokens)
     .set({
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
+      accessToken: encrypt(data.access_token),
+      refreshToken: encrypt(data.refresh_token),
       expiresAt,
       updatedAt: now,
     })
@@ -104,8 +105,8 @@ export async function storeTokens(
     await db
       .update(schema.integrationTokens)
       .set({
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
+        accessToken: encrypt(tokens.access_token),
+        refreshToken: encrypt(tokens.refresh_token),
         expiresAt,
         scope: tokens.scope,
         updatedAt: now,
@@ -116,8 +117,8 @@ export async function storeTokens(
       id: randomUUID(),
       userId,
       provider: "whoop",
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
+      accessToken: encrypt(tokens.access_token),
+      refreshToken: encrypt(tokens.refresh_token),
       expiresAt,
       scope: tokens.scope,
       createdAt: now,
@@ -143,5 +144,5 @@ export async function getAccessToken(userId: string): Promise<string> {
     }
   }
 
-  return stored.accessToken;
+  return decrypt(stored.accessToken);
 }
