@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
 // ─── Users ───────────────────────────────────────────────
@@ -53,28 +53,39 @@ export const healthProfilesRelations = relations(
 
 // ─── Biomarkers ──────────────────────────────────────────
 
-export const biomarkers = sqliteTable("biomarkers", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  value: real("value").notNull(),
-  unit: text("unit").notNull(),
-  // Data provenance: "fhir" | "whoop" | "apple_health" | "manual"
-  source: text("source"),
-  // Clinical reference range from the source lab or FHIR Observation
-  referenceRangeLow: real("reference_range_low"),
-  referenceRangeHigh: real("reference_range_high"),
-  // Abnormal flag from source lab ("H", "L", "HH", "LL", "A", or null)
-  abnormalFlag: text("abnormal_flag"),
-  // Confidence score: 1.0=FHIR lab, 0.8=wearable, 0.6=manual
-  confidence: real("confidence").notNull().default(1.0),
-  // Lab panel this result belongs to (e.g. "CBC", "Lipid Panel")
-  labPanelName: text("lab_panel_name"),
-  measuredAt: text("measured_at").notNull(),
-  createdAt: text("created_at").notNull(),
-});
+export const biomarkers = sqliteTable(
+  "biomarkers",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    value: real("value").notNull(),
+    unit: text("unit").notNull(),
+    // Data provenance: "fhir" | "whoop" | "apple_health" | "manual"
+    source: text("source"),
+    // Clinical reference range from the source lab or FHIR Observation
+    referenceRangeLow: real("reference_range_low"),
+    referenceRangeHigh: real("reference_range_high"),
+    // Abnormal flag from source lab ("H", "L", "HH", "LL", "A", or null)
+    abnormalFlag: text("abnormal_flag"),
+    // Confidence score: 1.0=FHIR lab, 0.8=wearable, 0.6=manual
+    confidence: real("confidence").notNull().default(1.0),
+    // Lab panel this result belongs to (e.g. "CBC", "Lipid Panel")
+    labPanelName: text("lab_panel_name"),
+    measuredAt: text("measured_at").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => ({
+    uniqReading: uniqueIndex("biomarkers_uniq").on(
+      t.userId,
+      t.name,
+      t.measuredAt,
+      t.source
+    ),
+  })
+);
 
 export const biomarkersRelations = relations(biomarkers, ({ one }) => ({
   user: one(users, {
@@ -272,21 +283,32 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 // Stores the original JSON payloads exactly as received from Epic/FHIR.
 // Never modified — append-only. Used for audit, re-processing, and debugging.
 
-export const rawFhirResources = sqliteTable("raw_fhir_resources", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  provider: text("provider").notNull(), // "epic", "cerner", etc.
-  resourceType: text("resource_type").notNull(), // "Observation", "DiagnosticReport", etc.
-  resourceId: text("resource_id").notNull(), // FHIR resource id
-  payload: text("payload").notNull(), // raw JSON
-  // SHA-256 hash of payload for dedup across repeated pulls
-  payloadHash: text("payload_hash"),
-  // Which sync run produced this record
-  syncBatchId: text("sync_batch_id"),
-  syncedAt: text("synced_at").notNull(),
-});
+export const rawFhirResources = sqliteTable(
+  "raw_fhir_resources",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(), // "epic", "cerner", etc.
+    resourceType: text("resource_type").notNull(), // "Observation", "DiagnosticReport", etc.
+    resourceId: text("resource_id").notNull(), // FHIR resource id
+    payload: text("payload").notNull(), // raw JSON
+    // SHA-256 hash of payload for dedup across repeated pulls
+    payloadHash: text("payload_hash"),
+    // Which sync run produced this record
+    syncBatchId: text("sync_batch_id"),
+    syncedAt: text("synced_at").notNull(),
+  },
+  (t) => ({
+    uniqResource: uniqueIndex("raw_fhir_resources_uniq").on(
+      t.userId,
+      t.provider,
+      t.resourceType,
+      t.resourceId
+    ),
+  })
+);
 
 export const rawFhirResourcesRelations = relations(rawFhirResources, ({ one }) => ({
   user: one(users, {

@@ -130,8 +130,10 @@ function classifyTrend(
     }
   }
 
-  // Unknown directionality — use simple sign
-  return slope30d > 0 ? "stable" : "stable";
+  // Unknown directionality — positive slope is generally worsening, negative improving
+  if (slope30d > 0) return "worsening";
+  if (slope30d < 0) return "improving";
+  return "stable";
 }
 
 // ─── Rolling average helpers ──────────────────────────────

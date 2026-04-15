@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import * as adherenceService from "../services/adherence.service.js";
 import { TIME_SLOTS } from "@aissisted/db/src/schema.js";
+import type { TimeSlot } from "../engine/types.js";
 
 export async function adherenceRoutes(app: FastifyInstance) {
   // POST /adherence/log — record a supplement taken or skipped
@@ -16,7 +17,7 @@ export async function adherenceRoutes(app: FastifyInstance) {
           properties: {
             supplementName: { type: "string", minLength: 1, maxLength: 200 },
             dosage: { type: "string" },
-            timeSlot: { type: "string" },
+            timeSlot: { type: "string", enum: TIME_SLOTS },
             takenAt: { type: "string" },
             skipped: { type: "boolean" },
             protocolId: { type: "string" },
@@ -31,7 +32,7 @@ export async function adherenceRoutes(app: FastifyInstance) {
       const body = request.body as {
         supplementName: string;
         dosage?: string;
-        timeSlot?: string;
+        timeSlot?: TimeSlot;
         takenAt?: string;
         skipped?: boolean;
         protocolId?: string;
@@ -42,7 +43,7 @@ export async function adherenceRoutes(app: FastifyInstance) {
       const log = await adherenceService.logSupplement(sub, {
         ...body,
         takenAt: body.takenAt ?? (!body.skipped ? new Date().toISOString() : undefined),
-      } as any);
+      });
 
       reply.status(201).send({ data: { log } });
     }

@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import { config } from "../../config.js";
 import { db, schema, eq, and } from "@aissisted/db";
 import { encrypt, decrypt } from "../../utils/token-encryption.js";
@@ -51,14 +51,19 @@ export async function storeFhirTokens(
   const now = new Date().toISOString();
 
   const existing = await db
-    .select({ id: schema.integrationTokens.id })
+    .select({ id: schema.integrationTokens.id, refreshToken: schema.integrationTokens.refreshToken })
     .from(schema.integrationTokens)
     .where(whereUserFhir(userId))
     .get();
 
+  // When the token response omits refresh_token (common on refresh flows), preserve the stored value.
+  const encryptedRefreshToken = tokens.refresh_token
+    ? encrypt(tokens.refresh_token)
+    : (existing?.refreshToken ?? null);
+
   const payload = {
     accessToken: encrypt(tokens.access_token),
-    refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
+    refreshToken: encryptedRefreshToken,
     expiresAt: expiresAt ?? null,
     metadata: JSON.stringify({ patientId }),
     updatedAt: now,
@@ -143,10 +148,10 @@ async function storeRawFhirResources(
   for (const resource of resources) {
     if (!resource.id) continue;
     const payload = JSON.stringify(resource);
-    // Compute a simple payload hash for deduplication
-    const payloadHash = Buffer.from(payload).length.toString(16) + "_" + resource.id;
-    try {
-      await db.insert(schema.rawFhirResources).values({
+    const payloadHash = createHash("sha256").update(payload).digest("hex");
+    await db
+      .insert(schema.rawFhirResources)
+      .values({
         id: randomUUID(),
         userId,
         provider: "epic",
@@ -156,10 +161,8 @@ async function storeRawFhirResources(
         payloadHash,
         syncBatchId,
         syncedAt: now,
-      });
-    } catch {
-      // Skip if already stored (duplicate resourceId for this user)
-    }
+      })
+      .onConflictDoNothing();
   }
 }
 
