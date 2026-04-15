@@ -8,8 +8,6 @@ import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
 import { HealthStateWidget } from "../../components/health-state-widget";
-
-interface Recommendation {
   id: string;
   name: string;
   dosage: string;
@@ -32,7 +30,13 @@ interface Biomarker {
   value: number;
   unit: string;
   measuredAt: string;
-  trend?: TrendDirection;
+}
+
+interface TrendRecord {
+  biomarkerName: string;
+  readingCount: number;
+  trendDirection: TrendDirection;
+  rollingAvg30d: number | null;
 }
 
 export default function DashboardPage() {
@@ -40,6 +44,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [currentProtocol, setCurrentProtocol] = useState<Protocol | null>(null);
   const [latestBiomarkers, setLatestBiomarkers] = useState<Biomarker[]>([]);
+  const [trendMap, setTrendMap] = useState<Map<string, TrendRecord>>(new Map());
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
   const [hasProfile, setHasProfile] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -48,10 +53,11 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [protoData, bioData, profileData] = await Promise.allSettled([
+      const [protoData, bioData, profileData, trendsData] = await Promise.allSettled([
         protocol.latest(),
         biomarkersApi.list({ latest: true }),
         profileApi.get(),
+        biomarkersApi.trends().catch(() => ({ trends: [] })),
       ]);
       if (protoData.status === "fulfilled") {
         setCurrentProtocol(protoData.value.protocol);
@@ -62,27 +68,42 @@ export default function DashboardPage() {
         const p = profileData.value.profile;
         setHasProfile(!!(p?.firstName));
       }
+      if (trendsData.status === "fulfilled") {
+        const map = new Map<string, TrendRecord>();
+        for (const t of trendsData.value.trends) {
+          map.set(t.biomarkerName, t);
+        }
+        setTrendMap(map);
+      }
       if (bioData.status === "fulfilled") {
         const markers: Biomarker[] = bioData.value.biomarkers;
         setLatestBiomarkers(markers);
-        // Fetch sparkline history in background
-        const names = markers.map((b) => b.name);
-        Promise.allSettled(
-          names.map((name) =>
-            biomarkersApi.history(name).then((h) => ({
-              name,
-              values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
-            }))
-          )
-        ).then((results) => {
-          const map: Record<string, number[]> = {};
-          for (const r of results) {
-            if (r.status === "fulfilled" && r.value.values.length > 1) {
-              map[r.value.name] = r.value.values;
+        // Only fetch sparkline history for markers with multiple readings
+        const trends = trendsData.status === "fulfilled" ? trendsData.value.trends : [];
+        const multipleReadings = markers
+          .map((b) => b.name)
+          .filter((name) => {
+            const t = trends.find((tr: TrendRecord) => tr.biomarkerName === name);
+            return t ? t.readingCount > 1 : false;
+          });
+        if (multipleReadings.length > 0) {
+          Promise.allSettled(
+            multipleReadings.map((name) =>
+              biomarkersApi.history(name).then((h) => ({
+                name,
+                values: [...h.biomarkers].reverse().map((b: Biomarker) => b.value),
+              }))
+            )
+          ).then((results) => {
+            const map: Record<string, number[]> = {};
+            for (const r of results) {
+              if (r.status === "fulfilled" && r.value.values.length > 1) {
+                map[r.value.name] = r.value.values;
+              }
             }
-          }
-          setSparklines(map);
-        });
+            setSparklines(map);
+          });
+        }
       }
     } finally {
       setLoading(false);
@@ -294,6 +315,9 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-2">
                 {latestBiomarkers.slice(0, 6).map((b) => {
                   const status = getRangeStatus(b.name, b.value);
+                  const trend = trendMap.get(b.name);
+                  const dir = trend?.trendDirection;
+                  const showTrend = dir && dir !== "new" && dir !== "insufficient_data";
                   return (
                     <div
                       key={b.id}
@@ -315,9 +339,9 @@ export default function DashboardPage() {
                             }
                           />
                         )}
-                        {b.trend && b.trend !== "new" && (
-                          <span className={`text-xs font-bold ${TREND_COLORS[b.trend]}`}>
-                            {TREND_ICONS[b.trend]}
+                        {showTrend && (
+                          <span className={`text-xs font-bold ${TREND_COLORS[dir as TrendDirection]}`}>
+                            {TREND_ICONS[dir as TrendDirection]}
                           </span>
                         )}
                         <span className="text-[#e8e8f0] font-medium">

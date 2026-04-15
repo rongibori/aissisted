@@ -23,6 +23,7 @@ interface ActiveSignal {
   severity: "info" | "warn" | "critical";
   explanation: string;
   value?: number;
+  components?: string[]; // compound signals only
 }
 
 interface HealthState {
@@ -252,15 +253,30 @@ export function HealthStateWidget() {
               <p className="text-[11px] font-semibold text-[#7a7a98] uppercase tracking-wider mb-2">
                 Active Signals
               </p>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 {actionableSignals.map((sig) => (
                   <div key={sig.key} className="flex items-start gap-2">
                     <span
                       className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${SEVERITY_DOT[sig.severity]}`}
                     />
-                    <p className={`text-xs leading-relaxed ${SEVERITY_COLORS[sig.severity]}`}>
-                      {sig.explanation}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      {/* Compound signal gets a distinct header chip */}
+                      {sig.signalType === "compound_risk" && sig.components && (
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {sig.components.map((c) => (
+                            <span
+                              key={c}
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-[#2a2a38] text-[#7a7a98] font-mono"
+                            >
+                              {c.replace(/_/g, " ").replace(/ (mg dl|ng ml|pg ml|miu l|mcg dl|g dl|u l)$/, "")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <p className={`text-xs leading-relaxed ${SEVERITY_COLORS[sig.severity]}`}>
+                        {sig.explanation}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>

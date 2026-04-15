@@ -164,7 +164,25 @@ export const chat = {
     }>("/chat/recent"),
 
   conversations: () =>
-    request<{ conversations: any[] }>("/chat/conversations"),
+    request<{
+      conversations: Array<{
+        id: string;
+        title: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+    }>("/chat/conversations"),
+
+  loadMessages: (conversationId: string) =>
+    request<{
+      conversationId: string;
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant" | "system";
+        content: string;
+        createdAt: string;
+      }>;
+    }>(`/chat/conversations/${conversationId}/messages`),
 };
 
 // ─── Integrations ────────────────────────────────────────
