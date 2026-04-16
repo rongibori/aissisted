@@ -180,11 +180,10 @@ DB_PASSWORD=$(openssl rand -base64 24 | tr -d '\n' | tr -d '=+/' | cut -c1-24)
 JWT_SECRET=$(openssl rand -hex 32)
 TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
 
-# Database URL — use placeholder for now; deploy.sh will update with real RDS endpoint
-put_param_if_missing \
-    "${SSM_PREFIX}/database-url" \
-    "postgresql://aissisted:${DB_PASSWORD}@PLACEHOLDER:5432/aissisted?sslmode=require" \
-    "Postgres connection string — placeholder until stack deploys and populates RDS endpoint"
+# NOTE: /aissisted/${ENVIRONMENT}/database-url is NOT created here.
+# CloudFormation owns that parameter (DatabaseURLParameter resource) so it can
+# inject the real RDS endpoint at deploy time. Creating a placeholder here
+# causes a race: ECS tasks launch against the stale SSM value and crash-loop.
 
 put_param_if_missing \
     "${SSM_PREFIX}/db-master-password" \

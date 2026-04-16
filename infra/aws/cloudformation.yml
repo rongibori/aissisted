@@ -576,11 +576,16 @@ Resources:
             StartPeriod: 60
 
   # ECS Service
+  # DependsOn ensures DATABASE_URL is real and RDS is available before ECS launches tasks.
+  # Without this, the 2026-04 deploy hit a circuit breaker when ECS started
+  # before SSM had a valid endpoint.
   ECSService:
     Type: AWS::ECS::Service
     DependsOn:
       - HTTPSListener
       - HTTPListener
+      - RDSInstance
+      - DatabaseURLParameter
     Properties:
       ServiceName: !Sub 'aissisted-${Environment}-api'
       Cluster: !Ref ECSCluster
@@ -646,8 +651,19 @@ Resources:
         HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
         EvaluateTargetHealth: true
 
-  # NOTE: SSM SecureString parameters are created by bootstrap.sh (external).
-  # See /aissisted/${Environment}/{database-url,jwt-secret,anthropic-api-key,token-encryption-key}
+  # SSM Parameter — DATABASE_URL constructed from live RDS endpoint.
+  # Must be CFN-managed (not bootstrapped) so ECS gets the real endpoint on first launch.
+  # Other secrets (jwt-secret, anthropic-api-key, token-encryption-key, db-master-password)
+  # remain SecureString in SSM, bootstrapped by bootstrap.sh.
+  DatabaseURLParameter:
+    Type: AWS::SSM::Parameter
+    DependsOn: RDSInstance
+    Properties:
+      Name: !Sub '/aissisted/${Environment}/database-url'
+      Type: String
+      Value: !Sub 'postgres://${DBMasterUsername}:${DBMasterPassword}@${RDSInstance.Endpoint.Address}:${RDSInstance.Endpoint.Port}/aissisted?sslmode=require'
+      Description: !Sub 'PostgreSQL connection string for ${Environment}. Managed by CloudFormation.'
+      Tier: Standard
 
 Outputs:
   APIUrl:

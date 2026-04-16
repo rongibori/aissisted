@@ -5,13 +5,11 @@
 #  1. Build Docker image for apps/api
 #  2. Push to ECR (tagged with git SHA + "latest")
 #  3. Deploy/update CloudFormation stack
+#     (CFN creates RDS → SSM /database-url → ECS Service, in that order)
 #  4. Wait for ECS service to stabilize
-#  5. Update SSM database-url param with real RDS endpoint
-#  6. Force new deployment so tasks pick up updated DATABASE_URL
-#  7. Smoke test https://<domain>/health
+#  5. Smoke test https://<domain>/health
 #
 # Usage:  ./infra/aws/deploy.sh
-#         FORCE_REBUILD=1 ./infra/aws/deploy.sh      # ignore image tag cache
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -48,7 +46,7 @@ log "ECR:           ${ECR_URI}"
 echo ""
 
 # ── 1. Build ────────────────────────────────────────────────────────────────
-log "Step 1/7 — Docker build (linux/amd64)"
+log "Step 1/5 — Docker build (linux/amd64)"
 cd "${REPO_ROOT}"
 
 # Apple Silicon requires --platform
@@ -62,7 +60,7 @@ docker buildx build \
 ok "Image built: aissisted/api:${IMAGE_TAG}"
 
 # ── 2. Push to ECR ──────────────────────────────────────────────────────────
-log "Step 2/7 — Push to ECR"
+log "Step 2/5 — Push to ECR"
 aws ecr get-login-password --region "${AWS_REGION}" \
     | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
@@ -73,7 +71,7 @@ docker push "${ECR_URI}:latest"
 ok "Pushed ${ECR_URI}:${IMAGE_TAG}"
 
 # ── 3. Deploy CloudFormation stack ──────────────────────────────────────────
-log "Step 3/7 — CloudFormation deploy (stack=${STACK_NAME})"
+log "Step 3/5 — CloudFormation deploy (stack=${STACK_NAME})"
 
 DB_PASSWORD=$(aws ssm get-parameter --region "${AWS_REGION}" \
     --name "${SSM_PREFIX}/db-master-password" --with-decryption \
@@ -99,37 +97,11 @@ aws cloudformation deploy \
 
 ok "Stack deployed."
 
-# ── 4. Get RDS endpoint, update DATABASE_URL in SSM ─────────────────────────
-log "Step 4/7 — Update DATABASE_URL with RDS endpoint"
+# ── 4. Wait for ECS service to stabilize ────────────────────────────────────
+# CFN returned success, but ECS may still be pulling the image + waiting for
+# ALB health checks. Explicit wait ensures tasks actually reach RUNNING.
+log "Step 4/5 — Waiting for ECS service to stabilize (~5-10 min on first deploy)..."
 
-RDS_ENDPOINT=$(aws cloudformation describe-stacks \
-    --region "${AWS_REGION}" \
-    --stack-name "${STACK_NAME}" \
-    --query "Stacks[0].Outputs[?OutputKey=='RDSEndpoint'].OutputValue" \
-    --output text)
-
-DATABASE_URL="postgresql://aissisted:${DB_PASSWORD}@${RDS_ENDPOINT}:5432/aissisted?sslmode=require"
-
-CURRENT_URL=$(aws ssm get-parameter \
-    --region "${AWS_REGION}" \
-    --name "${SSM_PREFIX}/database-url" \
-    --with-decryption \
-    --query 'Parameter.Value' --output text)
-
-if [[ "${CURRENT_URL}" != "${DATABASE_URL}" ]]; then
-    aws ssm put-parameter \
-        --region "${AWS_REGION}" \
-        --name "${SSM_PREFIX}/database-url" \
-        --value "${DATABASE_URL}" \
-        --type SecureString \
-        --overwrite >/dev/null
-    ok "DATABASE_URL updated → ${RDS_ENDPOINT}"
-else
-    ok "DATABASE_URL already current"
-fi
-
-# ── 5. Force new deployment to pick up secrets ──────────────────────────────
-log "Step 5/7 — Force ECS service redeploy"
 CLUSTER_NAME=$(aws cloudformation describe-stacks \
     --region "${AWS_REGION}" --stack-name "${STACK_NAME}" \
     --query "Stacks[0].Outputs[?OutputKey=='ECSClusterName'].OutputValue" --output text)
@@ -137,14 +109,6 @@ SERVICE_NAME=$(aws cloudformation describe-stacks \
     --region "${AWS_REGION}" --stack-name "${STACK_NAME}" \
     --query "Stacks[0].Outputs[?OutputKey=='ECSServiceName'].OutputValue" --output text)
 
-aws ecs update-service \
-    --region "${AWS_REGION}" \
-    --cluster "${CLUSTER_NAME}" \
-    --service "${SERVICE_NAME}" \
-    --force-new-deployment >/dev/null
-
-# ── 6. Wait for service to stabilize ────────────────────────────────────────
-log "Step 6/7 — Waiting for ECS service to stabilize (~5-10 min on first deploy)..."
 aws ecs wait services-stable \
     --region "${AWS_REGION}" \
     --cluster "${CLUSTER_NAME}" \
@@ -153,8 +117,8 @@ aws ecs wait services-stable \
 
 ok "Service stable."
 
-# ── 7. Smoke test ───────────────────────────────────────────────────────────
-log "Step 7/7 — Smoke test https://${SUBDOMAIN}.${DOMAIN}/health"
+# ── 5. Smoke test ───────────────────────────────────────────────────────────
+log "Step 5/5 — Smoke test https://${SUBDOMAIN}.${DOMAIN}/health"
 
 for attempt in 1 2 3 4 5; do
     if RESPONSE=$(curl -sS --max-time 10 "https://${SUBDOMAIN}.${DOMAIN}/health" 2>&1); then

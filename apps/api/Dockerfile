@@ -21,8 +21,6 @@ COPY apps/api/package.json              apps/api/
 COPY packages/db/package.json           packages/db/
 COPY packages/config/package.json       packages/config/
 COPY packages/types/package.json        packages/types/
-COPY packages/domain/package.json       packages/domain/
-COPY packages/integrations/package.json packages/integrations/
 COPY packages/ui/package.json           packages/ui/
 
 # Install only what the API needs, with frozen lockfile for reproducibility
