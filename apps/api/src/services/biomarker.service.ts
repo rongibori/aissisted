@@ -25,7 +25,7 @@ export async function addBiomarker(
   }
 
   const id = randomUUID();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   await db.insert(schema.biomarkers).values({
     id,
@@ -108,7 +108,7 @@ export async function persistRawBiomarkers(
 ): Promise<number> {
   if (entries.length === 0) return 0;
   let count = 0;
-  const now = new Date().toISOString();
+  const now = new Date();
   for (const entry of entries) {
     try {
       await db.insert(schema.biomarkers).values({

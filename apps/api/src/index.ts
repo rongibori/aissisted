@@ -14,8 +14,8 @@ import { integrationsRoutes } from "./routes/integrations.js";
 import { adherenceRoutes } from "./routes/adherence.js";
 import { healthStateRoutes } from "./routes/health-state.js";
 import { startScheduler } from "./scheduler.js";
-import { db, schema } from "@aissisted/db";
-import { migrate } from "drizzle-orm/libsql/migrator";
+import { db, schema, sql } from "@aissisted/db";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -27,7 +27,7 @@ const app = Fastify({
 
 // ─── Plugins ────────────────────────────────────────────
 await app.register(cors, {
-  origin: config.isDev ? true : ["https://aissisted.com"],
+  origin: config.isDev ? true : ["https://aissisted.co", "https://www.aissisted.co", "https://app.aissisted.co"],
   credentials: true,
 });
 
@@ -54,7 +54,7 @@ await registerAuditLog(app);
 app.get("/health", async (_request, reply) => {
   let dbStatus = "ok";
   try {
-    await db.run({ sql: "SELECT 1", args: [] });
+    await db.execute(sql`SELECT 1`);
   } catch {
     dbStatus = "error";
   }

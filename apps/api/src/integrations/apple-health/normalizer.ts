@@ -30,7 +30,7 @@ export interface NormalizedBiomarker {
   value: number;
   unit: string;
   source: string;
-  measuredAt: string;
+  measuredAt: Date;
 }
 
 /**
@@ -54,12 +54,12 @@ export function normalizeAppleHealthRecords(
     seen.add(dedupeKey);
 
     // Attempt ISO parse
-    let measuredAt: string;
+    let measuredAt: Date;
     try {
       // Replace space with T and drop the timezone offset for basic ISO
-      measuredAt = new Date(rec.startDate.replace(" ", "T").replace(/\s[+-]\d{4}$/, "Z")).toISOString();
+      measuredAt = new Date(rec.startDate.replace(" ", "T").replace(/\s[+-]\d{4}$/, "Z"));
     } catch {
-      measuredAt = new Date().toISOString();
+      measuredAt = new Date();
     }
 
     result.push({

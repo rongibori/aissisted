@@ -73,7 +73,7 @@ export async function refreshToken(userId: string): Promise<string> {
 
   const data = (await res.json()) as WhoopTokenResponse;
   const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   await db
     .update(schema.integrationTokens)
@@ -93,7 +93,7 @@ export async function storeTokens(
   tokens: WhoopTokenResponse
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   const existing = await db
     .select()

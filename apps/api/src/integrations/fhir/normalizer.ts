@@ -78,7 +78,7 @@ export interface NormalizedBiomarker {
   value: number;
   unit: string;
   source: string;
-  measuredAt: string;
+  measuredAt: Date;
   referenceRangeLow?: number;
   referenceRangeHigh?: number;
   abnormalFlag?: string; // "H", "L", "HH", "LL", "A", etc. from FHIR interpretation
@@ -98,8 +98,8 @@ function getLoincMapping(coding: Array<{ system: string; code: string }>) {
   return loinc ? LOINC_MAP[loinc.code] : undefined;
 }
 
-function getEffectiveDate(obs: FhirObservation): string {
-  return obs.effectiveDateTime ?? obs.effectivePeriod?.start ?? new Date().toISOString();
+function getEffectiveDate(obs: FhirObservation): Date {
+  return new Date(obs.effectiveDateTime ?? obs.effectivePeriod?.start ?? new Date());
 }
 
 export function normalizeObservations(
@@ -131,7 +131,7 @@ export function normalizeObservations(
     if (obs.status !== "final" && obs.status !== "amended") return;
 
     const measuredAt = getEffectiveDate(obs);
-    const dateKey = measuredAt.slice(0, 10);
+    const dateKey = measuredAt.toISOString().slice(0, 10);
     const abnormalFlag = getAbnormalFlag(obs);
 
     // Case 1: scalar value in valueQuantity

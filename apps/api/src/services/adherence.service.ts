@@ -18,7 +18,7 @@ export async function logSupplement(
   }
 ) {
   const id = randomUUID();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   await db.insert(schema.supplementLogs).values({
     id,

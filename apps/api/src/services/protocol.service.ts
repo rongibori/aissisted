@@ -161,14 +161,14 @@ export async function generateProtocol(userId: string) {
 
   // 6. Persist protocol
   const protocolId = randomUUID();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   await db.insert(schema.protocols).values({
     id: protocolId,
     userId,
     summary,
-    warnings: JSON.stringify(warnings),
-    signals: JSON.stringify(signalsSummary),
+    warnings,
+    signals: signalsSummary,
     createdAt: now,
   });
 

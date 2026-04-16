@@ -1,14 +1,124 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import {
+  pgTable,
+  pgEnum,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  uuid,
+  varchar,
+  doublePrecision,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+// ─── Enums ───────────────────────────────────────────────
+
+export const sexEnum = pgEnum("sex", ["male", "female", "other"]);
+export const sourceEnum = pgEnum("biomarker_source", [
+  "fhir",
+  "whoop",
+  "apple_health",
+  "manual",
+]);
+export const abnormalFlagEnum = pgEnum("abnormal_flag", ["H", "L", "HH", "LL", "A"]);
+export const safetyStatusEnum = pgEnum("safety_status", [
+  "allowed",
+  "blocked",
+  "warning",
+]);
+export const messageRoleEnum = pgEnum("message_role", [
+  "user",
+  "assistant",
+  "system",
+]);
+export const providerEnum = pgEnum("integration_provider", [
+  "whoop",
+  "fhir",
+  "apple_health",
+]);
+export const consentTypeEnum = pgEnum("consent_type", [
+  "hipaa_notice",
+  "data_processing",
+  "fhir_data_access",
+  "research_opt_in",
+]);
+export const signalTypeEnum = pgEnum("signal_type", [
+  "deficiency",
+  "excess",
+  "trend_worsening",
+  "trend_improving",
+  "trend_stable",
+  "data_gap",
+  "critical_value",
+]);
+export const signalDomainEnum = pgEnum("signal_domain", [
+  "cardiovascular",
+  "metabolic",
+  "hormonal",
+  "micronutrient",
+  "renal",
+  "inflammatory",
+  "general",
+]);
+export const severityEnum = pgEnum("severity", ["info", "warn", "critical"]);
+export const trendDirectionEnum = pgEnum("trend_direction", [
+  "worsening",
+  "improving",
+  "stable",
+  "new",
+  "insufficient_data",
+]);
+export const medicationStatusEnum = pgEnum("medication_status", [
+  "active",
+  "inactive",
+  "stopped",
+  "unknown",
+]);
+export const conditionStatusEnum = pgEnum("condition_status", [
+  "active",
+  "resolved",
+  "inactive",
+  "unknown",
+]);
+export const syncSourceEnum = pgEnum("sync_source", [
+  "fhir",
+  "whoop",
+  "apple_health",
+  "manual",
+]);
+export const syncStatusEnum = pgEnum("sync_status", [
+  "running",
+  "completed",
+  "failed",
+  "partial",
+]);
+export const dataSourceEnum = pgEnum("data_source", [
+  "fhir",
+  "manual",
+  "inferred",
+]);
+export const timeSlotEnum = pgEnum("time_slot", [
+  "morning_fasted",
+  "morning_with_food",
+  "midday",
+  "afternoon",
+  "evening",
+  "presleep",
+]);
 
 // ─── Users ───────────────────────────────────────────────
 
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -22,23 +132,27 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 // ─── Health Profiles ─────────────────────────────────────
 
-export const healthProfiles = sqliteTable("health_profiles", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const healthProfiles = pgTable("health_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   dateOfBirth: text("date_of_birth"),
-  sex: text("sex", { enum: ["male", "female", "other"] }),
-  goals: text("goals").notNull().default("[]"), // JSON array
-  conditions: text("conditions").notNull().default("[]"),
-  medications: text("medications").notNull().default("[]"),
-  allergies: text("allergies").notNull().default("[]"),
-  supplements: text("supplements").notNull().default("[]"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  sex: sexEnum("sex"),
+  goals: jsonb("goals").notNull().default("[]"),
+  conditions: jsonb("conditions").notNull().default("[]"),
+  medications: jsonb("medications").notNull().default("[]"),
+  allergies: jsonb("allergies").notNull().default("[]"),
+  supplements: jsonb("supplements").notNull().default("[]"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const healthProfilesRelations = relations(
@@ -53,27 +167,29 @@ export const healthProfilesRelations = relations(
 
 // ─── Biomarkers ──────────────────────────────────────────
 
-export const biomarkers = sqliteTable("biomarkers", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const biomarkers = pgTable("biomarkers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  value: real("value").notNull(),
+  value: doublePrecision("value").notNull(),
   unit: text("unit").notNull(),
   // Data provenance: "fhir" | "whoop" | "apple_health" | "manual"
-  source: text("source"),
+  source: sourceEnum("source"),
   // Clinical reference range from the source lab or FHIR Observation
-  referenceRangeLow: real("reference_range_low"),
-  referenceRangeHigh: real("reference_range_high"),
+  referenceRangeLow: doublePrecision("reference_range_low"),
+  referenceRangeHigh: doublePrecision("reference_range_high"),
   // Abnormal flag from source lab ("H", "L", "HH", "LL", "A", or null)
-  abnormalFlag: text("abnormal_flag"),
+  abnormalFlag: abnormalFlagEnum("abnormal_flag"),
   // Confidence score: 1.0=FHIR lab, 0.8=wearable, 0.6=manual
-  confidence: real("confidence").notNull().default(1.0),
+  confidence: doublePrecision("confidence").notNull().default(1.0),
   // Lab panel this result belongs to (e.g. "CBC", "Lipid Panel")
   labPanelName: text("lab_panel_name"),
-  measuredAt: text("measured_at").notNull(),
-  createdAt: text("created_at").notNull(),
+  measuredAt: timestamp("measured_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const biomarkersRelations = relations(biomarkers, ({ one }) => ({
@@ -85,15 +201,17 @@ export const biomarkersRelations = relations(biomarkers, ({ one }) => ({
 
 // ─── Protocols ───────────────────────────────────────────
 
-export const protocols = sqliteTable("protocols", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const protocols = pgTable("protocols", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   summary: text("summary").notNull(),
-  warnings: text("warnings").notNull().default("[]"), // JSON array
-  signals: text("signals").notNull().default("{}"), // JSON object
-  createdAt: text("created_at").notNull(),
+  warnings: jsonb("warnings").notNull().default("[]"),
+  signals: jsonb("signals").notNull().default("{}"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const protocolsRelations = relations(protocols, ({ one, many }) => ({
@@ -115,20 +233,20 @@ export const TIME_SLOTS = [
 
 export type TimeSlot = (typeof TIME_SLOTS)[number];
 
-export const recommendations = sqliteTable("recommendations", {
-  id: text("id").primaryKey(),
-  protocolId: text("protocol_id")
+export const recommendations = pgTable("recommendations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  protocolId: uuid("protocol_id")
     .notNull()
     .references(() => protocols.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   dosage: text("dosage").notNull(),
   timing: text("timing").notNull(),
   // Structured time slot for scheduling — canonical enum value
-  timeSlot: text("time_slot", { enum: TIME_SLOTS }),
+  timeSlot: timeSlotEnum("time_slot"),
   rationale: text("rationale").notNull(),
-  score: real("score").notNull().default(0),
+  score: doublePrecision("score").notNull().default(0),
   // Safety: explicit status per-item (allowed / blocked / warning)
-  safetyStatus: text("safety_status", { enum: ["allowed", "blocked", "warning"] }).default("allowed"),
+  safetyStatus: safetyStatusEnum("safety_status").default("allowed"),
   safetyNote: text("safety_note"),
 });
 
@@ -144,16 +262,20 @@ export const recommendationsRelations = relations(
 
 // ─── Supplement Stacks ───────────────────────────────────
 
-export const supplementStacks = sqliteTable("supplement_stacks", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const supplementStacks = pgTable("supplement_stacks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  items: text("items").notNull().default("[]"), // JSON array
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  items: jsonb("items").notNull().default("[]"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const supplementStacksRelations = relations(
@@ -168,14 +290,18 @@ export const supplementStacksRelations = relations(
 
 // ─── Conversations (Jeffrey) ─────────────────────────────
 
-export const conversations = sqliteTable("conversations", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const conversations = pgTable("conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const conversationsRelations = relations(
@@ -189,16 +315,18 @@ export const conversationsRelations = relations(
   })
 );
 
-export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey(),
-  conversationId: text("conversation_id")
+export const messages = pgTable("messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  conversationId: uuid("conversation_id")
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
-  role: text("role", { enum: ["user", "assistant", "system"] }).notNull(),
+  role: messageRoleEnum("role").notNull(),
   content: text("content").notNull(),
   intent: text("intent"),
-  metadata: text("metadata"), // JSON
-  createdAt: text("created_at").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -210,33 +338,37 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 
 // ─── Session History (wearable data) ─────────────────────
 
-export const sessionHistory = sqliteTable("session_history", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull(),
+export const sessionHistory = pgTable("session_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull(),
   source: text("source").notNull(),
   metric: text("metric").notNull(),
-  value: real("value").notNull(),
-  measuredAt: text("measured_at").notNull(),
-  createdAt: text("created_at").notNull(),
+  value: doublePrecision("value").notNull(),
+  measuredAt: timestamp("measured_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // ─── Integration Tokens ──────────────────────────────────
 
-export const integrationTokens = sqliteTable("integration_tokens", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const integrationTokens = pgTable("integration_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  provider: text("provider", {
-    enum: ["whoop", "fhir", "apple_health"],
-  }).notNull(),
+  provider: providerEnum("provider").notNull(),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
-  expiresAt: text("expires_at"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   scope: text("scope"),
-  metadata: text("metadata"), // JSON for provider-specific data
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const integrationTokensRelations = relations(
@@ -251,14 +383,16 @@ export const integrationTokensRelations = relations(
 
 // ─── Audit Log ───────────────────────────────────────────
 
-export const auditLog = sqliteTable("audit_log", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   resource: text("resource").notNull(),
-  resourceId: text("resource_id"),
-  detail: text("detail"), // JSON
-  createdAt: text("created_at").notNull(),
+  resourceId: uuid("resource_id"),
+  detail: jsonb("detail"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const auditLogRelations = relations(auditLog, ({ one }) => ({
@@ -272,46 +406,53 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 // Stores the original JSON payloads exactly as received from Epic/FHIR.
 // Never modified — append-only. Used for audit, re-processing, and debugging.
 
-export const rawFhirResources = sqliteTable("raw_fhir_resources", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const rawFhirResources = pgTable("raw_fhir_resources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  provider: text("provider").notNull(), // "epic", "cerner", etc.
-  resourceType: text("resource_type").notNull(), // "Observation", "DiagnosticReport", etc.
-  resourceId: text("resource_id").notNull(), // FHIR resource id
-  payload: text("payload").notNull(), // raw JSON
+  provider: text("provider").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id").notNull(),
+  payload: jsonb("payload").notNull(),
   // SHA-256 hash of payload for dedup across repeated pulls
   payloadHash: text("payload_hash"),
   // Which sync run produced this record
-  syncBatchId: text("sync_batch_id"),
-  syncedAt: text("synced_at").notNull(),
+  syncBatchId: uuid("sync_batch_id"),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull(),
 });
 
-export const rawFhirResourcesRelations = relations(rawFhirResources, ({ one }) => ({
-  user: one(users, {
-    fields: [rawFhirResources.userId],
-    references: [users.id],
-  }),
-}));
+export const rawFhirResourcesRelations = relations(
+  rawFhirResources,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [rawFhirResources.userId],
+      references: [users.id],
+    }),
+  })
+);
 
 // ─── Supplement Adherence Logs ────────────────────────────
 // Records each supplement taken (or skipped) for adherence tracking.
 
-export const supplementLogs = sqliteTable("supplement_logs", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const supplementLogs = pgTable("supplement_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  protocolId: text("protocol_id").references(() => protocols.id, { onDelete: "set null" }),
-  recommendationId: text("recommendation_id"),
+  protocolId: uuid("protocol_id").references(() => protocols.id, {
+    onDelete: "set null",
+  }),
+  recommendationId: uuid("recommendation_id"),
   supplementName: text("supplement_name").notNull(),
   dosage: text("dosage"),
-  timeSlot: text("time_slot", { enum: TIME_SLOTS }),
-  takenAt: text("taken_at"), // null = skipped
-  skipped: integer("skipped", { mode: "boolean" }).notNull().default(false),
+  timeSlot: timeSlotEnum("time_slot"),
+  takenAt: timestamp("taken_at", { withTimezone: true }),
+  skipped: boolean("skipped").notNull().default(false),
   note: text("note"),
-  createdAt: text("created_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const supplementLogsRelations = relations(supplementLogs, ({ one }) => ({
@@ -324,17 +465,17 @@ export const supplementLogsRelations = relations(supplementLogs, ({ one }) => ({
 // ─── Consent Records (HIPAA) ─────────────────────────────
 // Tracks when and what a user consented to (data processing, HIPAA BAA, etc.)
 
-export const consentRecords = sqliteTable("consent_records", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const consentRecords = pgTable("consent_records", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  consentType: text("consent_type", {
-    enum: ["hipaa_notice", "data_processing", "fhir_data_access", "research_opt_in"],
-  }).notNull(),
-  version: text("version").notNull(), // e.g. "1.0"
-  grantedAt: text("granted_at").notNull(),
-  revokedAt: text("revoked_at"),
+  consentType: consentTypeEnum("consent_type").notNull(),
+  version: text("version").notNull(),
+  grantedAt: timestamp("granted_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
 });
@@ -372,21 +513,23 @@ export const SIGNAL_DOMAINS = [
 ] as const;
 export type SignalDomain = (typeof SIGNAL_DOMAINS)[number];
 
-export const healthSignals = sqliteTable("health_signals", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const healthSignals = pgTable("health_signals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  signalType: text("signal_type", { enum: SIGNAL_TYPES }).notNull(),
-  domain: text("domain", { enum: SIGNAL_DOMAINS }).notNull(),
+  signalType: signalTypeEnum("signal_type").notNull(),
+  domain: signalDomainEnum("domain").notNull(),
   biomarkerName: text("biomarker_name"),
-  severity: text("severity", { enum: ["info", "warn", "critical"] }).notNull(),
-  value: real("value"),
+  severity: severityEnum("severity").notNull(),
+  value: doublePrecision("value"),
   explanation: text("explanation").notNull(),
-  sourceIds: text("source_ids"), // JSON array of source biomarker row IDs
-  effectiveFrom: text("effective_from").notNull(),
-  effectiveTo: text("effective_to"), // null = still active
-  createdAt: text("created_at").notNull(),
+  sourceIds: jsonb("source_ids"),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+  effectiveTo: timestamp("effective_to", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const healthSignalsRelations = relations(healthSignals, ({ one }) => ({
@@ -400,24 +543,26 @@ export const healthSignalsRelations = relations(healthSignals, ({ one }) => ({
 // Machine-readable summary of a user's overall health state at a point in time.
 // Computed by the analysis engine after each sync or on-demand.
 
-export const healthStateSnapshots = sqliteTable("health_state_snapshots", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const healthStateSnapshots = pgTable("health_state_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   // Primary mode label (dominant health concern or "optimal")
   mode: text("mode").notNull(),
   // 0-1: proportion of key biomarkers present and in range
-  confidenceScore: real("confidence_score").notNull(),
+  confidenceScore: doublePrecision("confidence_score").notNull(),
   // JSON: { cardiovascular: 0.3, metabolic: 0.7, ... } — 0=optimal, 1=severe
-  domainScores: text("domain_scores").notNull(),
+  domainScores: jsonb("domain_scores").notNull(),
   // JSON array of active signal keys (e.g. ["ldl_high", "vitamin_d_deficient"])
-  activeSignals: text("active_signals").notNull(),
+  activeSignals: jsonb("active_signals").notNull(),
   // JSON array of safety/clinical warnings
-  warnings: text("warnings").notNull(),
+  warnings: jsonb("warnings").notNull(),
   // JSON array of missing key lab flags
-  missingDataFlags: text("missing_data_flags").notNull(),
-  createdAt: text("created_at").notNull(),
+  missingDataFlags: jsonb("missing_data_flags").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const healthStateSnapshotsRelations = relations(
@@ -445,38 +590,45 @@ export const TREND_DIRECTIONS = [
 ] as const;
 export type TrendDirection = (typeof TREND_DIRECTIONS)[number];
 
-export const biomarkerTrends = sqliteTable("biomarker_trends", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const biomarkerTrends = pgTable("biomarker_trends", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   biomarkerName: text("biomarker_name").notNull(),
   // Latest observed value
-  latestValue: real("latest_value").notNull(),
+  latestValue: doublePrecision("latest_value").notNull(),
   latestUnit: text("latest_unit").notNull(),
-  latestMeasuredAt: text("latest_measured_at").notNull(),
+  latestMeasuredAt: timestamp("latest_measured_at", {
+    withTimezone: true,
+  }).notNull(),
   // Earliest reading in the trend window
-  firstMeasuredAt: text("first_measured_at"),
+  firstMeasuredAt: timestamp("first_measured_at", { withTimezone: true }),
   // Number of distinct readings included in computation
   readingCount: integer("reading_count").notNull().default(0),
   // Linear slope: value change per 30 days (positive = rising)
-  slope30d: real("slope_30d"),
+  slope30d: doublePrecision("slope_30d"),
   // Rolling averages
-  rollingAvg7d: real("rolling_avg_7d"),
-  rollingAvg30d: real("rolling_avg_30d"),
-  rollingAvg90d: real("rolling_avg_90d"),
+  rollingAvg7d: doublePrecision("rolling_avg_7d"),
+  rollingAvg30d: doublePrecision("rolling_avg_30d"),
+  rollingAvg90d: doublePrecision("rolling_avg_90d"),
   // Derived direction relative to reference range
-  trendDirection: text("trend_direction", { enum: TREND_DIRECTIONS }).notNull().default("new"),
+  trendDirection: trendDirectionEnum("trend_direction")
+    .notNull()
+    .default("new"),
   // When this record was last recomputed
-  computedAt: text("computed_at").notNull(),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
 });
 
-export const biomarkerTrendsRelations = relations(biomarkerTrends, ({ one }) => ({
-  user: one(users, {
-    fields: [biomarkerTrends.userId],
-    references: [users.id],
-  }),
-}));
+export const biomarkerTrendsRelations = relations(
+  biomarkerTrends,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [biomarkerTrends.userId],
+      references: [users.id],
+    }),
+  })
+);
 
 // ─── Medications (Longitudinal) ───────────────────────────
 // Structured medication records derived from FHIR MedicationRequest
@@ -491,9 +643,9 @@ export const MEDICATION_STATUSES = [
 ] as const;
 export type MedicationStatus = (typeof MEDICATION_STATUSES)[number];
 
-export const medications = sqliteTable("medications", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const medications = pgTable("medications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
@@ -501,17 +653,23 @@ export const medications = sqliteTable("medications", {
   normalizedName: text("normalized_name").notNull(),
   dosage: text("dosage"),
   frequency: text("frequency"),
-  status: text("status", { enum: MEDICATION_STATUSES }).notNull().default("active"),
+  status: medicationStatusEnum("status")
+    .notNull()
+    .default("active"),
   // Dates from FHIR MedicationRequest
-  startDate: text("start_date"),
-  endDate: text("end_date"),
+  startDate: timestamp("start_date", { withTimezone: true }),
+  endDate: timestamp("end_date", { withTimezone: true }),
   // Source provenance
-  source: text("source", { enum: ["fhir", "manual", "inferred"] }).notNull().default("manual"),
-  sourceResourceId: text("source_resource_id"), // FHIR MedicationRequest id
+  source: dataSourceEnum("source").notNull().default("manual"),
+  sourceResourceId: text("source_resource_id"),
   // Raw FHIR codes for future deduplication
   rxnormCode: text("rxnorm_code"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const medicationsRelations = relations(medications, ({ one }) => ({
@@ -534,24 +692,30 @@ export const CONDITION_STATUSES = [
 ] as const;
 export type ConditionStatus = (typeof CONDITION_STATUSES)[number];
 
-export const conditions = sqliteTable("conditions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
+export const conditions = pgTable("conditions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   normalizedName: text("normalized_name").notNull(),
-  status: text("status", { enum: CONDITION_STATUSES }).notNull().default("active"),
-  onsetDate: text("onset_date"),
-  abatementDate: text("abatement_date"),
+  status: conditionStatusEnum("status")
+    .notNull()
+    .default("active"),
+  onsetDate: timestamp("onset_date", { withTimezone: true }),
+  abatementDate: timestamp("abatement_date", { withTimezone: true }),
   // Source
-  source: text("source", { enum: ["fhir", "manual", "inferred"] }).notNull().default("manual"),
-  sourceResourceId: text("source_resource_id"), // FHIR Condition id
+  source: dataSourceEnum("source").notNull().default("manual"),
+  sourceResourceId: text("source_resource_id"),
   // Codes
   icd10Code: text("icd10_code"),
   snomedCode: text("snomed_code"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const conditionsRelations = relations(conditions, ({ one }) => ({
@@ -571,21 +735,23 @@ export type SyncSource = (typeof SYNC_SOURCES)[number];
 export const SYNC_STATUSES = ["running", "completed", "failed", "partial"] as const;
 export type SyncStatus = (typeof SYNC_STATUSES)[number];
 
-export const syncBatches = sqliteTable("sync_batches", {
-  id: text("id").primaryKey(), // UUID, stamped on raw_fhir_resources.syncBatchId
-  userId: text("user_id")
+export const syncBatches = pgTable("sync_batches", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  source: text("source", { enum: SYNC_SOURCES }).notNull(),
-  status: text("status", { enum: SYNC_STATUSES }).notNull().default("running"),
+  source: syncSourceEnum("source").notNull(),
+  status: syncStatusEnum("status").notNull().default("running"),
   // Counts
   resourcesFetched: integer("resources_fetched").notNull().default(0),
   biomarkersInserted: integer("biomarkers_inserted").notNull().default(0),
   // fullHistory = true means backfill, false = incremental
-  fullHistory: integer("full_history", { mode: "boolean" }).notNull().default(false),
+  fullHistory: boolean("full_history").notNull().default(false),
   errorMessage: text("error_message"),
-  startedAt: text("started_at").notNull(),
-  completedAt: text("completed_at"),
+  startedAt: timestamp("started_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 export const syncBatchesRelations = relations(syncBatches, ({ one }) => ({

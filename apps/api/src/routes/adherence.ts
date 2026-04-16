@@ -41,7 +41,7 @@ export async function adherenceRoutes(app: FastifyInstance) {
 
       const log = await adherenceService.logSupplement(sub, {
         ...body,
-        takenAt: body.takenAt ?? (!body.skipped ? new Date().toISOString() : undefined),
+        takenAt: body.takenAt ? new Date(body.takenAt) : (!body.skipped ? new Date() : undefined),
       } as any);
 
       reply.status(201).send({ data: { log } });

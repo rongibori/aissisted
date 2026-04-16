@@ -57,8 +57,8 @@ export async function registerAuditLog(app: FastifyInstance) {
         action,
         resource,
         resourceId: resourceId ?? null,
-        detail: JSON.stringify(detail),
-        createdAt: new Date().toISOString(),
+        detail,
+        createdAt: new Date(),
       });
     } catch {
       // Never let audit logging break a request

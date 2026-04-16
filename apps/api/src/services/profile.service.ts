@@ -32,7 +32,7 @@ export async function upsertProfile(
     supplements?: string[];
   }
 ) {
-  const now = new Date().toISOString();
+  const now = new Date();
   const existing = await db
     .select()
     .from(schema.healthProfiles)
@@ -50,16 +50,16 @@ export async function upsertProfile(
         }),
         ...(data.sex !== undefined && { sex: data.sex }),
         ...(data.goals !== undefined && {
-          goals: JSON.stringify(data.goals),
+          goals: data.goals,
         }),
         ...(data.conditions !== undefined && {
-          conditions: JSON.stringify(data.conditions),
+          conditions: data.conditions,
         }),
         ...(data.medications !== undefined && {
-          medications: JSON.stringify(data.medications),
+          medications: data.medications,
         }),
         ...(data.supplements !== undefined && {
-          supplements: JSON.stringify(data.supplements),
+          supplements: data.supplements,
         }),
         updatedAt: now,
       })
@@ -72,10 +72,10 @@ export async function upsertProfile(
       lastName: data.lastName ?? "",
       dateOfBirth: data.dateOfBirth,
       sex: data.sex,
-      goals: JSON.stringify(data.goals ?? []),
-      conditions: JSON.stringify(data.conditions ?? []),
-      medications: JSON.stringify(data.medications ?? []),
-      supplements: JSON.stringify(data.supplements ?? []),
+      goals: data.goals ?? [],
+      conditions: data.conditions ?? [],
+      medications: data.medications ?? [],
+      supplements: data.supplements ?? [],
       createdAt: now,
       updatedAt: now,
     });

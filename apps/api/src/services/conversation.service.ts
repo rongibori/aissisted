@@ -14,7 +14,7 @@ export async function getOrCreateConversation(
     if (existing) return existing;
   }
 
-  const now = new Date().toISOString();
+  const now = new Date();
   const id = randomUUID();
   await db.insert(schema.conversations).values({
     id,
@@ -47,7 +47,7 @@ export async function addMessage(
   metadata?: Record<string, unknown>
 ) {
   const id = randomUUID();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   await db.insert(schema.messages).values({
     id,
@@ -55,7 +55,7 @@ export async function addMessage(
     role,
     content,
     intent,
-    metadata: metadata ? JSON.stringify(metadata) : null,
+    metadata: metadata ?? null,
     createdAt: now,
   });
 

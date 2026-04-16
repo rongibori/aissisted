@@ -176,7 +176,7 @@ export async function computeBiomarkerTrends(userId: string): Promise<void> {
     grouped.set(row.name, arr);
   }
 
-  const now = new Date().toISOString();
+  const now = new Date();
 
   for (const [name, readings] of grouped) {
     // Readings are already sorted newest-first from DB; we need oldest-first for regression
