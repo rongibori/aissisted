@@ -440,3 +440,29 @@ openssl rand -base64 32       # FIELD_ENCRYPTION_KEY
 **Document Owner**: Ron Gibori
 **Prepared by**: Claude (April 15, 2026)
 **Status**: Execution-ready and aligned to the current repo
+
+## Rollback Strategy
+
+If the Postgres migration fails in production, follow this procedure to restore the previous SQLite-backed state.
+
+### Prerequisites
+
+- AWS RDS snapshot taken immediately before cutover (tag: `pre-postgres-cutover`)
+- Previous SQLite database file preserved at `apps/api/data/aissisted.db.pre-migration`
+- Environment variable rollback plan documented in `.env.rollback`
+
+### Rollback procedure
+
+1. **Stop all application traffic.** Scale the Fastify API deployment to 0 replicas. Confirm no active connections to Postgres.
+2. **Restore the RDS snapshot.** Run:
+3. **Revert environment variables.** Copy `.env.rollback` over `.env` in the API deployment. This restores `DATABASE_URL` to the SQLite path.
+4. **Restore the SQLite file.** Copy `apps/api/data/aissisted.db.pre-migration` to `apps/api/data/aissisted.db`.
+5. **Redeploy the previous API build.** Use the pinned `pre-postgres-cutover` Docker image tag.
+6. **Scale traffic back up.** Verify the `/health` endpoint returns 200 before opening to users.
+
+### Post-rollback
+
+- File a postmortem within 24 hours documenting root cause and detection gap.
+- Do not re-attempt the migration until the postmortem identifies the failure mode and a corrected cutover plan is approved.
+- Keep the restored SQLite database as the source of truth until the next migration window.
+
