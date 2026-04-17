@@ -134,8 +134,8 @@ Infrastructure:
 
 Documentation:
   docs/
-  ├── ARCHITECTURE_v2.md     (NEW - System architecture, 648 lines)
-  ├── PHASE_1_EXECUTION_v2.md (NEW - MVP delivery plan, 500+ lines)
+  ├── ARCHITECTURE.md     (NEW - System architecture, 648 lines)
+  ├── PHASE_1_EXECUTION.md (NEW - MVP delivery plan, 500+ lines)
   └── EXECUTION_GUIDE.md     (NEW - Post-migration setup, 443 lines)
 
 ================================================================================
@@ -271,8 +271,8 @@ DOCUMENTATION IN THIS DIRECTORY:
 
 DOCUMENTATION CREATED BY SCRIPT:
   - docs/EXECUTION_GUIDE.md (Phase A-E local setup and AWS)
-  - docs/ARCHITECTURE_v2.md (system design and tech specs)
-  - docs/PHASE_1_EXECUTION_v2.md (MVP feature plan)
+  - docs/ARCHITECTURE.md (system design and tech specs)
+  - docs/PHASE_1_EXECUTION.md (MVP feature plan)
   - infra/aws/README.md (AWS deployment procedures)
 
 ================================================================================
@@ -294,10 +294,10 @@ LOCAL SETUP (Phases A-C):
   → Read: docs/EXECUTION_GUIDE.md
 
 SYSTEM ARCHITECTURE:
-  → Read: docs/ARCHITECTURE_v2.md
+  → Read: docs/ARCHITECTURE.md
 
 FEATURE DELIVERY PLAN (Phase 1):
-  → Read: docs/PHASE_1_EXECUTION_v2.md
+  → Read: docs/PHASE_1_EXECUTION.md
 
 AWS DEPLOYMENT (Phase D):
   → Read: infra/aws/README.md
@@ -384,8 +384,8 @@ Supporting Files:
 
 Internal Documentation Created by Script:
   - docs/EXECUTION_GUIDE.md (Phase A-E)
-  - docs/ARCHITECTURE_v2.md (system design)
-  - docs/PHASE_1_EXECUTION_v2.md (MVP plan)
+  - docs/ARCHITECTURE.md (system design)
+  - docs/PHASE_1_EXECUTION.md (MVP plan)
   - infra/aws/README.md (deployment)
 
 ================================================================================
