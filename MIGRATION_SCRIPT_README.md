@@ -77,8 +77,8 @@ The script includes the complete, current content of these files as heredocs:
 | `infra/aws/ecs-task-definition.json` | 48 lines | JSON (NEW) |
 | `infra/aws/README.md` | 342 lines | Markdown (NEW) |
 | `infra/docker-compose.prod.yml` | 22 lines | YAML (NEW) |
-| `docs/ARCHITECTURE_v2.md` | 648 lines | Markdown (NEW) |
-| `docs/PHASE_1_EXECUTION_v2.md` | 500+ lines | Markdown (NEW) |
+| `docs/ARCHITECTURE.md` | 648 lines | Markdown (NEW) |
+| `docs/PHASE_1_EXECUTION.md` | 500+ lines | Markdown (NEW) |
 | `docs/EXECUTION_GUIDE.md` | 443 lines | Markdown (NEW) |
 
 ## Key Changes
@@ -174,8 +174,8 @@ feat/postgres-migration branch
 │   ├── ecs-task-definition.json (NEW)
 │   └── README.md (NEW)
 ├── docs/
-│   ├── ARCHITECTURE_v2.md (NEW)
-│   ├── PHASE_1_EXECUTION_v2.md (NEW)
+│   ├── ARCHITECTURE.md (NEW)
+│   ├── PHASE_1_EXECUTION.md (NEW)
 │   └── EXECUTION_GUIDE.md (NEW)
 ├── docker-compose.prod.yml (NEW)
 ├── .env.example (UPDATED)

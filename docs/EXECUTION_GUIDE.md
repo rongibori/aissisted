@@ -24,8 +24,8 @@ These are the key migration-related files currently present in the repo:
 | `infra/aws/ecs-task-definition.json` | **NEW** - Fargate task definition |
 | `infra/aws/README.md` | **NEW** - AWS deployment guide |
 | `infra/docker-compose.prod.yml` | **NEW** - Production-like local PG config |
-| `docs/ARCHITECTURE_v2.md` | **NEW** - Updated architecture doc |
-| `docs/PHASE_1_EXECUTION_v2.md` | **NEW** - Updated Phase 1 plan |
+| `docs/ARCHITECTURE.md` | **NEW** - Updated architecture doc |
+| `docs/PHASE_1_EXECUTION.md` | **NEW** - Updated Phase 1 plan |
 
 ---
 
