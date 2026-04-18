@@ -1,0 +1,105 @@
+/*
+ * @aissisted/brand — Brand Bible v1.1 color tokens.
+ * Single source of truth. Imported by apps/web and apps/site.
+ *
+ * Scope: color palette, semantic color mapping, @theme exposure for Tailwind v4.
+ * NOT scoped here: typography stacks, font-face declarations, app-specific
+ * utility classes. Those live per-app so each surface can evolve independently
+ * (apps/web keeps Briston fallback until migration; apps/site ships IBM Plex).
+ *
+ * Color ratio (enforced by design review, not CSS):
+ *   70% white · 20% graphite/black · 8% red · 2% aqua
+ *
+ * Token usage in components:
+ *   bg-surface / bg-surface-2  — backgrounds on the white-first interface
+ *   text-ink / text-muted       — primary and secondary typography
+ *   bg-brand / text-brand       — medical red, 8% budget — use sparingly
+ *   bg-data / text-data         — midnight blue, for data/system surfaces
+ *   bg-signal / text-signal     — aqua, activation + feedback states
+ *   border-line / border-strong — hairline and emphasized borders
+ *   bg-ok / text-ok, bg-warn…   — semantic feedback states
+ *
+ * Changelog:
+ *   v1.3 (2026-04-18) — extracted from apps/web/app/globals.css into
+ *     @aissisted/brand package. apps/web and apps/site now import this
+ *     single file. Typography intentionally NOT extracted (per-app scope).
+ *   v1.2 (2026-04-17) — added @theme block to expose tokens as Tailwind v4
+ *     utilities. Added rally-cry + display typography classes. Extended
+ *     semantic color variables for white-first interface migration.
+ *   v1.1 (2026-04-17) — --brand-red swapped from #8A0F1A (deep oxblood) to
+ *     #EE2B37 (confident saturated medical red). --accent-hover recomputed
+ *     to #CA252F (#EE2B37 × 0.85). Matte finish applies to physical execution
+ *     (cap, packaging) — the digital token is saturated and rendered as-is.
+ */
+
+:root {
+  /* ── Primary ── */
+  --brand-red: #EE2B37;           /* Medical Red — cap, key CTA accents, identity moments. Matte finish in physical execution. */
+
+  /* ── Core neutrals ── */
+  --brand-white: #FFFFFF;         /* Cleanroom, clarity, absence of noise */
+  --brand-graphite: #1C1C1E;      /* Primary typography, structure */
+  --brand-graphite-soft: #2E2E2E; /* Secondary text */
+
+  /* ── Intelligence layer ── */
+  --brand-midnight: #0B1D3A;      /* Data, system UI, intelligence signaling */
+
+  /* ── Accent / activation ── */
+  --brand-aqua: #00C2D1;          /* Activation line, data viz, feedback states */
+
+  /* ── Semantic mapping (white-first interface) ── */
+  --background: var(--brand-white);
+  --surface: var(--brand-white);
+  --surface-2: #F7F7F8;           /* Subtle elevation on white — not a brand token, utility only */
+  --line: #E5E5EA;                /* Hairline dividers on white */
+  --line-strong: #D1D1D6;         /* Emphasized borders (focus, selected) */
+  --ink: var(--brand-graphite);
+  --ink-muted: var(--brand-graphite-soft);
+  --ink-soft: #6E6E73;            /* Tertiary text — captions, timestamps */
+  --accent: var(--brand-red);
+  --accent-hover: #CA252F;        /* brand-red × 0.85 — hover/pressed state */
+  --data: var(--brand-midnight);
+  --signal: var(--brand-aqua);
+
+  /* Feedback states — tuned to the brand palette, not generic */
+  --ok: #0F7A4C;                  /* Desaturated, matte — no retail green */
+  --ok-soft: #E6F4ED;             /* Success surface tint */
+  --warn: #B76B00;                /* Graphite-adjacent amber */
+  --warn-soft: #FBF1E2;           /* Warning surface tint */
+  --danger: var(--brand-red);     /* Brand red already is the "attention" signal */
+  --danger-soft: #FCE6E8;         /* Danger surface tint */
+
+  /* Aliases kept for back-compat with earlier tokens */
+  --border: var(--line);
+  --text: var(--ink);
+  --text-muted: var(--ink-muted);
+  --success: var(--ok);
+  --warning: var(--warn);
+}
+
+/*
+ * @theme — expose Brand Bible tokens as first-class Tailwind v4 utilities.
+ * This generates bg-*, text-*, border-*, ring-* utilities automatically.
+ * Names are brand-semantic (ink/line/brand/signal/ok/warn/danger) — do not
+ * introduce literal color utilities (bg-red-500, text-indigo-400) anywhere
+ * in apps/web/** or apps/site/** from here on.
+ */
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--accent);
+  --color-brand-hover: var(--accent-hover);
+  --color-data: var(--data);
+  --color-signal: var(--signal);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+}

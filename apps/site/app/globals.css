@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/*
+ * Aissisted — apps/site (presentation + investor)
+ *
+ * Color tokens + @theme live in @aissisted/brand/tokens.css (shared single
+ * source of truth across apps/web and apps/site). Do NOT redeclare color
+ * tokens here — change them in packages/brand/tokens.css and every app
+ * updates simultaneously.
+ *
+ * Typography is per-app. apps/site ships IBM Plex (SIL OFL 1.1):
+ *   Plex Sans   → headlines, body prose, Jeffrey prose (warmth, approved deviation)
+ *   Plex Mono   → system affordances (timestamps, citations, data, intent badges)
+ *   Plex Serif  → emotional accents only — never UI, never body default
+ *
+ * Fonts are self-hosted via @fontsource (ships woff2 files with the bundle).
+ * No CDN dependency on the critical render path.
+ */
+@import "@aissisted/brand/tokens.css";
+
+:root {
+  /* ── Typography stacks (IBM Plex, per-app — NOT shared with apps/web) ── */
+  --font-display: "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-system: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-accent: "IBM Plex Serif", "Baskerville", Georgia, serif;
+}
+
+/*
+ * Expose Plex stacks to Tailwind v4 as first-class font utilities.
+ * Usage: class="font-display" (headlines), class="font-system" (system UI),
+ * class="font-accent" (serif emotional accents only).
+ */
+@theme {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-system: var(--font-system);
+  --font-accent: var(--font-accent);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headlines — Plex Sans, tight tracking, ink. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/*
+ * Rally cry — "Your Body. Understood."
+ * Canonical styling. Display font, oversized, tight tracking, period-separated.
+ * Never underline, never italicize, never all-caps.
+ */
+.rally-cry {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  line-height: 1.02;
+}
+
+/* System surfaces — timestamps, citations, Jeffrey intent badges, data. Plex Mono. */
+.font-system { font-family: var(--font-system); }
+
+/* Serif accents — pull-quotes, emotional punctuation. Never the body default. */
+.font-accent { font-family: var(--font-accent); }
+
+/* Hairline focus ring in brand aqua — activation signal, not a generic ring. */
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
+}
