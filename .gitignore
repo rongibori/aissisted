@@ -11,6 +11,11 @@ coverage
 .DS_Store
 *.log
 *.tsbuildinfo
+
+# Next.js auto-regenerates next-env.d.ts on every build — ignored per
+# https://nextjs.org/docs/app/api-reference/config/typescript#ignoring-typescript-errors
+apps/*/next-env.d.ts
+
 packages/db/data
 # packages/db/drizzle — migration SQL files ARE tracked (needed for production deploys)
 apps/api/data/*.db
