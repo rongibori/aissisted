@@ -127,8 +127,9 @@ export async function persistRawBiomarkers(
         measuredAt: entry.measuredAt,
         createdAt: now,
       })
-      .onConflictDoNothing();
-    if (result.rowsAffected > 0) count++;
+      .onConflictDoNothing()
+      .returning({ id: schema.biomarkers.id });
+    if (result.length > 0) count++;
   }
   return count;
 }
