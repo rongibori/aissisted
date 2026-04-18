@@ -18,7 +18,19 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
-    ]
+      "@tailwindcss/oxide",
+      "@swc/core",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ],
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@prisma/client"
+      ]
+    },
+    "overrides": {
+      "@prisma/client": "npm:@types/noop@1.0.0"
+    }
   }
 }
