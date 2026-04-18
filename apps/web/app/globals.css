@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Aissisted design tokens — locked to Brand Bible v1.0
+ * Aissisted design tokens — locked to Brand Bible v1.1
  * Source: docs/brand/BRAND_BIBLE.md §§ "VISUAL IDENTITY" and "LOCKED VISUAL STYLE GUIDE"
  *
  * Color ratio (enforced by design review, not CSS):
@@ -11,11 +11,17 @@
  * Baskerville (emotional accents only, never UI).
  * Briston is licensed — not yet shipped as a webfont. Fallback stack in
  * --font-display holds the visual feel until the webfont license is resolved.
+ *
+ * Changelog:
+ *   v1.1 (2026-04-17) — --brand-red swapped from #8A0F1A (deep oxblood) to
+ *     #EE2B37 (confident saturated medical red). --accent-hover recomputed
+ *     to #CA252F (#EE2B37 × 0.85). Matte finish applies to physical execution
+ *     (cap, packaging) — the digital token is saturated and rendered as-is.
  */
 
 :root {
   /* ── Primary ── */
-  --brand-red: #8A0F1A;           /* Medical Red — cap, key CTA accents, identity moments. Matte only. */
+  --brand-red: #EE2B37;           /* Medical Red — cap, key CTA accents, identity moments. Matte finish in physical execution. */
 
   /* ── Core neutrals ── */
   --brand-white: #FFFFFF;         /* Cleanroom, clarity, absence of noise */
@@ -36,7 +42,7 @@
   --text: var(--brand-graphite);
   --text-muted: var(--brand-graphite-soft);
   --accent: var(--brand-red);
-  --accent-hover: #6E0C15;        /* -15% luminance of brand-red */
+  --accent-hover: #CA252F;        /* brand-red × 0.85 — hover/pressed state */
   --data: var(--brand-midnight);
   --signal: var(--brand-aqua);
 
