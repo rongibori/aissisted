@@ -38,59 +38,36 @@ interface HealthState {
 }
 
 // ─── Constants ────────────────────────────────────────────
+/*
+ * Mode palette — Brand Bible v1.1 semantic mapping.
+ * Red (`danger`) is the attention signal. Warn is graphite-amber.
+ * Ok is desaturated success. Data is midnight for informational states.
+ * Never introduce raw Tailwind color utilities here.
+ */
 
 const MODE_CONFIG: Record<
   string,
-  { label: string; color: string; bg: string; border: string }
+  { label: string; tone: "ok" | "warn" | "danger" | "data" | "neutral" }
 > = {
-  optimal: {
-    label: "Optimal",
-    color: "text-emerald-400",
-    bg: "bg-emerald-950",
-    border: "border-emerald-900",
-  },
-  cardiovascular_risk: {
-    label: "Cardiovascular Risk",
-    color: "text-red-400",
-    bg: "bg-red-950",
-    border: "border-red-900",
-  },
-  metabolic_dysfunction: {
-    label: "Metabolic Concern",
-    color: "text-amber-400",
-    bg: "bg-amber-950",
-    border: "border-amber-900",
-  },
-  hormonal_imbalance: {
-    label: "Hormonal Imbalance",
-    color: "text-purple-400",
-    bg: "bg-purple-950",
-    border: "border-purple-900",
-  },
-  micronutrient_deficient: {
-    label: "Micronutrient Gap",
-    color: "text-yellow-400",
-    bg: "bg-yellow-950",
-    border: "border-yellow-900",
-  },
-  renal_caution: {
-    label: "Renal Caution",
-    color: "text-orange-400",
-    bg: "bg-orange-950",
-    border: "border-orange-900",
-  },
-  inflammatory: {
-    label: "Inflammation",
-    color: "text-red-400",
-    bg: "bg-red-950",
-    border: "border-red-900",
-  },
-  data_insufficient: {
-    label: "Insufficient Data",
-    color: "text-[#7a7a98]",
-    bg: "bg-[#1c1c26]",
-    border: "border-[#2a2a38]",
-  },
+  optimal:                 { label: "Optimal",              tone: "ok"      },
+  cardiovascular_risk:     { label: "Cardiovascular Risk",  tone: "danger"  },
+  metabolic_dysfunction:   { label: "Metabolic Concern",    tone: "warn"    },
+  hormonal_imbalance:      { label: "Hormonal Imbalance",   tone: "warn"    },
+  micronutrient_deficient: { label: "Micronutrient Gap",    tone: "warn"    },
+  renal_caution:           { label: "Renal Caution",        tone: "warn"    },
+  inflammatory:            { label: "Inflammation",         tone: "danger"  },
+  data_insufficient:       { label: "Insufficient Data",    tone: "neutral" },
+};
+
+const TONE_CLASSES: Record<
+  "ok" | "warn" | "danger" | "data" | "neutral",
+  string
+> = {
+  ok:      "text-ok bg-ok-soft border-ok/20",
+  warn:    "text-warn bg-warn-soft border-warn/20",
+  danger:  "text-danger bg-danger-soft border-danger/20",
+  data:    "text-data bg-surface-2 border-line",
+  neutral: "text-muted bg-surface-2 border-line",
 };
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -102,26 +79,25 @@ const DOMAIN_LABELS: Record<string, string> = {
   inflammatory: "Inflam.",
 };
 
-const SEVERITY_COLORS = {
-  critical: "text-red-400",
-  warn: "text-amber-400",
-  info: "text-[#7a7a98]",
+const SEVERITY_TEXT: Record<ActiveSignal["severity"], string> = {
+  critical: "text-danger",
+  warn: "text-warn",
+  info: "text-muted",
 };
 
-const SEVERITY_DOT = {
-  critical: "bg-red-500",
-  warn: "bg-amber-400",
-  info: "bg-[#7a7a98]",
+const SEVERITY_DOT: Record<ActiveSignal["severity"], string> = {
+  critical: "bg-danger",
+  warn: "bg-warn",
+  info: "bg-muted",
 };
 
 // ─── Domain score bar ─────────────────────────────────────
 
 function domainBarColor(score: number): string {
-  if (score < 0.2) return "bg-emerald-500";
-  if (score < 0.4) return "bg-emerald-400";
-  if (score < 0.6) return "bg-amber-400";
-  if (score < 0.8) return "bg-orange-500";
-  return "bg-red-500";
+  // Lower score = healthier. Ok / warn / danger, matte brand semantics.
+  if (score < 0.4) return "bg-ok";
+  if (score < 0.7) return "bg-warn";
+  return "bg-danger";
 }
 
 function DomainBar({
@@ -134,14 +110,14 @@ function DomainBar({
   const pct = Math.round(score * 100);
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-[#7a7a98] w-16 shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-[#2a2a38] rounded-full overflow-hidden">
+      <span className="text-[11px] text-muted w-16 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${domainBarColor(score)}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[11px] text-[#7a7a98] w-7 text-right shrink-0">
+      <span className="text-[11px] text-muted w-7 text-right shrink-0">
         {pct}%
       </span>
     </div>
@@ -187,6 +163,7 @@ export function HealthStateWidget() {
   const modeConfig =
     (state?.mode ? MODE_CONFIG[state.mode] : undefined) ??
     MODE_CONFIG.data_insufficient;
+  const toneClass = TONE_CLASSES[modeConfig.tone];
 
   const actionableSignals =
     state?.activeSignals.filter((s) => s.severity !== "info").slice(0, 3) ?? [];
@@ -202,11 +179,11 @@ export function HealthStateWidget() {
   return (
     <Card>
       <div className="flex items-start justify-between mb-4">
-        <h2 className="font-semibold text-[#e8e8f0]">Health State</h2>
+        <h2 className="font-semibold text-ink">Health State</h2>
         <button
           onClick={handleRefresh}
           disabled={refreshing || loading}
-          className="text-xs text-[#7a7a98] hover:text-[#e8e8f0] transition-colors disabled:opacity-40"
+          className="text-xs text-muted hover:text-ink transition-colors disabled:opacity-40"
           title="Refresh health state"
         >
           {refreshing ? "..." : "↻ Refresh"}
@@ -219,16 +196,16 @@ export function HealthStateWidget() {
         </div>
       ) : error || !state ? (
         <div className="text-center py-6">
-          <p className="text-sm text-[#7a7a98]">
-            {error ? "Could not load health state." : "No health data yet."}
+          <p className="text-sm text-muted">
+            {error ? "We couldn't load your health state." : "No health data yet."}
           </p>
-          <p className="text-xs text-[#7a7a98] mt-1">Add lab results to get started.</p>
+          <p className="text-xs text-soft mt-1">Add a lab result to begin.</p>
         </div>
       ) : (
         <>
           {/* Mode badge */}
           <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium ${modeConfig.color} ${modeConfig.bg} border ${modeConfig.border} mb-4`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border ${toneClass} mb-4`}
           >
             {state.mode === "optimal" ? "✓ " : "● "}
             {modeConfig.label}
@@ -250,8 +227,8 @@ export function HealthStateWidget() {
 
           {/* Active signals (warn + critical) */}
           {actionableSignals.length > 0 && (
-            <div className="border-t border-[#2a2a38] pt-3 mb-3">
-              <p className="text-[11px] font-semibold text-[#7a7a98] uppercase tracking-wider mb-2">
+            <div className="border-t border-line pt-3 mb-3">
+              <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
                 Active Signals
               </p>
               <div className="flex flex-col gap-2">
@@ -267,14 +244,16 @@ export function HealthStateWidget() {
                           {sig.components.map((c) => (
                             <span
                               key={c}
-                              className="text-[9px] px-1.5 py-0.5 rounded bg-[#2a2a38] text-[#7a7a98] font-mono"
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-surface-2 text-muted font-system border border-line"
                             >
-                              {c.replace(/_/g, " ").replace(/ (mg dl|ng ml|pg ml|miu l|mcg dl|g dl|u l)$/, "")}
+                              {c
+                                .replace(/_/g, " ")
+                                .replace(/ (mg dl|ng ml|pg ml|miu l|mcg dl|g dl|u l)$/, "")}
                             </span>
                           ))}
                         </div>
                       )}
-                      <p className={`text-xs leading-relaxed ${SEVERITY_COLORS[sig.severity]}`}>
+                      <p className={`text-xs leading-relaxed ${SEVERITY_TEXT[sig.severity]}`}>
                         {sig.explanation}
                       </p>
                     </div>
@@ -286,12 +265,12 @@ export function HealthStateWidget() {
 
           {/* Warnings */}
           {state.warnings.length > 0 && (
-            <div className="border-t border-[#2a2a38] pt-3 mb-3">
-              <p className="text-[11px] font-semibold text-[#7a7a98] uppercase tracking-wider mb-2">
+            <div className="border-t border-line pt-3 mb-3">
+              <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
                 Clinical Notes
               </p>
               {state.warnings.slice(0, 2).map((w, i) => (
-                <p key={i} className="text-xs text-amber-400 leading-relaxed mb-1">
+                <p key={i} className="text-xs text-warn leading-relaxed mb-1">
                   ⚠ {w}
                 </p>
               ))}
@@ -300,20 +279,24 @@ export function HealthStateWidget() {
 
           {/* Data gaps */}
           {(missingCount > 0 || staleCount > 0) && (
-            <div className="border-t border-[#2a2a38] pt-3">
-              <p className="text-[11px] text-[#7a7a98]">
+            <div className="border-t border-line pt-3">
+              <p className="text-[11px] text-muted">
                 {missingCount > 0 && (
-                  <span>{missingCount} key lab{missingCount > 1 ? "s" : ""} missing · </span>
+                  <span>
+                    {missingCount} key lab{missingCount > 1 ? "s" : ""} missing ·{" "}
+                  </span>
                 )}
                 {staleCount > 0 && (
-                  <span>{staleCount} lab{staleCount > 1 ? "s" : ""} stale (&gt;6 mo)</span>
+                  <span>
+                    {staleCount} lab{staleCount > 1 ? "s" : ""} stale (&gt;6 mo)
+                  </span>
                 )}
               </p>
             </div>
           )}
 
           {/* Last updated */}
-          <p className="text-[10px] text-[#7a7a98] mt-3 opacity-60">
+          <p className="text-[10px] text-soft mt-3">
             Updated{" "}
             {new Date(state.createdAt).toLocaleString(undefined, {
               month: "short",

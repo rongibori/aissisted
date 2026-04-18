@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/auth-context";
 
@@ -20,10 +21,20 @@ export function Nav() {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#0a0a0f] border-b border-[#2a2a38] flex items-center px-6 gap-8">
-      {/* Logo */}
-      <Link href="/dashboard" className="text-[#e8e8f0] font-semibold text-base tracking-tight">
-        Aissisted
+    <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-surface border-b border-line flex items-center px-6 gap-8">
+      {/* Wordmark — primary graphite variant on white surface */}
+      <Link
+        href="/dashboard"
+        aria-label="Aissisted — Your Body. Understood."
+        className="flex items-center"
+      >
+        <Image
+          src="/brand/Aissisted-logo-H.svg"
+          alt="Aissisted"
+          width={120}
+          height={22}
+          priority
+        />
       </Link>
 
       {/* Links */}
@@ -34,8 +45,8 @@ export function Nav() {
             href={href}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
               pathname.startsWith(href)
-                ? "bg-[#1c1c26] text-[#e8e8f0]"
-                : "text-[#7a7a98] hover:text-[#e8e8f0] hover:bg-[#1c1c26]"
+                ? "bg-surface-2 text-ink"
+                : "text-muted hover:text-ink hover:bg-surface-2"
             }`}
           >
             {label}
@@ -46,10 +57,10 @@ export function Nav() {
       {/* User */}
       {user && (
         <div className="flex items-center gap-3">
-          <span className="text-sm text-[#7a7a98]">{user.email}</span>
+          <span className="text-sm text-muted">{user.email}</span>
           <button
             onClick={logout}
-            className="text-sm text-[#7a7a98] hover:text-[#e8e8f0] transition-colors"
+            className="text-sm text-muted hover:text-ink transition-colors"
           >
             Sign out
           </button>

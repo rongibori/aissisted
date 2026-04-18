@@ -2,6 +2,15 @@
 
 import React from "react";
 
+/*
+ * Aissisted UI kit — Brand Bible v1.1 tokens
+ *
+ * All colors route through the @theme tokens in app/globals.css.
+ * No hex literals, no legacy indigo / slate / zinc utilities here.
+ * Surface palette is white-first (70% white), with graphite ink and
+ * medical red reserved for true brand moments (8% budget).
+ */
+
 // ─── Button ──────────────────────────────────────────────
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger";
@@ -19,17 +28,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0f] disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
+    // Primary = ink-on-white authority. Red is reserved for brand moments;
+    // most CTAs should read as calm / assured, not attention-grabbing.
     primary:
-      "bg-indigo-600 hover:bg-indigo-500 text-white focus:ring-indigo-500",
+      "bg-ink text-surface hover:bg-muted focus:ring-ink",
     secondary:
-      "bg-[#1c1c26] hover:bg-[#2a2a38] text-[#e8e8f0] border border-[#2a2a38] focus:ring-indigo-500",
+      "bg-surface text-ink border border-line hover:border-line-strong focus:ring-line-strong",
     ghost:
-      "hover:bg-[#1c1c26] text-[#7a7a98] hover:text-[#e8e8f0] focus:ring-indigo-500",
+      "text-muted hover:text-ink hover:bg-surface-2 focus:ring-line-strong",
+    // Danger = brand red. Use sparingly; this is the attention signal.
     danger:
-      "bg-red-600 hover:bg-red-500 text-white focus:ring-red-500",
+      "bg-brand text-surface hover:bg-brand-hover focus:ring-brand",
   };
 
   const sizes = {
@@ -63,7 +75,9 @@ export function Card({ children, className = "", onClick }: CardProps) {
   return (
     <div
       onClick={onClick}
-      className={`bg-[#13131a] border border-[#2a2a38] rounded-xl p-5 ${onClick ? "cursor-pointer hover:border-[#3a3a50] transition-colors" : ""} ${className}`}
+      className={`bg-surface border border-line rounded-xl p-5 ${
+        onClick ? "cursor-pointer hover:border-line-strong transition-colors" : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -87,14 +101,16 @@ export function Input({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-[#e8e8f0]">{label}</label>
+        <label className="text-sm font-medium text-ink">{label}</label>
       )}
       <input
-        className={`bg-[#1c1c26] border ${error ? "border-red-500" : "border-[#2a2a38]"} rounded-lg px-3 py-2 text-[#e8e8f0] placeholder-[#7a7a98] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${className}`}
+        className={`bg-surface border ${
+          error ? "border-danger" : "border-line"
+        } rounded-lg px-3 py-2 text-ink placeholder-soft text-sm focus:outline-none focus:ring-2 focus:ring-ink/20 focus:border-ink transition-colors ${className}`}
         {...props}
       />
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      {hint && !error && <p className="text-xs text-[#7a7a98]">{hint}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
+      {hint && !error && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }
@@ -107,11 +123,12 @@ interface BadgeProps {
 
 export function Badge({ children, variant = "default" }: BadgeProps) {
   const variants = {
-    default: "bg-[#2a2a38] text-[#7a7a98]",
-    success: "bg-green-950 text-green-400",
-    warning: "bg-amber-950 text-amber-400",
-    danger: "bg-red-950 text-red-400",
-    info: "bg-indigo-950 text-indigo-400",
+    default: "bg-surface-2 text-muted border border-line",
+    success: "bg-ok-soft text-ok border border-ok/20",
+    warning: "bg-warn-soft text-warn border border-warn/20",
+    danger:  "bg-danger-soft text-danger border border-danger/20",
+    // "info" surfaces intelligence / system state — midnight data channel
+    info:    "bg-surface-2 text-data border border-line",
   };
 
   return (
@@ -128,7 +145,9 @@ export function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const sizes = { sm: "w-4 h-4", md: "w-6 h-6", lg: "w-10 h-10" };
   return (
     <div
-      className={`${sizes[size]} border-2 border-[#2a2a38] border-t-indigo-500 rounded-full animate-spin`}
+      className={`${sizes[size]} border-2 border-line border-t-ink rounded-full animate-spin`}
+      role="status"
+      aria-label="Loading"
     />
   );
 }
@@ -145,9 +164,34 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-      <p className="text-[#e8e8f0] font-medium">{title}</p>
-      {description && <p className="text-sm text-[#7a7a98] max-w-sm">{description}</p>}
+      <p className="text-ink font-medium">{title}</p>
+      {description && (
+        <p className="text-sm text-muted max-w-sm">{description}</p>
+      )}
       {action && <div className="mt-2">{action}</div>}
     </div>
+  );
+}
+
+// ─── Rally Cry ────────────────────────────────────────────
+// "Your Body. Understood." — the single canonical brand rally cry.
+// Use this component anywhere the rally cry is surfaced (login hero,
+// onboarding completion, marketing surfaces) to guarantee one rendering.
+export function RallyCry({
+  size = "md",
+  className = "",
+}: {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  const sizes = {
+    sm: "text-2xl sm:text-3xl",
+    md: "text-4xl sm:text-5xl",
+    lg: "text-5xl sm:text-6xl",
+  };
+  return (
+    <p className={`rally-cry ${sizes[size]} ${className}`}>
+      Your Body. <span className="text-brand">Understood.</span>
+    </p>
   );
 }
