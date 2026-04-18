@@ -38,7 +38,10 @@ Classification pass used Path B from issue #28: *commit canonical specs as-is, f
 | `aissisted-brand-architecture.html` | **KEEP** | Brand system visualization (derivative of Brand Bible §Architecture). |
 | `aissisted-brand-brief.html` | **KEEP** | Brand brief reference (derivative of Brand Bible §Creative Brief). |
 | `aissisted-website.html` | **KEEP** | Website prototype HTML. |
-| `assets/Aissisted-logo-H.png` | **KEEP** | Horizontal logo lockup (13 KB). |
+| `assets/Aissisted-logo-H.svg` | **PRIMARY** | Horizontal wordmark lockup, vector. Dark-surface variant (white ink). Use on graphite/midnight/red backgrounds. |
+| `assets/Aissisted-logo-H.png` | **KEEP** | Horizontal lockup, 455×85 raster fallback (13 KB) — for email/social where SVG isn't supported. |
+
+> **Gap flagged:** the current SVG + PNG are both dark-surface variants (white ink). The Brand Bible's 70% white-first surface requires a **light-surface variant** (dark-ink / graphite on transparent) for hero, app shell, and documents. Tracked as a follow-up — see Planner task #20.
 | `DESIGN_SOURCES.md` | **KEEP** | Pointer index to large binary design sources kept off-repo. |
 
 > **Precedence:** when `BRAND_BIBLE.md` conflicts with any derivative (HTML briefs, specs, component copy, or UI), the Bible wins. File a PR to reconcile the derivative — do not edit the Bible to match drift.
