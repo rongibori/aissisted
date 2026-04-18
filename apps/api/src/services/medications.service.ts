@@ -39,7 +39,7 @@ export async function persistMedications(
 ): Promise<number> {
   if (meds.length === 0) return 0;
 
-  const now = new Date().toISOString();
+  const now = new Date();
   let inserted = 0;
 
   for (const med of meds) {

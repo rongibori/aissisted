@@ -47,7 +47,7 @@ export async function writeAuditLog(
     action,
     resource,
     resourceId: resourceId ?? null,
-    detail: detail ? JSON.stringify(detail) : null,
-    createdAt: new Date().toISOString(),
+    detail: detail ?? null,
+    createdAt: new Date(),
   });
 }

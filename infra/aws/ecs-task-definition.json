@@ -1,0 +1,48 @@
+{
+  "family": "aissisted-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/aissisted-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/aissisted-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "aissisted-api",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/aissisted-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "4000" },
+        { "name": "API_HOST", "value": "0.0.0.0" },
+        { "name": "NODE_ENV", "value": "production" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/aissisted/prod/database-url" },
+        { "name": "JWT_SECRET", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/aissisted/prod/jwt-secret" },
+        { "name": "ANTHROPIC_API_KEY", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/aissisted/prod/anthropic-api-key" },
+        { "name": "TOKEN_ENCRYPTION_KEY", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/aissisted/prod/token-encryption-key" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/aissisted-api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

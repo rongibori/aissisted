@@ -79,7 +79,7 @@ export async function chat(
         await logSupplement(userId, {
           supplementName,
           skipped,
-          takenAt: skipped ? undefined : new Date().toISOString(),
+          takenAt: skipped ? undefined : new Date(),
           note: message.slice(0, 200),
         });
         contextInjection = `\n\n[SUPPLEMENT LOGGED: ${supplementName} — ${skipped ? "skipped" : "taken"}]`;

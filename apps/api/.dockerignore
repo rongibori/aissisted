@@ -1,0 +1,55 @@
+# ─── Version control / editor ──────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+*.swp
+
+# ─── Node / pnpm ────────────────────────────────────────────────────────────
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/.nyc_output
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Env / secrets (NEVER ship these) ───────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# ─── Tests / dev tooling ────────────────────────────────────────────────────
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+**/__mocks__
+.vitest-cache
+
+# ─── Docs & misc ────────────────────────────────────────────────────────────
+README.md
+CHANGELOG.md
+LICENSE
+docs
+*.md
+
+# ─── Build artifacts we don't need at runtime ───────────────────────────────
+**/.cache
+**/tmp
+**/*.tsbuildinfo
+
+# ─── Frontend (apps/web) — API container doesn't need it ────────────────────
+apps/web
+
+# ─── Docker itself ──────────────────────────────────────────────────────────
+Dockerfile
+.dockerignore
+docker-compose*.yml
+infra

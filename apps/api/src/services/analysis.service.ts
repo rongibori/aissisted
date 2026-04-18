@@ -716,17 +716,17 @@ export async function computeHealthState(userId: string): Promise<HealthState> {
 
   // 9. Persist snapshot
   const id = randomUUID();
-  const createdAt = new Date().toISOString();
+  const createdAt = new Date();
 
   await db.insert(schema.healthStateSnapshots).values({
     id,
     userId,
     mode,
     confidenceScore,
-    domainScores: JSON.stringify(domainScores),
-    activeSignals: JSON.stringify(activeSignals.map((s) => s.key)),
-    warnings: JSON.stringify(warnings),
-    missingDataFlags: JSON.stringify(missingDataFlags),
+    domainScores,
+    activeSignals: activeSignals.map((s) => s.key),
+    warnings,
+    missingDataFlags,
     createdAt,
   });
 

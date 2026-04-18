@@ -1,23 +1,23 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { mkdirSync } from "fs";
-import { dirname } from "path";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import * as schema from "./schema.js";
 
-const dbUrl = process.env.DATABASE_URL ?? "file:./data/aissisted.db";
+const connectionString = process.env.DATABASE_URL ?? "postgresql://aissisted:aissisted@localhost:5432/aissisted";
 
-// Ensure the data directory exists for local SQLite files
-if (dbUrl.startsWith("file:")) {
-  const filePath = dbUrl.replace("file:", "");
-  try {
-    mkdirSync(dirname(filePath), { recursive: true });
-  } catch {
-    // Directory already exists
-  }
-}
+const pool = new pg.Pool({
+  connectionString,
+  // Connection pool settings for production
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  // SSL for AWS RDS in production
+  ...(process.env.NODE_ENV === "production" && {
+    ssl: { rejectUnauthorized: true },
+  }),
+});
 
-const client = createClient({ url: dbUrl });
-export const db = drizzle(client, { schema });
+export const db = drizzle(pool, { schema });
 
 export { schema };
 export * from "drizzle-orm";
+export * from "./encryption.js";

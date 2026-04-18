@@ -19,7 +19,7 @@ export async function createUser(email: string, password: string) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const now = new Date().toISOString();
+  const now = new Date();
   const id = randomUUID();
 
   await db.insert(schema.users).values({
@@ -91,7 +91,7 @@ export async function changePassword(
   const passwordHash = await bcrypt.hash(newPassword, 12);
   await db
     .update(schema.users)
-    .set({ passwordHash, updatedAt: new Date().toISOString() })
+    .set({ passwordHash, updatedAt: new Date() })
     .where(eq(schema.users.id, userId));
 }
 

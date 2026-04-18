@@ -48,7 +48,7 @@ export async function storeFhirTokens(
   const expiresAt = tokens.expires_in
     ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
     : undefined;
-  const now = new Date().toISOString();
+  const now = new Date();
 
   const existing = await db
     .select({ id: schema.integrationTokens.id, refreshToken: schema.integrationTokens.refreshToken })
@@ -65,7 +65,7 @@ export async function storeFhirTokens(
     accessToken: encrypt(tokens.access_token),
     refreshToken: encryptedRefreshToken,
     expiresAt: expiresAt ?? null,
-    metadata: JSON.stringify({ patientId }),
+    metadata: { patientId },
     updatedAt: now,
   };
 
@@ -144,14 +144,14 @@ async function storeRawFhirResources(
   resources: Array<{ id: string; [key: string]: any }>,
   syncBatchId: string
 ): Promise<void> {
-  const now = new Date().toISOString();
+  const now = new Date();
   for (const resource of resources) {
     if (!resource.id) continue;
-    const payload = JSON.stringify(resource);
-    const payloadHash = createHash("sha256").update(payload).digest("hex");
-    await db
-      .insert(schema.rawFhirResources)
-      .values({
+    const payload = resource;
+    // SHA-256 hash for deduplication across repeated pulls
+    const payloadHash = createHash("sha256").update(JSON.stringify(resource)).digest("hex");
+    try {
+      await db.insert(schema.rawFhirResources).values({
         id: randomUUID(),
         userId,
         provider: "epic",
@@ -161,8 +161,10 @@ async function storeRawFhirResources(
         payloadHash,
         syncBatchId,
         syncedAt: now,
-      })
-      .onConflictDoNothing();
+      });
+    } catch {
+      // Skip if already stored (duplicate resourceId for this user)
+    }
   }
 }
 
@@ -208,7 +210,7 @@ async function hydratePatientDemographics(
   if (Object.keys(updates).length > 0) {
     await db
       .update(schema.healthProfiles)
-      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(schema.healthProfiles.userId, userId));
   }
 }
@@ -231,7 +233,7 @@ async function persistAllergies(userId: string, allergyNames: string[]): Promise
 
   await db
     .update(schema.healthProfiles)
-    .set({ allergies: JSON.stringify(merged), updatedAt: new Date().toISOString() })
+    .set({ allergies: merged, updatedAt: new Date() })
     .where(eq(schema.healthProfiles.userId, userId));
 }
 
@@ -257,7 +259,7 @@ export async function syncFhirForUser(
 ): Promise<FhirSyncResult> {
   // Create sync batch record
   const batchId = randomUUID();
-  const startedAt = new Date().toISOString();
+  const startedAt = new Date();
   await db.insert(schema.syncBatches).values({
     id: batchId,
     userId,
@@ -317,7 +319,7 @@ export async function syncFhirForUser(
     const medicationsInserted = await persistMedications(userId, normalizedMedications);
 
     // Update sync batch to completed
-    const completedAt = new Date().toISOString();
+    const completedAt = new Date();
     await db
       .update(schema.syncBatches)
       .set({
@@ -351,7 +353,7 @@ export async function syncFhirForUser(
       .set({
         status: "failed",
         errorMessage: err instanceof Error ? err.message : String(err),
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
       })
       .where(eq(schema.syncBatches.id, batchId));
 
