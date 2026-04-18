@@ -51,14 +51,19 @@ export async function storeFhirTokens(
   const now = new Date();
 
   const existing = await db
-    .select({ id: schema.integrationTokens.id })
+    .select({ id: schema.integrationTokens.id, refreshToken: schema.integrationTokens.refreshToken })
     .from(schema.integrationTokens)
     .where(whereUserFhir(userId))
     .get();
 
+  // When the token response omits refresh_token (common on refresh flows), preserve the stored value.
+  const encryptedRefreshToken = tokens.refresh_token
+    ? encrypt(tokens.refresh_token)
+    : (existing?.refreshToken ?? null);
+
   const payload = {
     accessToken: encrypt(tokens.access_token),
-    refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
+    refreshToken: encryptedRefreshToken,
     expiresAt: expiresAt ?? null,
     metadata: { patientId },
     updatedAt: now,

@@ -110,8 +110,9 @@ export async function persistRawBiomarkers(
   let count = 0;
   const now = new Date();
   for (const entry of entries) {
-    try {
-      await db.insert(schema.biomarkers).values({
+    const result = await db
+      .insert(schema.biomarkers)
+      .values({
         id: randomUUID(),
         userId,
         name: entry.name,
@@ -125,11 +126,9 @@ export async function persistRawBiomarkers(
         confidence: entry.confidence ?? 1.0,
         measuredAt: entry.measuredAt,
         createdAt: now,
-      });
-      count++;
-    } catch {
-      // Skip duplicates / constraint violations
-    }
+      })
+      .onConflictDoNothing();
+    if (result.rowsAffected > 0) count++;
   }
   return count;
 }

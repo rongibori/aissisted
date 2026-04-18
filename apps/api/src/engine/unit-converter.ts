@@ -15,45 +15,17 @@ interface UnitConversion {
   factor: number; // canonical = input * factor
 }
 
+// Keep this table limited to unambiguous generic conversions.
+// Biomarker-specific factors (for example mmol/L → mg/dL for glucose,
+// cholesterol, triglycerides, BUN, etc.) must be handled by
+// BIOMARKER_CONVERSIONS so normalized `from` units remain unique here.
+
 const CONVERSIONS: UnitConversion[] = [
-  // ─── Lipids & Cholesterol ────────────────────
-  { from: "mmol/l", to: "mg/dl", factor: 38.67 },   // Total cholesterol, LDL, HDL
-  { from: "mmol/L", to: "mg/dL", factor: 38.67 },
-  // Triglycerides
-  { from: "mmol/l", to: "mg/dl", factor: 88.57 },   // same SI unit, different factor... handled by biomarker name
-
-  // ─── Glucose / HbA1c ─────────────────────────
-  // Glucose: mmol/L → mg/dL
-  // Note: triglycerides use a different factor so biomarker-specific conversions take priority
-
-  // ─── Thyroid ─────────────────────────────────
-  { from: "mu/l", to: "miu/l", factor: 1 },          // TSH: mU/L = mIU/L
-  { from: "pmol/l", to: "pg/ml", factor: 1.287 },    // Free T4: pmol/L → pg/mL
-  { from: "pmol/l", to: "ng/dl", factor: 0.0777 },   // Free T4: pmol/L → ng/dL (alt)
-  { from: "pmol/l", to: "pg/ml", factor: 0.6509 },   // Free T3: pmol/L → pg/mL
-
-  // ─── Vitamins ────────────────────────────────
-  { from: "nmol/l", to: "ng/ml", factor: 0.4006 },   // Vitamin D: nmol/L → ng/mL
-  { from: "pmol/l", to: "pg/ml", factor: 1.355 },    // B12: pmol/L → pg/mL
-  { from: "nmol/l", to: "ng/ml", factor: 0.2266 },   // Folate: nmol/L → ng/mL
-
-  // ─── Hormones ────────────────────────────────
-  { from: "nmol/l", to: "ng/dl", factor: 28.84 },    // Testosterone: nmol/L → ng/dL
-  { from: "nmol/l", to: "mcg/dl", factor: 0.2718 },  // Cortisol: nmol/L → mcg/dL
-  { from: "pmol/l", to: "pg/ml", factor: 0.272 },    // Estradiol: pmol/L → pg/mL
-
-  // ─── Iron Studies ────────────────────────────
-  { from: "umol/l", to: "mcg/dl", factor: 5.585 },   // Iron: µmol/L → mcg/dL
-  { from: "pmol/l", to: "ng/ml", factor: 1 },        // Ferritin: µg/L = ng/mL (already same)
-  { from: "ug/l", to: "ng/ml", factor: 1 },          // Ferritin: µg/L = ng/mL
-
-  // ─── Renal ───────────────────────────────────
-  { from: "umol/l", to: "mg/dl", factor: 0.01131 },  // Creatinine: µmol/L → mg/dL
-  { from: "mmol/l", to: "mg/dl", factor: 2.801 },    // BUN: mmol/L → mg/dL
-
-  // ─── Inflammation ────────────────────────────
-  { from: "mg/l", to: "mg/l", factor: 1 },           // CRP: already in mg/L
-  { from: "nmol/l", to: "umol/l", factor: 0.001 },   // Homocysteine: nmol/L → µmol/L
+  // ─── Generic unit equivalence / unambiguous conversions ──────────────
+  { from: "mu/l", to: "miu/l", factor: 1 },        // TSH: mU/L = mIU/L
+  { from: "ug/l", to: "ng/ml", factor: 1 },        // µg/L = ng/mL (Ferritin)
+  { from: "mg/l", to: "mg/l", factor: 1 },         // CRP: already canonical
+  { from: "nmol/l", to: "umol/l", factor: 0.001 }, // Homocysteine: nmol/L → µmol/L
 ];
 
 // Biomarker-specific overrides (where generic unit lookup is ambiguous)

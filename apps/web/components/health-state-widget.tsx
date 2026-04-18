@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { healthState as healthStateApi } from "../lib/api";
-import { Card, Badge, Button, Spinner } from "./ui";
+import { Card, Spinner } from "./ui";
 
 // ─── Types ────────────────────────────────────────────────
 
