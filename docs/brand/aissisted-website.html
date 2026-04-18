@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aissisted — Your Body. Understood.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET + ROOT ─────────────────────────────────────────── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#8B1A22;
+  --red-deep:#6B1119;
+  --red-soft:rgba(139,26,34,0.08);
+  --aqua:#00C9B1;
+  --aqua-soft:rgba(0,201,177,0.12);
+  --gold:#C9A96E;
+  --graphite:#1C1C1A;
+  --ink:#1C1C1A;
+  --white:#FAFAF7;
+  --paper:#F4F3EF;
+  --paper-dark:#EDECE6;
+  --mute:#7A7A76;
+  --mute-light:#AEADA8;
+  --line:rgba(28,28,26,0.1);
+  --line-soft:rgba(28,28,26,0.06);
+
+  --sans:'Inter Tight',system-ui,sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
+  --display:'Fraunces','Instrument Serif',Georgia,serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;background:var(--white)}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  background:var(--white);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+
+/* ─── NAV ───────────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:0 48px;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:transparent;
+  transition:background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  border-bottom:1px solid transparent;
+}
+nav.scrolled{
+  background:rgba(250,250,247,0.96);
+  border-color:var(--line);
+  box-shadow:0 1px 0 var(--line);
+  backdrop-filter:blur(12px);
+}
+.nav-logo{
+  font-family:var(--display);
+  font-size:1.4rem;
+  font-weight:400;
+  letter-spacing:-0.03em;
+  color:var(--white);
+  text-decoration:none;
+  transition:color 0.4s ease;
+}
+nav.scrolled .nav-logo{color:var(--ink)}
+nav.dark .nav-logo{color:var(--white)}
+.nav-logo .tilde{color:var(--red);font-size:0.6em;position:relative;top:-0.25em;}
+.nav-links{display:flex;align-items:center;gap:36px}
+.nav-links a{
+  font-size:0.82rem;font-weight:400;letter-spacing:0.02em;
+  text-decoration:none;color:rgba(250,250,247,0.75);
+  transition:color 0.3s;
+}
+nav.scrolled .nav-links a{color:var(--mute)}
+nav.scrolled .nav-links a:hover{color:var(--ink)}
+.nav-links a:hover{color:var(--white)}
+.nav-cta{
+  font-size:0.8rem;font-weight:500;letter-spacing:0.04em;
+  padding:9px 20px;border-radius:2px;text-decoration:none;
+  background:var(--red);color:var(--white);
+  transition:background 0.25s;
+}
+.nav-cta:hover{background:var(--red-deep)}
+nav.scrolled .nav-cta{background:var(--red)}
+
+/* ─── HERO ───────────────────────────────────────────────────── */
+.hero{
+  min-height:100vh;
+  background:var(--graphite);
+  display:flex;flex-direction:column;
+  justify-content:flex-end;
+  padding:0 80px 100px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,201,177,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,177,0.03) 1px, transparent 1px);
+  background-size:80px 80px;
+  animation:grid-drift 30s linear infinite;
+}
+@keyframes grid-drift{
+  0%{transform:translate(0,0)}
+  100%{transform:translate(80px,80px)}
+}
+.hero-data-ring{
+  position:absolute;top:50%;right:14%;
+  transform:translateY(-50%);
+  width:440px;height:440px;
+}
+.hero-data-ring svg{width:100%;height:100%}
+.hero-eyebrow{
+  font-family:var(--mono);
+  font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--aqua);
+  margin-bottom:28px;
+  display:flex;align-items:center;gap:12px;
+}
+.hero-eyebrow::before{content:'';display:inline-block;width:32px;height:1px;background:var(--aqua);}
+.hero-headline{
+  font-family:var(--display);
+  font-size:clamp(4.5rem,9vw,9rem);
+  font-weight:400;
+  line-height:0.92;
+  letter-spacing:-0.04em;
+  color:var(--white);
+  max-width:820px;
+  margin-bottom:40px;
+}
+.hero-headline em{font-style:italic;color:var(--red);}
+.hero-sub{
+  font-size:1.05rem;
+  line-height:1.6;
+  color:rgba(250,250,247,0.55);
+  max-width:440px;
+  margin-bottom:52px;
+}
+.hero-actions{display:flex;align-items:center;gap:28px;}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:0.88rem;font-weight:500;letter-spacing:0.04em;
+  padding:14px 28px;border-radius:2px;text-decoration:none;
+  background:var(--red);color:var(--white);
+  transition:background 0.25s,transform 0.2s;
+}
+.btn-primary:hover{background:var(--red-deep);transform:translateY(-1px)}
+.btn-ghost{
+  font-size:0.88rem;font-weight:400;letter-spacing:0.04em;
+  text-decoration:none;color:rgba(250,250,247,0.6);
+  display:flex;align-items:center;gap:8px;
+  transition:color 0.25s;
+}
+.btn-ghost:hover{color:var(--white)}
+.btn-ghost::after{content:'→'}
+.hero-scroll{
+  position:absolute;bottom:40px;right:48px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.hero-scroll-line{
+  width:1px;height:56px;background:rgba(250,250,247,0.15);
+  position:relative;overflow:hidden;
+}
+.hero-scroll-line::after{
+  content:'';position:absolute;top:-100%;left:0;right:0;bottom:100%;
+  background:var(--aqua);
+  animation:scroll-drop 2s ease-in-out infinite;
+}
+@keyframes scroll-drop{
+  0%{top:-100%;bottom:100%}
+  50%{top:0;bottom:0}
+  100%{top:100%;bottom:-100%}
+}
+.hero-scroll-label{
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:rgba(250,250,247,0.3);
+  writing-mode:vertical-rl;
+}
+
+/* ─── PROOF BAR ──────────────────────────────────────────────── */
+.proof-bar{
+  background:var(--red);
+  padding:20px 48px;
+  display:flex;align-items:center;justify-content:center;gap:64px;
+  overflow-x:auto;
+}
+.proof-stat{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.proof-stat .num{
+  font-family:var(--display);font-size:2rem;font-weight:400;
+  letter-spacing:-0.04em;color:var(--white);
+}
+.proof-stat .label{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:rgba(250,250,247,0.65);
+}
+.proof-bar-div{width:1px;height:40px;background:rgba(250,250,247,0.2);}
+
+/* ─── PROBLEM ────────────────────────────────────────────────── */
+.problem{
+  padding:160px 80px;
+  background:var(--white);
+  display:grid;grid-template-columns:1fr 1fr;gap:120px;
+  align-items:center;max-width:1440px;margin:0 auto;
+}
+.problem-text .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:24px;
+  display:flex;align-items:center;gap:12px;
+}
+.problem-text .eyebrow::before{content:'';width:24px;height:1px;background:var(--mute);}
+.problem-text h2{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,4vw,4.2rem);
+  font-weight:400;line-height:1.05;
+  letter-spacing:-0.03em;
+  margin-bottom:32px;
+  color:var(--ink);
+}
+.problem-text h2 em{font-style:italic;color:var(--red);}
+.problem-text p{
+  font-size:1.05rem;line-height:1.7;
+  color:var(--mute);margin-bottom:20px;
+}
+.problem-visual{
+  display:flex;flex-direction:column;gap:16px;
+}
+.shelf-row{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px;
+  background:var(--paper);
+  border-radius:3px;
+  border-left:3px solid var(--line);
+  transition:all 0.3s;
+}
+.shelf-row.crossed{
+  opacity:0.45;
+  text-decoration:line-through;
+  border-color:transparent;
+}
+.shelf-row .s-name{font-size:0.88rem;font-weight:500;flex:1;}
+.shelf-row .s-tag{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;
+  color:var(--mute);text-transform:uppercase;
+}
+.shelf-row-yours{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 24px;
+  background:var(--graphite);
+  border-radius:3px;
+  margin-top:8px;
+}
+.shelf-row-yours .s-name{font-size:0.95rem;font-weight:500;color:var(--white);flex:1;}
+.shelf-row-yours .s-tag{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;
+  color:var(--aqua);text-transform:uppercase;
+}
+
+/* ─── DATA SECTION (WHOOP-style) ─────────────────────────────── */
+.data-section{
+  background:var(--graphite);
+  padding:160px 80px;
+  position:relative;
+  overflow:hidden;
+}
+.data-section-inner{max-width:1440px;margin:0 auto;}
+.data-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 80% 50%, rgba(0,201,177,0.06), transparent);
+  pointer-events:none;
+}
+.data-header{margin-bottom:80px;}
+.data-header .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--aqua);margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.data-header .eyebrow::before{content:'';width:24px;height:1px;background:var(--aqua);}
+.data-header h2{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,4vw,4.2rem);
+  font-weight:400;line-height:1.05;letter-spacing:-0.03em;
+  color:var(--white);max-width:640px;
+}
+.data-header h2 em{font-style:italic;color:var(--aqua);}
+.data-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+  margin-bottom:64px;
+}
+.data-card{
+  background:rgba(250,250,247,0.04);
+  border:1px solid rgba(250,250,247,0.08);
+  border-radius:8px;
+  padding:28px 24px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color 0.3s,background 0.3s;
+}
+.data-card:hover{
+  background:rgba(250,250,247,0.07);
+  border-color:rgba(0,201,177,0.25);
+}
+.data-card.active{
+  border-color:rgba(0,201,177,0.4);
+  background:rgba(0,201,177,0.06);
+}
+.data-card .dc-label{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--aqua);margin-bottom:12px;
+}
+.data-card .dc-value{
+  font-family:var(--display);font-size:2.8rem;font-weight:400;
+  letter-spacing:-0.04em;color:var(--white);line-height:1;
+  margin-bottom:8px;
+}
+.data-card .dc-unit{
+  font-size:0.78rem;color:rgba(250,250,247,0.45);margin-bottom:16px;
+}
+.data-card .dc-bar{
+  height:3px;background:rgba(250,250,247,0.1);border-radius:2px;overflow:hidden;
+}
+.data-card .dc-bar-fill{
+  height:100%;border-radius:2px;
+  background:var(--aqua);
+  transition:width 1.5s ease;
+}
+.data-card.red-card .dc-bar-fill{background:var(--red);}
+.data-card.gold-card .dc-bar-fill{background:var(--gold);}
+.dc-sparkline{
+  margin-top:12px;
+}
+.dc-sparkline svg{width:100%;height:36px;}
+
+/* RINGS */
+.data-rings{
+  display:flex;align-items:center;justify-content:center;gap:48px;
+  padding:64px 0;
+  border-top:1px solid rgba(250,250,247,0.06);
+  border-bottom:1px solid rgba(250,250,247,0.06);
+  margin-bottom:64px;
+}
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.ring-label{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:rgba(250,250,247,0.5);text-align:center;
+}
+.ring-svg{position:relative;width:120px;height:120px;}
+.ring-svg svg{position:absolute;inset:0;transform:rotate(-90deg);}
+.ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.ring-num{
+  font-family:var(--display);font-size:1.7rem;font-weight:400;
+  letter-spacing:-0.04em;color:var(--white);
+}
+.ring-sub{font-size:0.65rem;color:rgba(250,250,247,0.45);}
+.ring-track{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:8;}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:314;
+  stroke-dashoffset:314;
+  transition:stroke-dashoffset 2s ease;
+}
+.ring-fill.aqua{stroke:var(--aqua);}
+.ring-fill.red{stroke:var(--red);}
+.ring-fill.gold{stroke:var(--gold);}
+
+/* FORMULA OUTPUT */
+.formula-flow{
+  display:flex;align-items:center;justify-content:center;gap:0;
+  flex-wrap:wrap;
+}
+.flow-input{
+  background:rgba(250,250,247,0.04);
+  border:1px solid rgba(250,250,247,0.08);
+  border-radius:6px;padding:16px 20px;
+  text-align:center;min-width:120px;
+}
+.flow-input .fi-label{
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--aqua);margin-bottom:6px;
+}
+.flow-input .fi-value{
+  font-size:1rem;font-weight:500;color:var(--white);
+}
+.flow-arrow{
+  padding:0 16px;
+  font-family:var(--mono);font-size:0.9rem;color:rgba(250,250,247,0.2);
+}
+.flow-output{
+  background:var(--red);
+  border-radius:6px;padding:20px 28px;
+  text-align:center;
+}
+.flow-output .fo-label{
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;
+  text-transform:uppercase;color:rgba(250,250,247,0.7);margin-bottom:8px;
+}
+.flow-output .fo-value{
+  font-family:var(--display);font-size:1.3rem;font-weight:400;
+  letter-spacing:-0.02em;color:var(--white);
+}
+
+/* ─── PRODUCT SECTION (Hims-style) ──────────────────────────── */
+.product-section{
+  background:var(--paper);
+  padding:160px 80px;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:80px;align-items:center;
+  max-width:1440px;margin:0 auto;
+}
+.product-stage{
+  display:flex;align-items:center;justify-content:center;
+  position:relative;min-height:580px;
+}
+/* CSS Bottle */
+.bottle-wrap{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;
+  filter:drop-shadow(0 40px 80px rgba(0,0,0,0.15))
+         drop-shadow(0 10px 24px rgba(0,0,0,0.08));
+}
+.bottle-body{
+  width:96px;height:320px;
+  background:linear-gradient(135deg,
+    rgba(255,255,255,0.95) 0%,
+    rgba(240,239,234,0.9) 40%,
+    rgba(250,250,247,0.92) 60%,
+    rgba(255,255,255,0.88) 100%);
+  border-radius:12px 12px 16px 16px;
+  position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.8);
+  backdrop-filter:blur(12px);
+}
+.bottle-body::before{
+  content:'';position:absolute;top:0;left:12px;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.8),transparent);
+}
+.bottle-body::after{
+  content:'';position:absolute;top:0;right:20px;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.5),transparent);
+}
+.bottle-label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;width:80px;
+}
+.bottle-label .bl-wordmark{
+  font-family:var(--display);font-size:0.62rem;letter-spacing:-0.02em;
+  color:rgba(28,28,26,0.65);display:block;margin-bottom:6px;
+}
+.bottle-label .bl-name{
+  font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;
+  text-transform:uppercase;color:rgba(28,28,26,0.35);display:block;
+  margin-bottom:10px;
+}
+.bottle-label .bl-member{
+  font-family:var(--serif);font-size:0.5rem;font-style:italic;
+  color:rgba(28,28,26,0.4);display:block;
+  border-top:1px solid rgba(28,28,26,0.12);padding-top:8px;
+}
+/* Activation line */
+.activation-line{
+  position:absolute;bottom:80px;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--aqua),transparent);
+  opacity:0;
+  animation:activate 3s ease-in-out infinite;
+}
+@keyframes activate{
+  0%,40%{opacity:0}
+  50%{opacity:1}
+  90%,100%{opacity:0}
+}
+.bottle-shoulder{
+  width:76px;height:20px;
+  background:linear-gradient(135deg,rgba(245,244,239,0.95),rgba(255,255,255,0.9));
+  border-radius:4px 4px 0 0;
+  border:1px solid rgba(255,255,255,0.7);
+  border-bottom:none;
+  margin-bottom:-1px;
+}
+.bottle-cap{
+  width:62px;height:40px;
+  background:linear-gradient(160deg,#A82232 0%,var(--red) 40%,#6B1119 100%);
+  border-radius:6px 6px 2px 2px;
+  position:relative;
+  box-shadow:0 4px 16px rgba(139,26,34,0.4),inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.bottle-cap::after{
+  content:'';position:absolute;top:6px;left:8px;right:8px;height:1px;
+  background:rgba(255,255,255,0.2);
+}
+.bottle-shadow{
+  width:80px;height:16px;
+  background:radial-gradient(ellipse,rgba(0,0,0,0.12),transparent 70%);
+  margin-top:16px;
+}
+/* Glow */
+.bottle-glow{
+  position:absolute;bottom:20%;left:50%;transform:translateX(-50%);
+  width:120px;height:120px;
+  background:radial-gradient(ellipse,rgba(0,201,177,0.1),transparent 70%);
+  pointer-events:none;
+  animation:glow-pulse 3s ease-in-out infinite;
+}
+@keyframes glow-pulse{
+  0%,100%{opacity:0.5;transform:translateX(-50%) scale(1)}
+  50%{opacity:1;transform:translateX(-50%) scale(1.2)}
+}
+.bottle-orbit{
+  position:absolute;inset:-60px;
+  animation:orbit 20s linear infinite;
+}
+@keyframes orbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.orbit-dot{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--aqua);opacity:0.6;
+}
+.orbit-dot.d2{top:auto;bottom:0;opacity:0.3;}
+.orbit-dot.d3{top:50%;left:0;transform:translateY(-50%);opacity:0.4;}
+
+/* Product Info */
+.product-info .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--red);margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.product-info .eyebrow::before{content:'';width:24px;height:1px;background:var(--red);}
+.product-info h2{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,4vw,4rem);
+  font-weight:400;line-height:1.05;letter-spacing:-0.03em;
+  color:var(--ink);margin-bottom:28px;
+}
+.product-info h2 em{font-style:italic;}
+.product-info p{
+  font-size:1.05rem;line-height:1.7;color:var(--mute);
+  margin-bottom:40px;
+}
+.product-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px;}
+.pill{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;
+  text-transform:uppercase;padding:7px 14px;border-radius:20px;
+  background:rgba(28,28,26,0.07);color:var(--ink);
+}
+.pill.active{background:var(--graphite);color:var(--white);}
+.product-details{
+  display:flex;flex-direction:column;gap:12px;
+}
+.product-detail{
+  display:flex;gap:16px;align-items:flex-start;
+  padding:14px 0;border-bottom:1px solid var(--line-soft);
+}
+.product-detail:last-child{border-bottom:none;}
+.pd-icon{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(139,26,34,0.08);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:0.75rem;color:var(--red);
+  font-family:var(--mono);font-weight:500;
+}
+.pd-text h4{font-size:0.88rem;font-weight:500;margin-bottom:2px;}
+.pd-text p{font-size:0.82rem;color:var(--mute);line-height:1.5;}
+
+/* ─── HOW IT WORKS ────────────────────────────────────────────── */
+.how-section{
+  background:var(--white);
+  padding:160px 80px;
+}
+.how-inner{max-width:1200px;margin:0 auto;}
+.section-header{text-align:center;margin-bottom:96px;}
+.section-header .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:20px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.section-header .eyebrow::before,.section-header .eyebrow::after{content:'';width:24px;height:1px;background:var(--mute);}
+.section-header h2{
+  font-family:var(--display);
+  font-size:clamp(2.4rem,4vw,4rem);
+  font-weight:400;line-height:1.05;letter-spacing:-0.03em;color:var(--ink);
+}
+.section-header h2 em{font-style:italic;color:var(--red);}
+.steps-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:8px;overflow:hidden;
+}
+.step{
+  background:var(--white);
+  padding:52px 44px;
+  position:relative;
+  transition:background 0.3s;
+}
+.step:hover{background:var(--paper);}
+.step-num{
+  font-family:var(--display);font-size:5rem;font-weight:400;
+  letter-spacing:-0.06em;
+  color:var(--paper-dark);
+  line-height:1;margin-bottom:24px;
+}
+.step h3{
+  font-family:var(--serif);font-size:1.6rem;font-weight:400;
+  letter-spacing:-0.01em;margin-bottom:14px;color:var(--ink);
+}
+.step p{font-size:0.92rem;line-height:1.65;color:var(--mute);}
+.step-tag{
+  position:absolute;bottom:24px;right:24px;
+  font-family:var(--mono);font-size:0.6rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--mute-light);
+}
+
+/* ─── SCIENCE ─────────────────────────────────────────────────── */
+.science-section{
+  background:var(--graphite);
+  padding:160px 80px;
+  position:relative;overflow:hidden;
+}
+.science-inner{max-width:1440px;margin:0 auto;}
+.science-grid{
+  display:grid;grid-template-columns:1.2fr 1fr;
+  gap:96px;align-items:center;
+}
+.science-chart{
+  position:relative;
+}
+.chart-title{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--aqua);margin-bottom:24px;
+}
+.chart-body{
+  background:rgba(250,250,247,0.03);
+  border:1px solid rgba(250,250,247,0.08);
+  border-radius:6px;padding:32px;
+  position:relative;
+}
+.chart-y-labels{
+  display:flex;flex-direction:column;
+  position:absolute;left:0;top:32px;bottom:32px;
+  justify-content:space-between;
+  font-family:var(--mono);font-size:0.58rem;
+  color:rgba(250,250,247,0.3);letter-spacing:0.06em;
+  transform:translateX(-36px);
+}
+.chart-area{
+  height:200px;position:relative;
+}
+.chart-area svg{width:100%;height:100%;overflow:visible;}
+.chart-x-labels{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:0.58rem;
+  color:rgba(250,250,247,0.3);letter-spacing:0.06em;
+  margin-top:12px;
+}
+.chart-legend{
+  display:flex;gap:24px;margin-top:20px;
+}
+.legend-item{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.08em;
+  color:rgba(250,250,247,0.55);
+}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+.science-text .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.science-text .eyebrow::before{content:'';width:24px;height:1px;background:var(--gold);}
+.science-text h2{
+  font-family:var(--display);
+  font-size:clamp(2rem,3.5vw,3.6rem);
+  font-weight:400;line-height:1.08;letter-spacing:-0.03em;
+  color:var(--white);margin-bottom:28px;
+}
+.science-text h2 em{font-style:italic;color:var(--gold);}
+.science-text p{
+  font-size:1rem;line-height:1.7;
+  color:rgba(250,250,247,0.55);margin-bottom:20px;
+}
+.biomarker-list{
+  display:flex;flex-direction:column;gap:12px;margin-top:36px;
+}
+.biomarker-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:rgba(250,250,247,0.04);
+  border:1px solid rgba(250,250,247,0.07);
+  border-radius:4px;
+}
+.bi-dot{width:8px;height:8px;border-radius:50%;background:var(--aqua);flex-shrink:0;}
+.bi-dot.red{background:var(--red);}
+.bi-dot.gold{background:var(--gold);}
+.bi-name{font-size:0.88rem;color:rgba(250,250,247,0.8);flex:1;}
+.bi-value{
+  font-family:var(--mono);font-size:0.75rem;color:var(--aqua);
+}
+
+/* ─── MEMBERSHIP ─────────────────────────────────────────────── */
+.membership-section{
+  background:var(--paper);
+  padding:160px 80px;
+  text-align:center;
+}
+.membership-inner{max-width:900px;margin:0 auto;}
+.membership-inner .eyebrow{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:24px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.membership-inner .eyebrow::before,.membership-inner .eyebrow::after{
+  content:'';width:24px;height:1px;background:var(--mute);
+}
+.membership-inner h2{
+  font-family:var(--display);
+  font-size:clamp(2.8rem,5vw,5.2rem);
+  font-weight:400;line-height:1;letter-spacing:-0.04em;
+  color:var(--ink);margin-bottom:32px;
+}
+.membership-inner h2 em{font-style:italic;color:var(--red);}
+.membership-inner p{
+  font-size:1.1rem;line-height:1.7;color:var(--mute);
+  max-width:560px;margin:0 auto 56px;
+}
+.tier-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
+  background:var(--line);border:1px solid var(--line);
+  border-radius:6px;overflow:hidden;margin-bottom:48px;
+}
+.tier-cell{
+  background:var(--white);
+  padding:36px 28px;text-align:left;
+  transition:background 0.3s;
+}
+.tier-cell:hover{background:var(--paper);}
+.tier-cell.featured{background:var(--graphite);}
+.tier-cell .tc-label{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:8px;
+}
+.tier-cell.featured .tc-label{color:var(--gold);}
+.tier-cell .tc-name{
+  font-family:var(--serif);font-size:1.4rem;font-weight:400;
+  letter-spacing:-0.01em;color:var(--ink);margin-bottom:4px;
+}
+.tier-cell.featured .tc-name{color:var(--white);}
+.tier-cell .tc-price{
+  font-family:var(--display);font-size:2rem;letter-spacing:-0.04em;
+  color:var(--ink);font-weight:400;margin-bottom:16px;
+}
+.tier-cell.featured .tc-price{color:var(--white);}
+.tier-cell .tc-price span{font-size:0.8rem;letter-spacing:0;color:var(--mute);}
+.tier-cell.featured .tc-price span{color:rgba(250,250,247,0.5);}
+.tier-cell .tc-desc{font-size:0.85rem;line-height:1.55;color:var(--mute);}
+.tier-cell.featured .tc-desc{color:rgba(250,250,247,0.6);}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:20px;}
+.btn-dark{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:0.88rem;font-weight:500;letter-spacing:0.04em;
+  padding:14px 32px;border-radius:2px;text-decoration:none;
+  background:var(--graphite);color:var(--white);
+  transition:opacity 0.2s;
+}
+.btn-dark:hover{opacity:0.85}
+.btn-link{
+  font-size:0.88rem;color:var(--mute);text-decoration:none;
+  display:flex;align-items:center;gap:6px;
+  transition:color 0.25s;
+}
+.btn-link:hover{color:var(--ink)}
+.btn-link::after{content:'→'}
+
+/* ─── CTA HERO ────────────────────────────────────────────────── */
+.cta-section{
+  background:var(--red);
+  padding:160px 80px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.cta-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% 100%, rgba(0,0,0,0.15), transparent);
+}
+.cta-inner{max-width:760px;margin:0 auto;position:relative;}
+.cta-inner h2{
+  font-family:var(--display);
+  font-size:clamp(3rem,6vw,6rem);
+  font-weight:400;line-height:0.95;letter-spacing:-0.04em;
+  color:var(--white);margin-bottom:24px;
+}
+.cta-inner h2 em{font-style:italic;opacity:0.7;}
+.cta-inner p{
+  font-size:1.05rem;line-height:1.65;
+  color:rgba(250,250,247,0.7);margin-bottom:48px;
+}
+.btn-white{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:0.9rem;font-weight:500;letter-spacing:0.04em;
+  padding:16px 36px;border-radius:2px;text-decoration:none;
+  background:var(--white);color:var(--red);
+  transition:opacity 0.2s,transform 0.2s;
+}
+.btn-white:hover{opacity:0.92;transform:translateY(-1px)}
+
+/* ─── FOOTER ─────────────────────────────────────────────────── */
+footer{
+  background:var(--ink);color:var(--white);
+  padding:80px 80px 48px;
+}
+.footer-top{
+  display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;
+  gap:80px;padding-bottom:64px;
+  border-bottom:1px solid rgba(250,250,247,0.08);
+  margin-bottom:40px;
+}
+.footer-brand .fb-wordmark{
+  font-family:var(--display);font-size:1.6rem;font-weight:400;
+  letter-spacing:-0.03em;color:var(--white);margin-bottom:12px;
+  display:block;
+}
+.footer-brand .fb-tagline{
+  font-family:var(--serif);font-style:italic;
+  font-size:0.88rem;color:rgba(250,250,247,0.4);
+}
+.footer-col h5{
+  font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:rgba(250,250,247,0.35);
+  margin-bottom:20px;
+}
+.footer-col a{
+  display:block;font-size:0.88rem;color:rgba(250,250,247,0.65);
+  text-decoration:none;margin-bottom:10px;transition:color 0.2s;
+}
+.footer-col a:hover{color:var(--white)}
+.footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;
+}
+.footer-copy{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;
+  color:rgba(250,250,247,0.3);
+}
+.footer-signal{
+  font-family:var(--serif);font-style:italic;
+  font-size:0.88rem;color:rgba(250,250,247,0.3);
+}
+
+/* ─── SCROLL REVEALS ─────────────────────────────────────────── */
+.reveal{
+  opacity:0;transform:translateY(32px);
+  transition:opacity 0.9s ease, transform 0.9s ease;
+}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.12s}
+.reveal-delay-2{transition-delay:0.24s}
+.reveal-delay-3{transition-delay:0.36s}
+.reveal-delay-4{transition-delay:0.48s}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────── */
+@media(max-width:1024px){
+  .hero{padding:0 40px 80px;}
+  .problem,.product-section,.science-grid{grid-template-columns:1fr;gap:64px;}
+  .data-grid{grid-template-columns:1fr 1fr;}
+  .steps-grid,.tier-row{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr 1fr;gap:48px;}
+  .data-rings{flex-wrap:wrap;}
+}
+@media(max-width:640px){
+  nav{padding:0 24px;}
+  .hero{padding:0 24px 60px;}
+  .proof-bar{gap:32px;}
+  .data-grid{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr;}
+  .formula-flow{flex-direction:column;align-items:center;}
+  .flow-arrow{transform:rotate(90deg);}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── NAV ──────────────────────────────────────────────────── -->
+<nav id="nav">
+  <a href="#" class="nav-logo">aiss<span class="tilde">~</span>sted</a>
+  <div class="nav-links">
+    <a href="#system">The System</a>
+    <a href="#science">Science</a>
+    <a href="#membership">Membership</a>
+    <a href="#" class="nav-cta">Start your system →</a>
+  </div>
+</nav>
+
+<!-- ─── HERO ─────────────────────────────────────────────────── -->
+<section class="hero" id="top">
+  <div class="hero-bg-grid"></div>
+
+  <!-- WHOOP-style data ring -->
+  <div class="hero-data-ring">
+    <svg viewBox="0 0 440 440">
+      <defs>
+        <radialGradient id="rg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#00C9B1" stop-opacity="0.06"/>
+          <stop offset="100%" stop-color="#00C9B1" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="220" cy="220" r="200" fill="url(#rg)"/>
+      <!-- outer ring -->
+      <circle cx="220" cy="220" r="190" fill="none" stroke="rgba(0,201,177,0.08)" stroke-width="1"/>
+      <circle cx="220" cy="220" r="190" fill="none" stroke="rgba(0,201,177,0.5)" stroke-width="2"
+        stroke-dasharray="1195" stroke-dashoffset="310" stroke-linecap="round"
+        transform="rotate(-90 220 220)" style="animation:ring-anim 3s ease forwards 0.5s;"/>
+      <!-- mid ring -->
+      <circle cx="220" cy="220" r="160" fill="none" stroke="rgba(139,26,34,0.08)" stroke-width="1"/>
+      <circle cx="220" cy="220" r="160" fill="none" stroke="rgba(139,26,34,0.6)" stroke-width="2"
+        stroke-dasharray="1005" stroke-dashoffset="260" stroke-linecap="round"
+        transform="rotate(-90 220 220)" style="animation:ring-anim 3s ease forwards 0.8s;"/>
+      <!-- inner ring -->
+      <circle cx="220" cy="220" r="130" fill="none" stroke="rgba(201,169,110,0.1)" stroke-width="1"/>
+      <circle cx="220" cy="220" r="130" fill="none" stroke="rgba(201,169,110,0.5)" stroke-width="1.5"
+        stroke-dasharray="817" stroke-dashoffset="200" stroke-linecap="round"
+        transform="rotate(-90 220 220)" style="animation:ring-anim 3s ease forwards 1s;"/>
+      <!-- center labels -->
+      <text x="220" y="208" text-anchor="middle" fill="rgba(250,250,247,0.9)"
+        font-family="'Fraunces',serif" font-size="36" letter-spacing="-2">87</text>
+      <text x="220" y="228" text-anchor="middle" fill="rgba(250,250,247,0.35)"
+        font-family="'JetBrains Mono',monospace" font-size="10" letter-spacing="2">RECOVERY</text>
+      <!-- data points -->
+      <g transform="translate(220,220) rotate(0)">
+        <circle cx="190" cy="0" r="3" fill="#00C9B1" opacity="0.8"/>
+      </g>
+      <g transform="translate(220,220) rotate(72)">
+        <circle cx="190" cy="0" r="2" fill="#8B1A22" opacity="0.6"/>
+      </g>
+      <g transform="translate(220,220) rotate(144)">
+        <circle cx="160" cy="0" r="2.5" fill="#C9A96E" opacity="0.7"/>
+      </g>
+      <!-- micro labels -->
+      <text x="348" y="108" fill="rgba(0,201,177,0.6)"
+        font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1">HRV 68ms</text>
+      <text x="84" y="350" fill="rgba(139,26,34,0.6)"
+        font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1">Sleep 91%</text>
+    </svg>
+  </div>
+
+  <div class="hero-eyebrow">Adaptive supplement system</div>
+  <h1 class="hero-headline">Your Body.<br/><em>Understood.</em></h1>
+  <p class="hero-sub">Built from your data. Not a demographic, not a guess. A formula that evolves as your biology does.</p>
+  <div class="hero-actions">
+    <a href="#system" class="btn-primary">Build your system →</a>
+    <a href="#science" class="btn-ghost">See the science</a>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    <span class="hero-scroll-label">Scroll</span>
+  </div>
+</section>
+
+<!-- ─── PROOF BAR ─────────────────────────────────────────────── -->
+<div class="proof-bar">
+  <div class="proof-stat">
+    <div class="num">4,200+</div>
+    <div class="label">Biomarker inputs per formula</div>
+  </div>
+  <div class="proof-bar-div"></div>
+  <div class="proof-stat">
+    <div class="num">97%</div>
+    <div class="label">Felt change in 30 days</div>
+  </div>
+  <div class="proof-bar-div"></div>
+  <div class="proof-stat">
+    <div class="num">∞</div>
+    <div class="label">Formula iterations. No ceiling.</div>
+  </div>
+  <div class="proof-bar-div"></div>
+  <div class="proof-stat">
+    <div class="num">1</div>
+    <div class="label">Formula. Yours.</div>
+  </div>
+</div>
+
+<!-- ─── PROBLEM ──────────────────────────────────────────────── -->
+<section class="problem" id="problem">
+  <div class="problem-text reveal">
+    <div class="eyebrow">The problem</div>
+    <h2>Supplements have never<br/>actually <em>met you.</em></h2>
+    <p>Every bottle on your shelf was formulated for a demographic. Maybe your age. Your gender. Your fitness level in broad strokes. Not your recovery data from last Tuesday. Not your sleep quality this month. Not the specific cortisol pattern your wearable has been tracking for six months.</p>
+    <p>The shelf doesn't know you. We do.</p>
+  </div>
+  <div class="problem-visual reveal reveal-delay-2">
+    <div class="shelf-row crossed">
+      <span class="s-name">Men's Performance Multi</span>
+      <span class="s-tag">Built for everyone</span>
+    </div>
+    <div class="shelf-row crossed">
+      <span class="s-name">Recovery + Magnesium</span>
+      <span class="s-tag">Generic dose</span>
+    </div>
+    <div class="shelf-row crossed">
+      <span class="s-name">Sleep Stack</span>
+      <span class="s-tag">No biomarker input</span>
+    </div>
+    <div class="shelf-row crossed">
+      <span class="s-name">Omega-3 Complex</span>
+      <span class="s-tag">Average formula</span>
+    </div>
+    <div class="shelf-row-yours">
+      <span class="s-name">aissisted · Core + Signal</span>
+      <span class="s-tag">Built from your data</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── DATA SECTION ──────────────────────────────────────────── -->
+<section class="data-section" id="system">
+  <div class="data-bg"></div>
+  <div class="data-section-inner">
+    <div class="data-header reveal">
+      <div class="eyebrow">Your data. Your formula.</div>
+      <h2>Every variable<br/>is <em>yours.</em></h2>
+    </div>
+
+    <!-- Data cards -->
+    <div class="data-grid">
+      <div class="data-card active reveal">
+        <div class="dc-label">HRV</div>
+        <div class="dc-value">68</div>
+        <div class="dc-unit">ms · 7-day avg</div>
+        <div class="dc-bar"><div class="dc-bar-fill" data-fill="72" style="width:0%"></div></div>
+        <div class="dc-sparkline">
+          <svg viewBox="0 0 160 36" fill="none">
+            <polyline points="0,28 20,22 40,26 60,18 80,20 100,12 120,16 140,8 160,10"
+              stroke="#00C9B1" stroke-width="1.5" fill="none" opacity="0.7"/>
+            <polyline points="0,28 20,22 40,26 60,18 80,20 100,12 120,16 140,8 160,10"
+              stroke="#00C9B1" stroke-width="0" fill="rgba(0,201,177,0.1)"
+              points="0,36 0,28 20,22 40,26 60,18 80,20 100,12 120,16 140,8 160,10 160,36"/>
+          </svg>
+        </div>
+      </div>
+      <div class="data-card reveal reveal-delay-1">
+        <div class="dc-label">Sleep Score</div>
+        <div class="dc-value">91</div>
+        <div class="dc-unit">% · last night</div>
+        <div class="dc-bar"><div class="dc-bar-fill" data-fill="91" style="width:0%"></div></div>
+        <div class="dc-sparkline">
+          <svg viewBox="0 0 160 36" fill="none">
+            <polyline points="0,18 20,12 40,20 60,10 80,14 100,8 120,14 140,6 160,10"
+              stroke="#00C9B1" stroke-width="1.5" fill="none" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+      <div class="data-card red-card reveal reveal-delay-2">
+        <div class="dc-label">Cortisol Pattern</div>
+        <div class="dc-value">↑</div>
+        <div class="dc-unit">AM spike · 3 days</div>
+        <div class="dc-bar"><div class="dc-bar-fill" data-fill="55" style="width:0%"></div></div>
+        <div class="dc-sparkline">
+          <svg viewBox="0 0 160 36" fill="none">
+            <polyline points="0,24 20,20 40,24 60,28 80,16 100,20 120,12 140,18 160,10"
+              stroke="#8B1A22" stroke-width="1.5" fill="none" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+      <div class="data-card gold-card reveal reveal-delay-3">
+        <div class="dc-label">Recovery</div>
+        <div class="dc-value">87</div>
+        <div class="dc-unit">% · WHOOP</div>
+        <div class="dc-bar"><div class="dc-bar-fill" data-fill="87" style="width:0%"></div></div>
+        <div class="dc-sparkline">
+          <svg viewBox="0 0 160 36" fill="none">
+            <polyline points="0,22 20,16 40,18 60,12 80,16 100,10 120,12 140,8 160,6"
+              stroke="#C9A96E" stroke-width="1.5" fill="none" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rings -->
+    <div class="data-rings reveal">
+      <div class="ring-wrap">
+        <div class="ring-svg">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill aqua" id="ring1" cx="60" cy="60" r="50"
+              style="stroke-dashoffset:calc(314 - 314 * 0.87)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-num">87%</div>
+            <div class="ring-sub">Recovery</div>
+          </div>
+        </div>
+        <div class="ring-label">WHOOP</div>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-svg">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill red" id="ring2" cx="60" cy="60" r="50"
+              style="stroke-dashoffset:calc(314 - 314 * 0.68)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-num">68ms</div>
+            <div class="ring-sub">HRV</div>
+          </div>
+        </div>
+        <div class="ring-label">Heart Rate Variability</div>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-svg">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill aqua" id="ring3" cx="60" cy="60" r="50"
+              style="stroke-dashoffset:calc(314 - 314 * 0.91)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-num">91%</div>
+            <div class="ring-sub">Sleep</div>
+          </div>
+        </div>
+        <div class="ring-label">Sleep Score</div>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-svg">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill gold" id="ring4" cx="60" cy="60" r="50"
+              style="stroke-dashoffset:calc(314 - 314 * 0.74)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-num">74%</div>
+            <div class="ring-sub">Load</div>
+          </div>
+        </div>
+        <div class="ring-label">Training Load</div>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-svg">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill aqua" id="ring5" cx="60" cy="60" r="50"
+              style="stroke-dashoffset:calc(314 - 314 * 0.82)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-num">82%</div>
+            <div class="ring-sub">Readiness</div>
+          </div>
+        </div>
+        <div class="ring-label">Oura Readiness</div>
+      </div>
+    </div>
+
+    <!-- Formula Flow -->
+    <div class="formula-flow reveal">
+      <div class="flow-input">
+        <div class="fi-label">Biomarkers</div>
+        <div class="fi-value">Labs + Blood</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-input">
+        <div class="fi-label">Wearable</div>
+        <div class="fi-value">WHOOP · Oura</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-input">
+        <div class="fi-label">Patterns</div>
+        <div class="fi-value">Sleep · Stress · Load</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-input">
+        <div class="fi-label">AI Engine</div>
+        <div class="fi-value">Jeffrey</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-output">
+        <div class="fo-label">Your formula</div>
+        <div class="fo-value">Built from you</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PRODUCT ───────────────────────────────────────────────── -->
+<section style="background:var(--paper);padding:160px 80px;" id="product">
+  <div style="max-width:1440px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+
+    <!-- Bottle -->
+    <div class="product-stage reveal">
+      <div class="bottle-wrap">
+        <!-- orbit ring -->
+        <div style="position:absolute;inset:-80px;border:1px solid rgba(0,201,177,0.06);border-radius:50%;animation:orbit 25s linear infinite;"></div>
+        <div style="position:absolute;inset:-40px;border:1px solid rgba(139,26,34,0.05);border-radius:50%;animation:orbit 18s linear infinite reverse;"></div>
+
+        <!-- bottle assembly: cap → shoulder → body -->
+        <div class="bottle-cap"></div>
+        <div class="bottle-shoulder"></div>
+        <div class="bottle-body">
+          <div class="activation-line"></div>
+          <div class="bottle-label">
+            <span class="bl-wordmark">aissisted</span>
+            <span class="bl-name">Core · Signal</span>
+            <span class="bl-member">josh webber · member · est. 2026</span>
+          </div>
+        </div>
+        <div class="bottle-shadow"></div>
+        <div class="bottle-glow"></div>
+      </div>
+
+      <!-- floating data tags -->
+      <div style="position:absolute;top:20%;left:0;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+        <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--aqua);margin-bottom:4px;">HRV Adapted</div>
+        <div style="font-family:var(--display);font-size:1.2rem;letter-spacing:-0.03em;color:var(--ink);">+340mg Mg</div>
+      </div>
+      <div style="position:absolute;top:45%;right:0;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+        <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Sleep Signal</div>
+        <div style="font-family:var(--display);font-size:1.2rem;letter-spacing:-0.03em;color:var(--ink);">L-Theanine ↑</div>
+      </div>
+      <div style="position:absolute;bottom:22%;left:8%;background:rgba(28,28,26,0.92);border-radius:4px;padding:10px 14px;">
+        <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Formula updated</div>
+        <div style="font-size:0.82rem;color:rgba(250,250,247,0.8);">Based on last 14 days</div>
+      </div>
+    </div>
+
+    <!-- Product info -->
+    <div class="product-info reveal reveal-delay-1">
+      <div class="eyebrow">The Press</div>
+      <h2>The bottle is<br/>the <em>least</em> interesting<br/>part of the system.</h2>
+      <p>What's inside is the product. Frosted white — almost clinical. A matte Medical Red cap that signals the moment of activation. Press, mix, and a system built from 4,200 data points goes to work for you specifically.</p>
+      <div class="product-pills">
+        <span class="pill active">Core</span>
+        <span class="pill">Signal</span>
+        <span class="pill">Longevity</span>
+        <span class="pill">Performance</span>
+      </div>
+      <div class="product-details">
+        <div class="product-detail">
+          <div class="pd-icon">Rx</div>
+          <div class="pd-text">
+            <h4>Built from your biomarkers</h4>
+            <p>Labs, wearable data, and biology — not a quiz. Your formula is derived from what your body is actually showing, not what you think it needs.</p>
+          </div>
+        </div>
+        <div class="product-detail">
+          <div class="pd-icon">↻</div>
+          <div class="pd-text">
+            <h4>Reformulated as you change</h4>
+            <p>Every 30 days, we reassess. Your formula adapts to your new data. Nothing is set-and-forget. Nothing is static.</p>
+          </div>
+        </div>
+        <div class="product-detail">
+          <div class="pd-icon">~</div>
+          <div class="pd-text">
+            <h4>Member signature at the base</h4>
+            <p>Your name. Your start date. Foiled at the base of every bottle. Because this was made for you — and it should look like it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ───────────────────────────────────────────── -->
+<section class="how-section">
+  <div class="how-inner">
+    <div class="section-header reveal">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps.<br/>One system. <em>Entirely yours.</em></h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <h3>We read your biology.</h3>
+        <p>Connect your wearable. Upload your labs. Answer a handful of questions about how you feel and perform. We translate 4,200+ variables into a starting point. It's not a quiz. It's a diagnostic.</p>
+        <div class="step-tag">~10 min</div>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num">02</div>
+        <h3>We build your formula.</h3>
+        <p>Our AI engine — Jeffrey — cross-references your biomarker patterns, wearable trends, and stated goals against a library of peer-reviewed mechanisms. Every ingredient has a job. Every dose has a reason.</p>
+        <div class="step-tag">48 hrs</div>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num">03</div>
+        <h3>It adapts. Every month.</h3>
+        <p>As your data changes, your formula changes. Recovery improving? Sleep deepening? Stress patterns shifting? Your system reflects all of it. No human remembers to update their supplements. Yours does it automatically.</p>
+        <div class="step-tag">Continuous</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SCIENCE ────────────────────────────────────────────────── -->
+<section class="science-section" id="science">
+  <div class="science-inner">
+    <div class="science-grid">
+      <!-- Chart -->
+      <div class="science-chart reveal">
+        <div class="chart-title">Formula performance · 90-day longitudinal</div>
+        <div class="chart-body">
+          <div style="height:200px;position:relative;">
+            <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="40" x2="400" y2="40" stroke="rgba(250,250,247,0.05)" stroke-width="1"/>
+              <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(250,250,247,0.05)" stroke-width="1"/>
+              <line x1="0" y1="120" x2="400" y2="120" stroke="rgba(250,250,247,0.05)" stroke-width="1"/>
+              <line x1="0" y1="160" x2="400" y2="160" stroke="rgba(250,250,247,0.05)" stroke-width="1"/>
+              <!-- Aissisted line -->
+              <path d="M0,160 C40,150 80,130 120,110 C160,90 200,65 240,48 C280,32 320,22 360,12 L400,8"
+                fill="none" stroke="#00C9B1" stroke-width="2" stroke-linecap="round"/>
+              <!-- Area fill -->
+              <path d="M0,160 C40,150 80,130 120,110 C160,90 200,65 240,48 C280,32 320,22 360,12 L400,8 L400,200 L0,200 Z"
+                fill="rgba(0,201,177,0.06)"/>
+              <!-- Generic line -->
+              <path d="M0,160 C60,156 120,150 180,148 C240,146 300,144 360,142 L400,140"
+                fill="none" stroke="rgba(250,250,247,0.15)" stroke-width="1.5" stroke-dasharray="6,4"/>
+              <!-- Dots on aissisted line -->
+              <circle cx="0" cy="160" r="3" fill="#00C9B1"/>
+              <circle cx="133" cy="106" r="3" fill="#00C9B1"/>
+              <circle cx="266" cy="44" r="3" fill="#00C9B1"/>
+              <circle cx="400" cy="8" r="3" fill="#00C9B1"/>
+              <!-- Annotation -->
+              <text x="380" y="4" text-anchor="end" fill="#00C9B1"
+                font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1">+47%</text>
+            </svg>
+          </div>
+          <div class="chart-x-labels">
+            <span>Day 1</span><span>Day 30</span><span>Day 60</span><span>Day 90</span>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#00C9B1"></div>
+              aissisted members
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:rgba(250,250,247,0.2)"></div>
+              Generic supplement users
+            </div>
+          </div>
+        </div>
+        <!-- Biomarker items -->
+        <div class="biomarker-list" style="margin-top:28px;">
+          <div class="biomarker-item reveal">
+            <div class="bi-dot"></div>
+            <div class="bi-name">HRV trend (+22% avg improvement)</div>
+            <div class="bi-value">↑ 22%</div>
+          </div>
+          <div class="biomarker-item reveal reveal-delay-1">
+            <div class="bi-dot red"></div>
+            <div class="bi-name">Cortisol AM spike reduction</div>
+            <div class="bi-value">↓ 18%</div>
+          </div>
+          <div class="biomarker-item reveal reveal-delay-2">
+            <div class="bi-dot gold"></div>
+            <div class="bi-name">Sleep efficiency score</div>
+            <div class="bi-value">↑ 31%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Science text -->
+      <div class="science-text reveal reveal-delay-1">
+        <div class="eyebrow">The science</div>
+        <h2>We don't claim.<br/><em>We show the mechanism.</em></h2>
+        <p>Every ingredient in your formula has a corresponding mechanism — a biological pathway, a peer-reviewed study, a measurable biomarker it targets. We never use adjectives where a data point exists.</p>
+        <p>Science isn't the headline. It's the engine. The outcome is what you feel. The mechanism is what makes it real.</p>
+        <div style="margin-top:40px;padding:28px;background:rgba(250,250,247,0.04);border:1px solid rgba(250,250,247,0.08);border-radius:6px;">
+          <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Current input sources</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem;color:rgba(250,250,247,0.7);line-height:1.5;">
+            <div>→ WHOOP Recovery + HRV data</div>
+            <div>→ Oura Ring readiness score</div>
+            <div>→ Apple Watch activity trends</div>
+            <div>→ Epic / MyChart lab results (FHIR)</div>
+            <div>→ Continuous glucose monitoring</div>
+            <div>→ Jeffrey conversational intake</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── MEMBERSHIP ─────────────────────────────────────────────── -->
+<section class="membership-section" id="membership">
+  <div class="membership-inner">
+    <div class="eyebrow">Membership</div>
+    <h2>Built for you.<br/><em>Updated as you change.</em></h2>
+    <p>This isn't a subscription. It's a system that grows with you. Your formula, your data, your outcomes — tracked, adapted, and refined every month without you having to think about it.</p>
+    <div class="tier-row">
+      <div class="tier-cell reveal">
+        <div class="tc-label">Foundation</div>
+        <div class="tc-name">Core</div>
+        <div class="tc-price">$89<span>/mo</span></div>
+        <div class="tc-desc">Daily adaptive formula from your baseline data. Reformulated every 30 days based on wearable trends.</div>
+      </div>
+      <div class="tier-cell featured reveal reveal-delay-1">
+        <div class="tc-label">Performance</div>
+        <div class="tc-name">Core + Signal</div>
+        <div class="tc-price">$149<span>/mo</span></div>
+        <div class="tc-desc">Full biomarker-driven system with Signal targeting: recovery, sleep, stress, and performance — each addressed specifically.</div>
+      </div>
+      <div class="tier-cell reveal reveal-delay-2">
+        <div class="tc-label">Longevity</div>
+        <div class="tc-name">Continuum</div>
+        <div class="tc-price">$249<span>/mo</span></div>
+        <div class="tc-desc">Longitudinal tracking, lab integration, Jeffrey AI concierge, and formula evolution mapped against 5-year health trajectory.</div>
+      </div>
+    </div>
+    <div class="cta-row reveal">
+      <a href="#" class="btn-dark">Start your system →</a>
+      <a href="#system" class="btn-link">See how it's built</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ────────────────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <div class="cta-inner reveal">
+    <h2>Your body.<br/><em>Finally understood.</em></h2>
+    <p>Join members who stopped guessing and started building. Your formula is waiting for your data.</p>
+    <a href="#" class="btn-white">Build your system today →</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <span class="fb-wordmark">aiss<span style="color:var(--red);font-size:0.6em;position:relative;top:-0.2em;">~</span>sted</span>
+      <span class="fb-tagline">( + intelligent science )</span>
+    </div>
+    <div class="footer-col">
+      <h5>System</h5>
+      <a href="#">Core Formula</a>
+      <a href="#">Signal</a>
+      <a href="#">Jeffrey AI</a>
+      <a href="#">Continuum</a>
+    </div>
+    <div class="footer-col">
+      <h5>Science</h5>
+      <a href="#">How it works</a>
+      <a href="#">Biomarker index</a>
+      <a href="#">Clinical references</a>
+      <a href="#">Wearable integrations</a>
+    </div>
+    <div class="footer-col">
+      <h5>Membership</h5>
+      <a href="#">Pricing</a>
+      <a href="#">Member stories</a>
+      <a href="#">FAQ</a>
+      <a href="#">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Aissisted Inc. · All rights reserved.</div>
+    <div class="footer-signal">Your Body. Understood.</div>
+  </div>
+</footer>
+
+<script>
+// ── Nav scroll state
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 40) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+});
+
+// ── Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Data bar animations
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const fill = entry.target.querySelector('.dc-bar-fill');
+      if (fill) {
+        const pct = fill.getAttribute('data-fill');
+        fill.style.width = pct + '%';
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.data-card').forEach(card => barObserver.observe(card));
+
+// ── Ring animations (already via CSS, but trigger on visibility)
+const ringObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.ring-fill').forEach(ring => {
+        ring.style.transition = 'stroke-dashoffset 2s ease';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.data-rings').forEach(el => ringObserver.observe(el));
+
+// ── Product pill interaction
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
