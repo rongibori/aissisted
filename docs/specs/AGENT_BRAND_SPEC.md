@@ -1,9 +1,13 @@
 # AISSISTED — BRAND AGENT SPEC
 
-**Version:** v1.1 (Runtime-Aligned)
+**Version:** v1.2 (Brand Bible v1.0 aligned)
 **Owner:** Brand + Engineering
 **Status:** Production-grade specification, runtime-aligned to verified repo state
-**Depends on:** `SHARED_STATE_AND_MEMORY_SPEC.md` v1.1, `ORCHESTRATOR_ROUTING_SPEC.md` v1.0, `BRAND_FILTER_SPEC.md` v1.1, `AGENT_PRODUCT_SPEC.md` v1.1, `AGENT_DATA_SPEC.md` v1.1
+**Depends on:** `SHARED_STATE_AND_MEMORY_SPEC.md` v1.1, `ORCHESTRATOR_ROUTING_SPEC.md` v1.0, `BRAND_FILTER_SPEC.md` v1.2, `AGENT_PRODUCT_SPEC.md` v1.1, `AGENT_DATA_SPEC.md` v1.1, `docs/brand/BRAND_BIBLE.md` v1.0
+
+**Changelog:**
+- **v1.2 (2026-04-17)** — Tone mode union synced to `BRAND_FILTER_SPEC.md` v1.2 (5 modes). Prior `brand_consumer` references mapped to `core_brand_default`.
+- **v1.1** — Runtime-aligned to verified repo state.
 **Blocks:** All user-facing copy, Jeffrey voice responses, app cards, notifications, lifecycle emails
 **Stack alignment:** Fastify · PostgreSQL (Drizzle) · Redis · Claude API · AWS
 **Role in agent graph:** always the **terminal agent** — invoked last on `question.general`, `question.personal`, `question.protocol`, `reflection.mood`, `reflection.progress`, `action.update_goal`, `action.adjust_protocol`, `navigation.*`, `onboarding.step`, `system.scheduled.review`
@@ -49,7 +53,7 @@ The creative scope is narrow on purpose. The agent has no latitude to add inform
 
 - Slot filling — turning `{ name: "preferredName", value: "Ron" }` into voiced copy
 - Channel-adaptive rendering — same decision, different word counts and structures for voice vs. app vs. email
-- Tone modulation — product_ux vs. brand_consumer mode
+- Tone modulation across the 5 locked modes defined in `BRAND_FILTER_SPEC.md` §6.2 (`core_brand_default`, `inspirational`, `product_ux`, `credibility`, `conversational_crm`)
 - Personalization injection — weaving user name, goal references, memory callbacks into copy
 - Revision — accepting Brand Filter feedback and producing a tighter, more aligned draft
 - Progressive-disclosure phrasing — generating depth-1 headlines vs. depth-2 rationale vs. depth-3 science copy
@@ -117,8 +121,17 @@ interface BrandAgentInput extends AgentInput {
     data?: DataAgentOutput;          // present on Data → Brand paths
   };
   channel: Channel;
-  toneMode: "product_ux" | "brand_consumer";
+  toneMode: ToneMode; // see BRAND_FILTER_SPEC.md §6.2 — 5-mode union
 }
+
+// Imported from BRAND_FILTER_SPEC.md §6.2 — kept here for reference only.
+// Canonical definition lives in packages/config/agents/brand/tone.ts.
+export type ToneMode =
+  | "core_brand_default"     // calm · clear · assured (default hero/marketing)
+  | "inspirational"          // elevated · emotional · expansive (campaign hero)
+  | "product_ux"             // direct · effortless · simple (product/UX strings)
+  | "credibility"            // confident · grounded · transparent (science/proof)
+  | "conversational_crm";    // personal · supportive · human (email/notifications)
 ```
 
 ### 5.3 Input Shapes by Route
@@ -170,7 +183,7 @@ export interface RenderedCTA {
 
 export interface RenderMeta {
   channel: Channel;
-  toneMode: "product_ux" | "brand_consumer";
+  toneMode: ToneMode; // see §5.2 / BRAND_FILTER_SPEC.md §6.2
   slotsReceived: string[];
   slotsFilled: string[];
   wordBudget: number;
@@ -192,7 +205,7 @@ export interface RenderMeta {
   },
   "meta": {
     "channel": "voice_jeffrey",
-    "toneMode": "brand_consumer",
+    "toneMode": "core_brand_default",
     "slotsReceived": ["preferredName", "drivingBiomarker", "ingredient"],
     "slotsFilled": ["preferredName", "drivingBiomarker", "ingredient"],
     "wordBudget": 40,
@@ -257,9 +270,12 @@ HARD RULES:
 6. Prefer: yours, built, designed, understood, adaptive, evolving,
    precision, simple, clear.
 
-TONE MODES:
-- product_ux: direct · simple · actionable. Short sentences. No fluff.
-- brand_consumer: emotional + intelligent. Can breathe. Still concise.
+TONE MODES (5 — locked in Brand Bible v1.0):
+- core_brand_default: calm · clear · assured. The default. Hero, marketing, general brand voice.
+- inspirational: elevated · emotional · expansive. Campaign hero moments. Breathes more.
+- product_ux: direct · effortless · simple. Product strings, UX copy. Short, action-oriented.
+- credibility: confident · grounded · transparent. Science, proof, mechanism. No hedging fluff.
+- conversational_crm: personal · supportive · human. Email, notifications, lifecycle touchpoints.
 
 CHANNEL CONSTRAINTS (enforced — exceeding = failure):
 - voice_jeffrey: ≤40 words, ≤2 sentences, no lists
@@ -502,7 +518,7 @@ The revision adds one LLM call. Budget:
 
 ### Test 1 — `question.protocol` via voice_jeffrey
 **Input:** Product decision with slots `[preferredName: "Ron", drivingBiomarker: "HRV", ingredient: "magnesium"]`, channel=voice_jeffrey, maxWords=25
-**Expected:** ≤40 words, ≤2 sentences, includes "Ron", references HRV and magnesium. No forbidden words. Tone: brand_consumer.
+**Expected:** ≤40 words, ≤2 sentences, includes "Ron", references HRV and magnesium. No forbidden words. Tone: core_brand_default.
 
 ### Test 2 — `reflection.progress` via app_card
 **Input:** Product decision with `framing: "on_track"`, slots `[preferredName: "Sara", sleepScoreChange: "+12%", hrvTrend: "improving"]`, channel=app_card
@@ -518,7 +534,7 @@ The revision adds one LLM call. Budget:
 
 ### Test 5 — `system.scheduled.review` via email_lifecycle
 **Input:** Product decision with multiple sections (sleep, HRV, protocol adherence), slots filled, channel=email_lifecycle
-**Expected:** ≤200 words. Multi-section `sections[]` output. Each section has personalization. Tone: brand_consumer. Lists OK.
+**Expected:** ≤200 words. Multi-section `sections[]` output. Each section has personalization. Tone: conversational_crm. Lists OK.
 
 ### Test 6 — Revision loop
 **Input:** First-pass draft that includes "optimize your health" (forbidden).
@@ -666,4 +682,4 @@ Brand owns the words. Engineering owns the machine. Product owns the structure.
 
 ---
 
-*End of spec. v1.1. — Runtime-aligned, ready for engineering review.*
+*End of spec. v1.2 — Brand Bible v1.0 aligned, 5-mode tone union, ready for engineering review.*

@@ -1,11 +1,15 @@
 # AISSISTED — BRAND FILTER SPEC
 
-**Version:** v1.1 (Execution-aligned)
+**Version:** v1.2 (Brand Bible v1.0 aligned)
 **Owner:** Brand + Engineering
 **Status:** Production-grade specification, ready for engineering handoff and aligned to the current runtime stack
-**Depends on:** `SHARED_STATE_AND_MEMORY_SPEC.md` v1.1, `ORCHESTRATOR_ROUTING_SPEC.md` v1.0
+**Depends on:** `SHARED_STATE_AND_MEMORY_SPEC.md` v1.1, `ORCHESTRATOR_ROUTING_SPEC.md` v1.0, `docs/brand/BRAND_BIBLE.md` v1.0
 **Blocks:** Every user-facing agent output (Jeffrey voice, app copy, email, notifications)
 **Stack alignment:** Fastify · PostgreSQL (Drizzle) · Redis · Claude API · AWS
+
+**Changelog:**
+- **v1.2 (2026-04-17)** — Aligned to Brand Bible v1.0. Expanded `ToneMode` union from 3 → 5 modes (`core_brand_default`, `inspirational`, `product_ux`, `credibility`, `conversational_crm`). Previous `brand_consumer` maps to `core_brand_default`; `strategy_investor` is removed from user-facing tone modes (investor copy runs through a separate non-filtered path).
+- **v1.1** — Execution-aligned to runtime stack.
 
 ---
 
@@ -178,14 +182,37 @@ export interface ChannelConstraints {
 
 ### 6.2 Tone Modes
 
+Five modes, mapped 1:1 to the Brand Bible "TONE SYSTEM (HOW WE FLEX)" section. All five share the same DNA: **calm, clear, certain**. They differ only in register.
+
 ```typescript
 export type ToneMode =
-  | "product_ux"         // direct · simple · actionable ("Press. Mix. Go.")
-  | "brand_consumer"     // emotional + intelligent ("You feel better. You know why.")
-  | "strategy_investor"; // structured · logical · high-signal
+  | "core_brand_default"     // calm · clear · assured (default hero/marketing)
+                             //   "Your body changes. Your formula should too."
+  | "inspirational"          // elevated · emotional · expansive (campaign hero)
+                             //   "For the first time, your health isn't guesswork. It's understood."
+  | "product_ux"             // direct · effortless · simple (product/UX strings)
+                             //   "Press. Mix. Go."
+  | "credibility"            // confident · grounded · transparent (science/proof)
+                             //   "Built from your data. Refined by intelligent science."
+  | "conversational_crm";    // personal · supportive · human (email/notifications)
+                             //   "We noticed your sleep has been off. We've adjusted your formula to support it."
 ```
 
-Tone mode is set by the orchestrator based on intent class and channel, not inferred by the filter.
+**Routing rule (set by orchestrator, not by the filter):**
+
+| Channel | Default tone mode |
+|---------|-------------------|
+| `voice_jeffrey` | `conversational_crm` |
+| `app_card` | `core_brand_default` |
+| `app_inline` | `product_ux` |
+| `notification_push` | `conversational_crm` |
+| `email_transactional` | `conversational_crm` |
+| `email_lifecycle` | `core_brand_default` |
+| `sms` | `product_ux` |
+| Marketing landing hero | `inspirational` |
+| Science / proof sections | `credibility` |
+
+The orchestrator may override per-intent (e.g., a protocol-adjustment notification uses `conversational_crm` even on `app_card`). Investor / strategy copy runs through a separate non-filtered path and is not a `ToneMode` in this spec.
 
 ---
 

@@ -1,24 +1,75 @@
 @import "tailwindcss";
 
+/*
+ * Aissisted design tokens — locked to Brand Bible v1.0
+ * Source: docs/brand/BRAND_BIBLE.md §§ "VISUAL IDENTITY" and "LOCKED VISUAL STYLE GUIDE"
+ *
+ * Color ratio (enforced by design review, not CSS):
+ *   70% white · 20% graphite/black · 8% red · 2% aqua
+ *
+ * Typography: Briston Bold (headlines), Source Code Pro (UI/data),
+ * Baskerville (emotional accents only, never UI).
+ * Briston is licensed — not yet shipped as a webfont. Fallback stack in
+ * --font-display holds the visual feel until the webfont license is resolved.
+ */
+
 :root {
-  --background: #0a0a0f;
-  --surface: #13131a;
-  --surface-2: #1c1c26;
-  --border: #2a2a38;
-  --text: #e8e8f0;
-  --text-muted: #7a7a98;
-  --accent: #6366f1;
-  --accent-hover: #4f52e0;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* ── Primary ── */
+  --brand-red: #8A0F1A;           /* Medical Red — cap, key CTA accents, identity moments. Matte only. */
+
+  /* ── Core neutrals ── */
+  --brand-white: #FFFFFF;         /* Cleanroom, clarity, absence of noise */
+  --brand-graphite: #1C1C1E;      /* Primary typography, structure */
+  --brand-graphite-soft: #2E2E2E; /* Secondary text */
+
+  /* ── Intelligence layer ── */
+  --brand-midnight: #0B1D3A;      /* Data, system UI, intelligence signaling */
+
+  /* ── Accent / activation ── */
+  --brand-aqua: #00C2D1;          /* Activation line, data viz, feedback states */
+
+  /* ── Semantic mapping (white-first interface) ── */
+  --background: var(--brand-white);
+  --surface: var(--brand-white);
+  --surface-2: #F7F7F8;           /* Subtle elevation on white — not a brand token, utility only */
+  --border: #E5E5EA;              /* Hairline dividers on white */
+  --text: var(--brand-graphite);
+  --text-muted: var(--brand-graphite-soft);
+  --accent: var(--brand-red);
+  --accent-hover: #6E0C15;        /* -15% luminance of brand-red */
+  --data: var(--brand-midnight);
+  --signal: var(--brand-aqua);
+
+  /* Feedback states — tuned to the brand palette, not generic */
+  --success: #0F7A4C;             /* Desaturated, matte — no retail green */
+  --warning: #B76B00;             /* Graphite-adjacent amber */
+  --danger: var(--brand-red);     /* Brand red already is the "attention" signal */
+
+  /* ── Typography stacks ── */
+  --font-display: "Briston", "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-system: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-accent: "Baskerville", "Libre Baskerville", Georgia, serif;
 }
 
 body {
   background: var(--background);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-system);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headlines use the display stack. Data/UI stays in Source Code Pro. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* Baskerville reserved for emotional accents — apply via utility class, never default. */
+.font-accent {
+  font-family: var(--font-accent);
 }
 
 * {
@@ -29,7 +80,7 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--surface);
+  background: var(--surface-2);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
