@@ -37,6 +37,27 @@ Classification pass used Path B from issue #28: *commit canonical specs as-is, f
 | `aissisted-brand-architecture.html` | **KEEP** | Brand system visualization. |
 | `aissisted-brand-brief.html` | **KEEP** | Brand brief reference. |
 | `aissisted-website.html` | **KEEP** | Website prototype HTML. |
+| `assets/Aissisted-logo-H.png` | **KEEP** | Horizontal logo lockup (13 KB). |
+| `DESIGN_SOURCES.md` | **KEEP** | Pointer index to large binary design sources kept off-repo. |
+
+### Operational scripts (in `scripts/`)
+
+Recovered from the pre-v2 backup and promoted into the repo:
+
+| File | Classification | Rationale |
+|------|----------------|-----------|
+| `aissisted-audit.sh` | **KEEP** | Workspace audit helper. |
+| `aissisted-consolidate.sh` | **KEEP** | Consolidation helper used during the 2026-04-16 repo merge. |
+| `aissisted-guardrails.sh` | **KEEP** | Repo hygiene guardrails. |
+
+### Intentionally excluded from this commit
+
+| Source | Reason |
+|--------|--------|
+| `~/Desktop/[WIP] Asssisted/*.psd`, `*.key`, `*.ai`, `Briston.otf`, business PDFs | Large binary design sources (~234 MB total). Indexed in `docs/brand/DESIGN_SOURCES.md`; not stored in git. |
+| `~/Desktop/SCIENCE + WELL-BEING word.pdf` | External reference material, not Aissisted-authored canonical content. |
+| Six Labs files | Separate company; confidential. Does not belong in this repo. |
+| Onboarding Flow spec | Planned-but-unwritten. Tracked as a gap, not a lost file. |
 
 ---
 
