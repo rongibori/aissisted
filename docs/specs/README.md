@@ -6,7 +6,7 @@ This folder holds canonical product, brand, data, engineering, and safety specif
 
 ## Triage provenance
 
-These specs were consolidated on **2026-04-17** from `Aissisted.backup-20260416-153155/` on the local workstation (pre-v2 backup folder created during the 2026-04-16 repo consolidation).
+These specs were consolidated on **2026-04-17** from the pre-v2 backup (created 2026-04-16 during the repo consolidation, now archived at `~/Documents/Claude/Projects/_archive/Aissisted-specs-pre-v2/`).
 
 Classification pass used Path B from issue #28: *commit canonical specs as-is, flag conflicts for human review rather than auto-resolving*.
 
@@ -17,8 +17,8 @@ Classification pass used Path B from issue #28: *commit canonical specs as-is, f
 | `THE_BEGINNING_OF_THE_PLAYBOOK.md` | Origin narrative | **KEEP** | Foundational brand/product thesis. No code conflict. |
 | `SHARED_STATE_AND_MEMORY_SPEC.md` | v1.1 Execution-aligned | **KEEP** | Stack-aligned (Fastify/Postgres/Redis). Foundation spec — no deps. |
 | `ORCHESTRATOR_ROUTING_SPEC.md` | v1.0 Foundational | **KEEP** | Stack-aligned incl. pgvector. |
-| `BRAND_FILTER_SPEC.md` | v1.1 Execution-aligned | **KEEP** | Stack-aligned. Blocks all user-facing output. |
-| `AGENT_BRAND_SPEC.md` | v1.1 Runtime-Aligned | **KEEP** | Terminal agent spec. Stack-aligned. |
+| `BRAND_FILTER_SPEC.md` | v1.2 Brand Bible aligned | **KEEP** | Stack-aligned. Blocks all user-facing output. Tone mode union expanded to 5 per Brand Bible v1.0. |
+| `AGENT_BRAND_SPEC.md` | v1.2 Brand Bible aligned | **KEEP** | Terminal agent spec. Stack-aligned. Tone union synced to 5 modes. |
 | `AGENT_DATA_SPEC.md` | v1.1 Runtime-Aligned | **KEEP** | Signal engine. Stack-aligned. |
 | `AGENT_ENGINEERING_SPEC.md` | v1.1 Runtime-Aligned | **KEEP** | Protocol validator. Stack-aligned. |
 | `AGENT_GROWTH_SPEC.md` | v1.1 Runtime-Aligned | **KEEP** | Async advisory layer. Stack-aligned. |
@@ -34,11 +34,14 @@ Classification pass used Path B from issue #28: *commit canonical specs as-is, f
 
 | File | Classification | Rationale |
 |------|----------------|-----------|
-| `aissisted-brand-architecture.html` | **KEEP** | Brand system visualization. |
-| `aissisted-brand-brief.html` | **KEEP** | Brand brief reference. |
+| `BRAND_BIBLE.md` | **CANONICAL · v1.0 LOCKED** | Single source of truth for voice, tone, visual identity, architecture, and go-to-market. All brand/product/visual decisions reconcile here. |
+| `aissisted-brand-architecture.html` | **KEEP** | Brand system visualization (derivative of Brand Bible §Architecture). |
+| `aissisted-brand-brief.html` | **KEEP** | Brand brief reference (derivative of Brand Bible §Creative Brief). |
 | `aissisted-website.html` | **KEEP** | Website prototype HTML. |
 | `assets/Aissisted-logo-H.png` | **KEEP** | Horizontal logo lockup (13 KB). |
 | `DESIGN_SOURCES.md` | **KEEP** | Pointer index to large binary design sources kept off-repo. |
+
+> **Precedence:** when `BRAND_BIBLE.md` conflicts with any derivative (HTML briefs, specs, component copy, or UI), the Bible wins. File a PR to reconcile the derivative — do not edit the Bible to match drift.
 
 ### Operational scripts (in `scripts/`)
 
@@ -67,7 +70,7 @@ The branch `feat/postgres-migration` has its own `docs/ARCHITECTURE.md`, `docs/E
 
 ## Historical backup
 
-The source backup folder is preserved at `~/Documents/Claude/Projects/Aissisted.backup-20260416-153155/` pending archival (tracked in issue #30 / the follow-up archive task). Do not restore from it without Planner approval.
+The source backup folder has been archived to `~/Documents/Claude/Projects/_archive/Aissisted-specs-pre-v2/` (completed 2026-04-17, Issue #26). It is retained as a read-only reference only. Do not restore from it without Planner approval — the canonical state is this repo.
 
 ## How to evolve these specs
 
@@ -76,4 +79,4 @@ The source backup folder is preserved at `~/Documents/Claude/Projects/Aissisted.
 3. Update dependency versions in any spec that depends on yours.
 4. If a change rewrites more than 20% of a spec, open a governance issue first.
 
-— Planner (Cowork) · 2026-04-17
+— Planner (Cowork) · last updated 2026-04-17 (Brand Bible v1.0 landing)
