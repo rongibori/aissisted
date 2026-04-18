@@ -5,7 +5,8 @@
 **Status:** Production-grade specification, ready for engineering handoff
 **Depends on:** `SHARED_STATE_AND_MEMORY_SPEC.md` v1.1
 **Blocks:** Jeffrey voice layer, agent deployment, Brand Filter runtime, safety gating
-**Stack alignment:** Fastify · PostgreSQL (Drizzle) · Redis · pgvector · AWS (HIPAA-eligible)
+**Current runtime:** Fastify · SQLite/libsql (Drizzle) · Claude API · AWS
+**Target stack (planned migration on `feat/postgres-migration`):** PostgreSQL (Drizzle) · Redis · pgvector
 
 ---
 

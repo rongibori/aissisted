@@ -1,6 +1,6 @@
 # `docs/specs/` — Aissisted product & architecture specs
 
-This folder holds canonical product, brand, data, engineering, and safety specifications for the Aissisted platform. Every spec here is **v1.0+ Runtime-Aligned** — i.e., aligned with the live `apps/api` stack (Fastify · PostgreSQL/Drizzle · Redis · Claude API · AWS).
+This folder holds canonical product, brand, data, engineering, and safety specifications for the Aissisted platform. Every spec here is **v1.0+ Runtime-Aligned** — i.e., aligned with the current live `apps/api` stack (Fastify · Drizzle/libsql (SQLite) · Claude API · AWS). **PostgreSQL/Drizzle, Redis, and pgvector remain target-stack components planned under `feat/postgres-migration` and are not yet the live runtime.**
 
 ---
 
