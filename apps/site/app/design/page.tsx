@@ -284,7 +284,7 @@ function Section({
   return (
     <section className="border-t border-ink/5 py-16 md:py-20">
       <Container width="full">
-        <UILabel tone="muted">{title}</UILabel>
+        <UILabel>{title}</UILabel>
         <div className="mt-8">{children}</div>
       </Container>
     </section>
@@ -302,7 +302,7 @@ function PrimitiveFullBleed({
     <section className="border-t border-ink/5">
       <Container width="full">
         <div className="pt-16">
-          <UILabel tone="muted">{title}</UILabel>
+          <UILabel>{title}</UILabel>
         </div>
       </Container>
       {children}

@@ -20,8 +20,8 @@ import { cn } from "@/lib/cn";
  * at the call site. That keeps the palette of choices narrow and stops drift.
  */
 
-type Props<T extends ElementType = "div"> = {
-  as?: T;
+type Props = {
+  as?: ElementType;
   className?: string;
   children: ReactNode;
 };

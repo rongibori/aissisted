@@ -1,11 +1,12 @@
 {
   "name": "@aissisted/brand",
   "private": true,
-  "version": "0.1.0",
-  "description": "Aissisted Brand Bible v1.1 design tokens — single source of truth shared across apps/web and apps/site.",
+  "version": "0.2.0",
+  "description": "Aissisted Brand Bible v2 design tokens — color, type scale, spacing, radius, motion, elevation.",
   "type": "module",
   "exports": {
-    "./tokens.css": "./tokens.css",
+    "./tokens.css":   "./tokens.css",
+    "./tokens":       "./tokens.ts",
     "./package.json": "./package.json"
   },
   "sideEffects": [
@@ -13,6 +14,7 @@
   ],
   "files": [
     "tokens.css",
+    "tokens.ts",
     "README.md"
   ]
 }
