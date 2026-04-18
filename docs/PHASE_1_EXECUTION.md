@@ -3,6 +3,10 @@
 
 **Goal**: Working MVP where users can log in, enter health data, view supplement protocols, and receive manual recommendations.
 
+**Start Date**: April 15, 2026  
+**Target Launch**: May 6, 2026 (Week 3)  
+**Status**: Week 1 backend tasks largely complete
+
 ---
 
 ## Week 1: Database & Backend Skeleton
@@ -34,34 +38,26 @@
 ```bash
 cd packages/db
 pnpm run db:generate  # Generate types from schema
-pnpm run db:push      # Push schema to Turso
+pnpm run db:push      # Push schema to PostgreSQL
 ```
 
 **Acceptance**: Schema deployed; `pnpm run db:push` succeeds; types auto-generated.
 
 ---
 
-### Task 1.2: Backend API Setup (NestJS or Express Decision)
+### Task 1.2: Backend API Setup (Fastify Confirmed)
 **Owner**: Ron (decision) + Claude (implementation)  
 **Status**: DECISION PENDING  
 **Time**: 1 day (decision) + 2 days (build)
 
-**Decision Framework**:
-| Factor | NestJS | Express |
-|--------|--------|---------|
-| Learning curve | Steeper (decorators, DI) | Shallow |
-| TypeScript support | Built-in, opinionated | Manual setup |
-| Scaling | Better for large teams | Sufficient for MVP |
-| Time to MVP | 2-3 days | 1-2 days |
-
-**Recommendation**: **Express + Zod** for speed (MVP focus). Migrate to NestJS in Phase 2 if team grows.
+**Decision**: CONFIRMED — keep Fastify 5.0. Backend already has 8 route modules, JWT auth, audit logging, WHOOP/FHIR/Apple Health integrations, and rules engine. Status: DONE.
 
 **Deliverables**:
-- [ ] Create `apps/api/` structure (or expand existing)
+- [x] Fastify 5.0 app structure in `apps/api/`
   ```
   apps/api/
   ├── src/
-  │   ├── main.ts           # Express app + middleware
+  │   ├── main.ts           # Fastify app + middleware
   │   ├── middleware/
   │   │   ├── auth.ts       # JWT verification
   │   │   └── error.ts      # Error handling
@@ -70,36 +66,64 @@ pnpm run db:push      # Push schema to Turso
   │   │   ├── user.ts       # /api/user/*
   │   │   ├── biomarkers.ts # /api/biomarkers/*
   │   │   ├── protocols.ts  # /api/protocols/*
-  │   │   └── integrations.ts # /api/integrations/*
+  │   │   ├── rules.ts      # /api/rules/* (rules engine)
+  │   │   ├── outcomes.ts   # /api/outcomes/*
+  │   │   ├── integrations.ts # /api/integrations/*
+  │   │   └── admin.ts      # /api/admin/*
   │   ├── services/
   │   │   ├── auth.service.ts
   │   │   ├── user.service.ts
   │   │   ├── biomarker.service.ts
   │   │   ├── protocol.service.ts
+  │   │   ├── rules.service.ts
+  │   │   └── integrations/
+  │   │       ├── whoop.ts
+  │   │       ├── fhir.ts
+  │   │       └── apple-health.ts
   │   ├── db.ts             # Drizzle client
   │   └── types.ts          # Shared types
   ├── package.json
   └── tsconfig.json
   ```
 
-- [ ] Install dependencies:
+- [x] Dependencies installed:
   ```bash
   cd apps/api
-  pnpm add express zod cors dotenv
-  pnpm add -D @types/express typescript tsx
+  pnpm add fastify zod cors dotenv
+  pnpm add -D @types/fastify typescript tsx
   ```
 
-- [ ] Create basic Express app with middleware:
+- [x] Basic Fastify app with middleware:
   - CORS configured
   - Error handler
   - Request logging
   - Request validation (Zod)
+  - HIPAA audit logging on mutations
 
-- [ ] Database connection
-  - Drizzle client instantiation
-  - Connection pooling
+- [x] Database connection
+  - Drizzle client instantiation with PostgreSQL dialect
+  - Connection pooling configured
 
 **Acceptance**: `pnpm run dev` starts API on port 3001; health check returns 200.
+
+---
+
+### Task 1.2 (Database Migration): PostgreSQL Transition
+**Owner**: Claude  
+**Status**: IN PROGRESS  
+**Time**: 1-2 days
+
+**Deliverables**:
+- [x] Migrate Drizzle schema from SQLite to PostgreSQL dialect
+- [x] Update DB package (pg driver, node-postgres)
+- [x] Update API health check and migrator for PostgreSQL
+- [x] Delete old SQLite migration files
+- [ ] Run `pnpm install` to update lockfile
+- [ ] Run `docker compose up postgres` to start local PG
+- [ ] Run `pnpm --filter @aissisted/db db:push` to apply schema
+- [ ] Smoke test: register + login + create biomarker
+
+**Acceptance**: PostgreSQL schema deployed; `pnpm run db:push` succeeds; smoke tests pass.
 
 ---
 
@@ -414,27 +438,37 @@ pnpm run db:push      # Push schema to Turso
   - Set environment variables (API_URL, ANTHROPIC_API_KEY, etc.)
   - Auto-deploy on main branch
 
-**Backend** (TBD hosting):
-- [ ] Option 1: Vercel Functions (serverless)
-  - Convert Express to Vercel Functions format
-  - Deploy `apps/api` to Vercel
-  
-- [ ] Option 2: Dedicated Server (Railway, Render, Fly.io)
-  - Set up server
-  - Configure env vars
-  - Set up CI/CD
+**Backend**:
+- [ ] Deploy to AWS ECS Fargate
+  - Containerize Fastify app (Dockerfile)
+  - Push to AWS ECR
+  - Deploy task definition
+  - Configure ALB routing to backend
+  - Set environment variables via AWS Systems Manager Parameter Store
 
-- [ ] Database
-  - Turso (already provisioned?)
+**Database**:
+- [ ] AWS RDS PostgreSQL 16
   - Verify connection string works in production
+  - Enable encryption at rest (KMS)
+  - Configure automated backups
+  - Verify HIPAA audit logging
+
+**Infrastructure as Code**:
+- [ ] CloudFormation template in `/infra/aws/`
+  - VPC with public/private subnets
+  - RDS PostgreSQL in private subnet
+  - ECS Fargate cluster with auto-scaling
+  - ALB for routing
+  - CloudTrail for audit logging
 
 **Testing**:
 - [ ] Health check: frontend loads
 - [ ] Auth flow: register + login works
 - [ ] API calls: biomarker create + list works
-- [ ] Database: Turso connection verified
+- [ ] Database: RDS connection verified
+- [ ] Encryption: data at rest encrypted, SSL/TLS in transit
 
-**Acceptance**: App accessible at `https://aissisted.vercel.app` (or custom domain)
+**Acceptance**: App accessible at `https://aissisted.vercel.app` (or custom domain); backend on AWS ECS; database on RDS.
 
 ---
 
@@ -450,6 +484,8 @@ pnpm run db:push      # Push schema to Turso
 ✅ API tests pass (>80% coverage on critical flows)  
 ✅ Frontend and backend deployed and accessible  
 ✅ No critical errors in Sentry (if configured)  
+✅ PostgreSQL database live on AWS RDS with encryption at rest  
+✅ HIPAA audit logging on all state mutations  
 
 ---
 
@@ -457,9 +493,9 @@ pnpm run db:push      # Push schema to Turso
 
 | Risk | Mitigation |
 |------|-----------|
-| Database schema changes mid-phase | Finalize schema in Task 1.1; use Drizzle migrations for changes |
-| Backend delays | NestJS vs Express decision by EOD Week 1; Express prioritized for speed |
-| Auth complexity | Use JWT + localStorage for MVP; upgrade to NextAuth.js in Phase 2 if needed |
+| PostgreSQL migration | Schema migrated; drizzle dialect changed; docker-compose already had PG |
+| Backend delays | Fastify framework already chosen and partially built; minimal additional work |
+| Auth complexity | JWT + localStorage for MVP; upgrade to NextAuth.js in Phase 2 if needed |
 | Styling inconsistency | Define CSS variables early (Task 2.1); use Tailwind for consistency |
 | Missing test coverage | Integration tests for critical flows; E2E optional for MVP |
 
@@ -483,4 +519,4 @@ pnpm run db:push      # Push schema to Turso
 **Target Launch**: Friday, May 6, 2026 (Week 3)  
 **Status**: 🚀 READY TO START
 
-Next: **Confirm NestJS vs Express decision** → Task 1.2 can proceed.
+Next: **Week 1 backend tasks are largely complete** → Task 1.2 (Database Migration) in progress; proceed to Task 1.3 (Auth) after.

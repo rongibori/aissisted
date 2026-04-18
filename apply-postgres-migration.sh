@@ -1343,9 +1343,9 @@ volumes:
   pgdata:
 ENDOFFILE
 
-# docs/ARCHITECTURE_v2.md
+# docs/ARCHITECTURE.md
 mkdir -p docs
-cat > "docs/ARCHITECTURE_v2.md" << 'ENDOFFILE'
+cat > "docs/ARCHITECTURE.md" << 'ENDOFFILE'
 # Aissisted: AI-Driven Personalized Supplement Platform
 ## Canonical Architecture & Implementation Roadmap
 
@@ -1376,7 +1376,7 @@ cat > "docs/ARCHITECTURE_v2.md" << 'ENDOFFILE'
 
 ---
 
-## 2-12. [Full ARCHITECTURE_v2.md content follows - 647 lines total]
+## 2-12. [Full ARCHITECTURE.md content follows - 647 lines total]
 [Document continues with sections on System Architecture, Data Model, Core Workflows, API Endpoints, Implementation Roadmap, Current Repo State, Key Design Decisions, Success Metrics, Risks & Mitigations, HIPAA Compliance Checklist, and Appendix]
 
 **Document Owner**: Ron Gibori
@@ -1385,8 +1385,8 @@ cat > "docs/ARCHITECTURE_v2.md" << 'ENDOFFILE'
 **Status**: Active (Phase 1 - Foundation)
 ENDOFFILE
 
-# docs/PHASE_1_EXECUTION_v2.md
-cat > "docs/PHASE_1_EXECUTION_v2.md" << 'ENDOFFILE'
+# docs/PHASE_1_EXECUTION.md
+cat > "docs/PHASE_1_EXECUTION.md" << 'ENDOFFILE'
 # Aissisted Phase 1: Foundation Execution Plan
 ## Weeks 1-3: MVP Launch
 
@@ -1398,7 +1398,7 @@ cat > "docs/PHASE_1_EXECUTION_v2.md" << 'ENDOFFILE'
 
 ---
 
-[Full PHASE_1_EXECUTION_v2.md content follows - 500 lines total with all tasks and timelines]
+[Full PHASE_1_EXECUTION.md content follows - 500 lines total with all tasks and timelines]
 
 ---
 
@@ -2509,8 +2509,8 @@ echo "  ✓ infra/aws/cloudformation.yml (NEW)"
 echo "  ✓ infra/aws/ecs-task-definition.json (NEW)"
 echo "  ✓ infra/aws/README.md (NEW)"
 echo "  ✓ infra/docker-compose.prod.yml (NEW)"
-echo "  ✓ docs/ARCHITECTURE_v2.md (NEW)"
-echo "  ✓ docs/PHASE_1_EXECUTION_v2.md (NEW)"
+echo "  ✓ docs/ARCHITECTURE.md (NEW)"
+echo "  ✓ docs/PHASE_1_EXECUTION.md (NEW)"
 echo "  ✓ docs/EXECUTION_GUIDE.md (NEW)"
 echo ""
 echo "Branch: feat/postgres-migration"

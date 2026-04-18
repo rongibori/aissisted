@@ -65,8 +65,8 @@ The script creates or updates 15 files when you run it:
 - `infra/docker-compose.prod.yml` (NEW)
 
 **Documentation** (3)
-- `docs/ARCHITECTURE_v2.md` (NEW)
-- `docs/PHASE_1_EXECUTION_v2.md` (NEW)
+- `docs/ARCHITECTURE.md` (NEW)
+- `docs/PHASE_1_EXECUTION.md` (NEW)
 - `docs/EXECUTION_GUIDE.md` (NEW)
 
 ## How to Use
@@ -146,8 +146,8 @@ For production:
 | **Manifest** | `MIGRATION_MANIFEST.md` | Technical deep-dive |
 | **Script README** | `MIGRATION_SCRIPT_README.md` | How to use the script |
 | **Execution Guide** | `docs/EXECUTION_GUIDE.md` | Phases A-E (local & AWS setup) |
-| **Architecture** | `docs/ARCHITECTURE_v2.md` | System design & tech specs |
-| **Phase 1 Plan** | `docs/PHASE_1_EXECUTION_v2.md` | MVP feature delivery plan |
+| **Architecture** | `docs/ARCHITECTURE.md` | System design & tech specs |
+| **Phase 1 Plan** | `docs/PHASE_1_EXECUTION.md` | MVP feature delivery plan |
 | **AWS Guide** | `infra/aws/README.md` | Production deployment steps |
 
 ## Verification Checklist
@@ -167,8 +167,8 @@ After running the script, verify:
 - Technical scope → Read `MIGRATION_MANIFEST.md`
 - How to set up locally → Read `docs/EXECUTION_GUIDE.md` Phase A
 - How to deploy to AWS → Read `infra/aws/README.md`
-- System architecture → Read `docs/ARCHITECTURE_v2.md`
-- Feature delivery timeline → Read `docs/PHASE_1_EXECUTION_v2.md`
+- System architecture → Read `docs/ARCHITECTURE.md`
+- Feature delivery timeline → Read `docs/PHASE_1_EXECUTION.md`
 
 ## Timeline
 

@@ -79,8 +79,8 @@ git commit -m "feat: complete PostgreSQL migration from SQLite"
 
 | File | Status | Size | Purpose |
 |------|--------|------|---------|
-| `docs/ARCHITECTURE_v2.md` | **NEW** | 648 lines | System architecture, workflows, tech specs |
-| `docs/PHASE_1_EXECUTION_v2.md` | **NEW** | 500+ lines | Detailed Phase 1 execution plan (MVP launch) |
+| `docs/ARCHITECTURE.md` | **NEW** | 648 lines | System architecture, workflows, tech specs |
+| `docs/PHASE_1_EXECUTION.md` | **NEW** | 500+ lines | Detailed Phase 1 execution plan (MVP launch) |
 | `docs/EXECUTION_GUIDE.md` | **NEW** | 443 lines | Post-migration setup (local, testing, deployment) |
 
 ---
@@ -244,8 +244,8 @@ These require human intervention and are documented in `docs/EXECUTION_GUIDE.md`
 ### Generated Documentation
 ```
 docs/EXECUTION_GUIDE.md          ← Follow this for local setup
-docs/ARCHITECTURE_v2.md          ← System design and rationale
-docs/PHASE_1_EXECUTION_v2.md    ← Detailed feature implementation plan
+docs/ARCHITECTURE.md          ← System design and rationale
+docs/PHASE_1_EXECUTION.md    ← Detailed feature implementation plan
 infra/aws/README.md             ← AWS deployment procedures
 ```
 
@@ -386,8 +386,8 @@ git commit -m "feat: add PostgreSQL migration files"
 | Resource | Location | Purpose |
 |----------|----------|---------|
 | **Execution Guide** | `docs/EXECUTION_GUIDE.md` | Step-by-step local setup |
-| **Architecture Doc** | `docs/ARCHITECTURE_v2.md` | System design details |
-| **Phase 1 Plan** | `docs/PHASE_1_EXECUTION_v2.md` | Feature delivery roadmap |
+| **Architecture Doc** | `docs/ARCHITECTURE.md` | System design details |
+| **Phase 1 Plan** | `docs/PHASE_1_EXECUTION.md` | Feature delivery roadmap |
 | **AWS Guide** | `infra/aws/README.md` | Production deployment |
 | **Script README** | `MIGRATION_SCRIPT_README.md` | How to use the script |
 | **This Manifest** | `MIGRATION_MANIFEST.md` | Overview (you are here) |
@@ -402,7 +402,7 @@ git commit -m "feat: add PostgreSQL migration files"
 | **Phase B** (Migrations) | 5 min | Generate migration files | Documentation ready |
 | **Phase C** (Tests) | 15 min | Type check, API tests | Documentation ready |
 | **Phase D** (AWS) | 2 hours | CloudFormation, ECR, secrets, deployment | Documentation ready |
-| **Phase E** (Complete) | Ongoing | Frontend integration, additional Phase 1 tasks | Tracked in PHASE_1_EXECUTION_v2.md |
+| **Phase E** (Complete) | Ongoing | Frontend integration, additional Phase 1 tasks | Tracked in PHASE_1_EXECUTION.md |
 
 **Critical Path to MVP**: Phases A → B → C → Frontend development → Phase D
 
