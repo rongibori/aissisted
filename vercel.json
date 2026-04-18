@@ -3,6 +3,5 @@
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @aissisted/site build",
-  "outputDirectory": "apps/site/.next",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/site packages/brand"
+  "outputDirectory": "apps/site/.next"
 }
