@@ -2,19 +2,21 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * Button — three tones, two sizes, one motion system.
+ * Button — three tones, three sizes, one motion system.
  *
  * Tones:
  *   primary  · brand red on white · conversion only (rally, lead, invite)
  *   secondary· ink on white with 1px ink border · navigation, secondary CTA
  *   ghost    · no border, ink text, subtle hover · inline / tertiary
  *
- * Palette budget: primary button is the 2% signal. Use sparingly — a hero
- * has ONE primary CTA per beat.
+ * Sizes: sm (compact), md (default), lg (hero CTAs)
+ *
+ * Palette budget: primary button sits in the 8% accent budget. Use sparingly
+ * — a hero has ONE primary CTA per beat.
  */
 
 type Tone = "primary" | "secondary" | "ghost";
-type Size = "sm" | "md";
+type Size = "sm" | "md" | "lg";
 
 const TONE_STYLES: Record<Tone, string> = {
   primary: cn(
@@ -37,6 +39,7 @@ const TONE_STYLES: Record<Tone, string> = {
 const SIZE_STYLES: Record<Size, string> = {
   sm: "h-9 px-4 text-sm",
   md: "h-11 px-6 text-base",
+  lg: "h-14 px-8 text-lg",
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
