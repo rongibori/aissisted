@@ -50,6 +50,9 @@ importers:
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
+      drizzle-orm:
+        specifier: ^0.38.0
+        version: 0.38.4(@libsql/client@0.14.0)(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(@types/react@19.2.14)(prisma@6.19.3(typescript@5.9.3))(react@19.2.5)
       fastify:
         specifier: ^5.0.0
         version: 5.8.4

@@ -185,7 +185,8 @@ export function HealthStateWidget() {
   };
 
   const modeConfig =
-    (state?.mode && MODE_CONFIG[state.mode]) ?? MODE_CONFIG.data_insufficient;
+    (state?.mode ? MODE_CONFIG[state.mode] : undefined) ??
+    MODE_CONFIG.data_insufficient;
 
   const actionableSignals =
     state?.activeSignals.filter((s) => s.severity !== "info").slice(0, 3) ?? [];

@@ -8,6 +8,8 @@ import { Card, Button, Badge, Spinner, EmptyState } from "../../components/ui";
 import { getRangeStatus, STATUS_COLORS, STATUS_LABELS, TREND_ICONS, TREND_COLORS, type TrendDirection } from "../../lib/biomarker-ranges";
 import { Sparkline } from "../../components/sparkline";
 import { HealthStateWidget } from "../../components/health-state-widget";
+
+interface Recommendation {
   id: string;
   name: string;
   dosage: string;

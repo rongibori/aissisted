@@ -14,3 +14,7 @@ coverage
 packages/db/data
 # packages/db/drizzle — migration SQL files ARE tracked (needed for production deploys)
 apps/api/data/*.db
+
+# AWS bootstrap outputs — generated locally, contains account-specific infra IDs
+infra/aws/.bootstrap-output.env
+infra/**/.bootstrap-output.env

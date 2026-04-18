@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aissisted — Brand Architecture & Operating System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,0..100;1,9..144,400..700,0..100&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #8B1A22;
+  --red-deep: #6B1119;
+  --red-soft: rgba(139,26,34,0.08);
+  --aqua: #00C7C0;
+  --aqua-soft: rgba(0,199,192,0.10);
+  --gold: #C9A86A;
+  --white: #FAFAF7;
+  --paper: #F4F2ED;
+  --bone: #ECE9E2;
+  --graphite: #14141A;
+  --ink: #1F1F26;
+  --mute: #6B6A6A;
+  --line: rgba(20,20,26,0.10);
+  --line-soft: rgba(20,20,26,0.06);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--white);
+  color: var(--ink);
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; letter-spacing: -0.02em; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; letter-spacing: 0.02em; text-transform: uppercase; }
+
+/* ---------- NAV ---------- */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(250,250,247,0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--line-soft);
+}
+.nav-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 18px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.brand-mark {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600; font-size: 0.95rem; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.brand-mark .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(139,15,26,0.12);
+}
+.nav-links {
+  display: flex; gap: 28px;
+  font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+  font-weight: 500;
+}
+.nav-links a {
+  color: var(--mute);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  position: relative;
+  padding: 4px 0;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-links a.active { color: var(--ink); }
+.nav-links a.active::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -2px;
+  height: 1px; background: var(--red);
+}
+
+/* ---------- LAYOUT ---------- */
+.section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 140px 48px 100px;
+  position: relative;
+}
+.section-tight { padding-top: 80px; }
+.eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--red); font-weight: 600;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.eyebrow::before {
+  content: ''; width: 24px; height: 1px; background: var(--red);
+}
+h1.hero-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(3.5rem, 8vw, 7.5rem);
+  line-height: 0.95; letter-spacing: -0.04em;
+  font-weight: 400;
+  color: var(--ink);
+}
+h1.hero-title em { font-style: italic; color: var(--red); }
+h2.section-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1; letter-spacing: -0.03em;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 24px;
+  max-width: 900px;
+}
+h2.section-title em { font-style: italic; color: var(--red); }
+h3.block-title {
+  font-size: 1.15rem; font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.lede {
+  font-size: 1.35rem; line-height: 1.45;
+  color: var(--mute); max-width: 720px;
+  font-weight: 300;
+  margin-bottom: 60px;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 140px 48px 80px;
+  max-width: 1400px; margin: 0 auto;
+  position: relative;
+}
+.hero-meta {
+  position: absolute; top: 100px; left: 48px; right: 48px;
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mute);
+}
+.hero-content { max-width: 1100px; }
+.hero-sub {
+  margin-top: 40px;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 1.6rem; line-height: 1.4;
+  color: var(--mute);
+  max-width: 640px;
+}
+.hero-line {
+  margin-top: 80px;
+  display: flex; align-items: center; gap: 24px;
+  font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 500;
+}
+.hero-line .pill {
+  border: 1px solid var(--line);
+  padding: 8px 16px; border-radius: 100px;
+}
+.hero-line .accent { color: var(--red); }
+
+.scroll-cue {
+  position: absolute; bottom: 40px; left: 48px;
+  font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mute);
+  display: flex; align-items: center; gap: 12px;
+}
+.scroll-cue::after {
+  content: ''; width: 40px; height: 1px;
+  background: linear-gradient(to right, var(--mute), transparent);
+}
+
+/* ---------- DIVIDER ---------- */
+.divider {
+  height: 1px; background: var(--line-soft);
+  max-width: 1400px; margin: 0 auto;
+}
+
+/* ---------- THE ONE QUESTION ---------- */
+.one-question {
+  background: var(--graphite);
+  color: var(--white);
+  padding: 120px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.one-question::before {
+  content: ''; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(139,15,26,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.one-question .inner {
+  position: relative; max-width: 1000px; margin: 0 auto;
+}
+.one-question .label {
+  font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 32px;
+}
+.one-question h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1.1; letter-spacing: -0.02em;
+  font-weight: 400;
+}
+.one-question h2 em { font-style: italic; color: var(--red); }
+.one-question .answer {
+  margin-top: 48px;
+  font-size: 0.95rem; letter-spacing: 0.05em;
+  color: rgba(250,250,247,0.55);
+  max-width: 600px; margin-left: auto; margin-right: auto;
+}
+
+/* ---------- PYRAMID ---------- */
+.pyramid-section {
+  background: var(--paper);
+  padding: 140px 48px;
+}
+.pyramid-wrap {
+  max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+  align-items: center;
+}
+.pyramid {
+  position: relative;
+  aspect-ratio: 1.1 / 1;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 6px;
+}
+.pyramid-tier {
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  border-radius: 4px;
+  padding: 24px;
+}
+.pyramid-tier .tier-content {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.pyramid-tier .tier-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.15em;
+  opacity: 0.5;
+}
+.pyramid-tier .tier-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.4rem; line-height: 1.1;
+  font-style: italic;
+}
+.pyramid-tier:hover { transform: translateX(4px); }
+.tier-1 {
+  width: 100%; height: 35%;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.tier-2 {
+  width: 70%; margin-left: auto; margin-right: auto;
+  height: 33%;
+  background: var(--ink);
+  color: var(--white);
+}
+.tier-3 {
+  width: 40%; margin-left: auto; margin-right: auto;
+  height: 32%;
+  background: var(--red);
+  color: var(--white);
+  box-shadow: 0 20px 60px -20px rgba(139,15,26,0.4);
+}
+.pyramid-info {
+  padding-left: 20px; border-left: 1px solid var(--line);
+}
+.pyramid-info h2 { margin-bottom: 24px; }
+.pyramid-info .role-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px;
+  margin-top: 48px;
+  padding-top: 40px; border-top: 1px solid var(--line);
+}
+.pyramid-info .role-row > div { font-size: 0.85rem; color: var(--mute); }
+.pyramid-info .role-row strong { display: block; color: var(--ink); margin-bottom: 4px; font-weight: 600; }
+
+/* ---------- TIER DETAIL CARDS ---------- */
+.tier-cards {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 48px 120px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.tier-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 36px 32px;
+  position: relative;
+  display: flex; flex-direction: column;
+  transition: all 0.3s ease;
+}
+.tier-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px -12px rgba(20,20,26,0.12); }
+.tier-card .badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 100px;
+  display: inline-block; margin-bottom: 24px;
+  width: fit-content;
+}
+.tier-card.t1 .badge { background: var(--bone); color: var(--ink); }
+.tier-card.t2 .badge { background: var(--ink); color: var(--white); }
+.tier-card.t3 .badge { background: var(--red-soft); color: var(--red); }
+.tier-card h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.8rem; font-weight: 400;
+  line-height: 1.05; letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.tier-card .micro {
+  font-size: 0.78rem; color: var(--mute); margin-bottom: 28px;
+}
+.tier-card .row {
+  padding: 14px 0; border-top: 1px solid var(--line-soft);
+  display: grid; grid-template-columns: 90px 1fr; gap: 16px;
+  font-size: 0.85rem;
+}
+.tier-card .row .key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--mute);
+  padding-top: 2px;
+}
+.tier-card .quote {
+  margin-top: 28px; padding: 20px 0;
+  border-top: 1px solid var(--line);
+  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-size: 1.15rem; line-height: 1.3;
+  color: var(--ink);
+}
+
+/* ---------- PORTFOLIO ---------- */
+.portfolio-section { padding: 140px 48px; max-width: 1400px; margin: 0 auto; }
+.portfolio-intro {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+  margin-bottom: 80px;
+}
+.architecture-model {
+  background: var(--paper);
+  border-radius: 8px;
+  padding: 40px;
+  position: relative;
+}
+.architecture-model .ring {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  height: 320px;
+}
+.architecture-model .center {
+  width: 120px; height: 120px;
+  background: var(--ink); color: var(--white);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.1rem; font-style: italic;
+  text-align: center;
+  letter-spacing: 0.04em;
+  position: relative; z-index: 2;
+  box-shadow: 0 0 0 8px var(--paper), 0 0 0 9px var(--line);
+}
+.architecture-model .satellite {
+  position: absolute;
+  width: 80px; height: 80px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+}
+.architecture-model .satellite.s1 { top: 10px; left: 50%; transform: translateX(-50%); }
+.architecture-model .satellite.s2 { right: 30px; bottom: 60px; }
+.architecture-model .satellite.s3 { bottom: 10px; left: 50%; transform: translateX(-50%); }
+.architecture-model .satellite.s4 { left: 30px; bottom: 60px; }
+.architecture-model .connection-line {
+  position: absolute; left: 50%; top: 50%;
+  width: 1px; height: 110px;
+  background: var(--line);
+  transform-origin: top center;
+}
+
+.product-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.product-card {
+  background: var(--white);
+  padding: 48px 40px;
+  display: flex; flex-direction: column;
+  position: relative;
+  min-height: 380px;
+}
+.product-card .icon {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px;
+}
+.product-card .icon svg { width: 100%; height: 100%; }
+.product-card .module-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 6px;
+}
+.product-card h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2.4rem; font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.product-card h3 .accent { color: var(--red); }
+.product-card .role {
+  font-style: italic; color: var(--mute);
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+}
+.product-card .desc {
+  font-size: 0.95rem; line-height: 1.55; color: var(--ink);
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+.product-card .signal {
+  margin-top: auto;
+  padding-top: 24px; border-top: 1px solid var(--line-soft);
+  display: flex; justify-content: space-between;
+  font-size: 0.78rem; color: var(--mute);
+}
+.product-card .signal strong { color: var(--ink); font-weight: 500; }
+
+/* ---------- TIER LADDER ---------- */
+.tier-ladder {
+  margin-top: 80px;
+  background: var(--graphite); color: var(--white);
+  border-radius: 8px;
+  padding: 64px 48px;
+}
+.tier-ladder h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem; font-weight: 400;
+  margin-bottom: 8px;
+}
+.tier-ladder .sub {
+  color: rgba(250,250,247,0.5);
+  margin-bottom: 48px;
+  font-size: 0.95rem;
+}
+.ladder-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(250,250,247,0.1);
+}
+.ladder-item {
+  background: var(--graphite);
+  padding: 32px 28px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.ladder-item .step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.15em;
+  color: var(--gold);
+}
+.ladder-item .name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.6rem; font-style: italic;
+  margin-bottom: 4px;
+}
+.ladder-item .who {
+  font-size: 0.85rem;
+  color: rgba(250,250,247,0.6);
+  margin-bottom: 16px;
+}
+.ladder-item .traits {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 0.82rem;
+  color: rgba(250,250,247,0.8);
+}
+.ladder-item .traits span::before {
+  content: '— '; color: var(--red);
+}
+
+/* ---------- NAMING SYSTEM ---------- */
+.naming-system {
+  background: var(--white);
+  padding: 120px 48px;
+}
+.naming-inner {
+  max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: 380px 1fr; gap: 80px;
+}
+.naming-rules {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.rule {
+  border-left: 2px solid var(--red);
+  padding: 12px 0 12px 20px;
+}
+.rule .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em;
+  color: var(--red); margin-bottom: 4px;
+}
+.rule .text { font-size: 1rem; line-height: 1.4; color: var(--ink); }
+
+.naming-examples {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.naming-card {
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 28px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.naming-card.bad {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.naming-card.bad .name { color: var(--mute); text-decoration: line-through; }
+.naming-card .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.naming-card.good .label { color: var(--red); }
+.naming-card.bad .label { color: var(--mute); }
+.naming-card .name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.6rem; font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.naming-card .why {
+  font-size: 0.82rem; color: var(--mute);
+  line-height: 1.4;
+}
+
+/* ---------- AUDIENCE LAYERS ---------- */
+.audience-section {
+  background: var(--paper);
+  padding: 140px 48px;
+}
+.audience-inner { max-width: 1400px; margin: 0 auto; }
+.persona-grid {
+  margin-top: 64px;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+}
+.persona {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 36px;
+  display: flex; flex-direction: column;
+}
+.persona .codename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em;
+  color: var(--red); margin-bottom: 16px;
+}
+.persona h4 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem; font-weight: 400;
+  letter-spacing: -0.02em; line-height: 1;
+  margin-bottom: 12px;
+}
+.persona .quote {
+  font-style: italic; color: var(--mute);
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.1rem; line-height: 1.4;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.persona .stat-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  font-size: 0.85rem;
+}
+.persona .stat-row .key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 4px;
+}
+.persona .stat-row .val { color: var(--ink); }
+.persona .product-pulls {
+  margin-top: 24px; padding-top: 24px;
+  border-top: 1px solid var(--line-soft);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.persona .pull {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 3px;
+  background: var(--paper); color: var(--ink);
+}
+
+/* ---------- VISUAL SYSTEM ---------- */
+.visual-section {
+  padding: 140px 48px;
+  max-width: 1400px; margin: 0 auto;
+}
+.color-system {
+  margin-top: 60px;
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.color-swatch {
+  padding: 32px 28px;
+  min-height: 280px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.color-swatch .meta { font-size: 0.85rem; }
+.color-swatch h4 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.5rem; font-weight: 400;
+  margin-bottom: 4px;
+}
+.color-swatch .role {
+  font-style: italic;
+  font-family: 'Instrument Serif', serif;
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+.color-swatch .codes {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.06em;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.color-swatch .usage {
+  margin-top: 16px;
+  font-size: 0.78rem;
+  opacity: 0.65;
+  line-height: 1.4;
+}
+.swatch-red { background: var(--red); color: var(--white); }
+.swatch-aqua { background: var(--aqua); color: var(--graphite); }
+.swatch-graphite { background: var(--graphite); color: var(--white); }
+.swatch-white { background: var(--white); color: var(--ink); border-right: 1px solid var(--line); }
+.swatch-gold { background: var(--gold); color: var(--graphite); }
+
+.color-rules {
+  margin-top: 32px;
+  background: var(--paper); border-radius: 6px;
+  padding: 32px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+}
+.rule-block h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+.rule-block ul { list-style: none; }
+.rule-block li {
+  padding: 8px 0;
+  font-size: 0.9rem;
+  display: flex; gap: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.rule-block li:last-child { border: none; }
+.rule-block li .marker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  width: 14px; flex-shrink: 0;
+}
+.do .marker { color: var(--aqua); }
+.dont .marker { color: var(--red); }
+
+/* ---------- TYPOGRAPHY ---------- */
+.type-system {
+  margin-top: 80px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.type-card {
+  background: var(--white);
+  padding: 48px 40px;
+}
+.type-card .role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+.type-card .name {
+  font-size: 1rem;
+  color: var(--mute);
+  margin-bottom: 32px;
+  letter-spacing: 0.02em;
+}
+.type-card .display {
+  font-size: 4.5rem; line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+.type-card.serif-card .display {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.type-card.sans-card .display {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 500;
+}
+.type-card .specs {
+  display: flex; gap: 24px; padding-top: 24px;
+  border-top: 1px solid var(--line-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.08em;
+  color: var(--mute);
+}
+
+/* ---------- VISUAL TREATMENT MATRIX ---------- */
+.treatment-matrix {
+  margin-top: 80px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.matrix-header, .matrix-row {
+  display: grid;
+  grid-template-columns: 200px repeat(3, 1fr);
+}
+.matrix-header {
+  background: var(--graphite); color: var(--white);
+}
+.matrix-header > div {
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.matrix-header > div:first-child { background: rgba(250,250,247,0.05); }
+.matrix-row {
+  border-top: 1px solid var(--line);
+}
+.matrix-row > div {
+  padding: 22px 20px;
+  font-size: 0.88rem;
+  border-right: 1px solid var(--line-soft);
+  line-height: 1.45;
+}
+.matrix-row > div:last-child { border-right: none; }
+.matrix-row .row-label {
+  background: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); font-weight: 500;
+  display: flex; align-items: flex-start; padding-top: 24px;
+}
+
+/* ---------- ASSET BLUEPRINT ---------- */
+.assets-section {
+  background: var(--paper);
+  padding: 140px 48px;
+}
+.assets-inner { max-width: 1400px; margin: 0 auto; }
+.asset-grid {
+  margin-top: 60px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.asset-card {
+  background: var(--white);
+  padding: 36px 32px;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.asset-card:hover { background: var(--paper); }
+.asset-card .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em;
+  color: var(--mute); margin-bottom: 12px;
+}
+.asset-card h4 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.7rem; font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.asset-card .channel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+.asset-card .specs {
+  font-size: 0.85rem; line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.asset-card .specs strong { font-weight: 500; }
+.asset-card .copy-sample {
+  margin-top: auto; padding: 16px;
+  background: var(--paper);
+  border-left: 2px solid var(--red);
+  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-size: 1rem; line-height: 1.35;
+  color: var(--ink);
+}
+.asset-card.peak .copy-sample {
+  background: var(--graphite);
+  color: var(--white);
+  border-left-color: var(--gold);
+}
+
+/* ---------- DECISION FILTER ---------- */
+.filter-section {
+  padding: 140px 48px;
+  background: var(--graphite);
+  color: var(--white);
+}
+.filter-inner { max-width: 1400px; margin: 0 auto; }
+.filter-section .eyebrow { color: var(--gold); }
+.filter-section .eyebrow::before { background: var(--gold); }
+.filter-section h2.section-title { color: var(--white); }
+.filter-section h2.section-title em { color: var(--red); }
+.filter-section .lede { color: rgba(250,250,247,0.55); }
+.checklist {
+  margin-top: 40px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+}
+.check-block h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: 24px;
+  color: var(--gold);
+}
+.check-list { list-style: none; }
+.check-list li {
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(250,250,247,0.1);
+  display: flex; gap: 20px;
+  align-items: flex-start;
+}
+.check-list li .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem; letter-spacing: 0.06em;
+  color: var(--red);
+  width: 24px; flex-shrink: 0;
+  padding-top: 2px;
+}
+.check-list li .q {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 1.25rem; line-height: 1.35;
+}
+.check-list li .a {
+  font-size: 0.82rem; color: rgba(250,250,247,0.55);
+  margin-top: 6px;
+  font-family: 'Inter Tight', sans-serif;
+  font-style: normal;
+}
+
+.gates {
+  margin-top: 80px;
+  background: rgba(250,250,247,0.04);
+  border-radius: 8px;
+  padding: 48px;
+}
+.gates h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.8rem; font-weight: 400;
+  margin-bottom: 32px;
+}
+.gate-row {
+  display: grid; grid-template-columns: 60px 1fr 2fr 1fr;
+  gap: 24px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(250,250,247,0.1);
+  align-items: center;
+  font-size: 0.9rem;
+}
+.gate-row.head {
+  border-top: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(250,250,247,0.5);
+}
+.gate-row .level {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--red);
+}
+.gate-row .signal {
+  color: rgba(250,250,247,0.65);
+}
+.gate-row .action {
+  font-style: italic;
+  font-family: 'Instrument Serif', serif;
+}
+
+/* ---------- CADENCE ---------- */
+.cadence-section {
+  padding: 140px 48px;
+  max-width: 1400px; margin: 0 auto;
+}
+.cadence-grid {
+  margin-top: 60px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cadence-row {
+  display: grid; grid-template-columns: 200px 1fr 1fr 1fr;
+  border-top: 1px solid var(--line);
+}
+.cadence-row:first-child { border-top: none; background: var(--graphite); color: var(--white); }
+.cadence-row > div {
+  padding: 22px 24px;
+  border-right: 1px solid var(--line-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.cadence-row > div:last-child { border-right: none; }
+.cadence-row.head > div {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(250,250,247,0.7);
+  border-color: rgba(250,250,247,0.1);
+}
+.cadence-row .channel-name {
+  background: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); font-weight: 500;
+}
+.cadence-row.head .channel-name { background: rgba(250,250,247,0.05); }
+
+/* ---------- FULL FLOW ---------- */
+.flow-section {
+  background: var(--white);
+  padding: 140px 48px;
+}
+.flow-inner { max-width: 1400px; margin: 0 auto; }
+.flow-stage {
+  display: grid; grid-template-columns: 200px 1fr 380px;
+  gap: 48px;
+  padding: 56px 0;
+  border-top: 1px solid var(--line);
+  align-items: start;
+}
+.flow-stage:last-child { border-bottom: 1px solid var(--line); }
+.flow-stage .stage-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--red);
+  position: relative;
+  padding-left: 24px;
+}
+.flow-stage .stage-label::before {
+  content: ''; position: absolute; left: 0; top: 6px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--red);
+}
+.flow-stage .copy {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2.4rem; line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.flow-stage .copy em { font-style: italic; color: var(--red); }
+.flow-stage .gloss {
+  font-size: 0.88rem; line-height: 1.55;
+  color: var(--mute);
+}
+.flow-stage .gloss strong { color: var(--ink); font-weight: 500; }
+
+/* ---------- CLOSING ---------- */
+/* ---------- DESIGN DISCIPLINE ---------- */
+.discipline-section {
+  padding: 140px 48px;
+  background: var(--paper);
+  color: var(--ink);
+  border-top: 1px solid var(--line-soft);
+}
+.discipline-inner { max-width: 1400px; margin: 0 auto; }
+.discipline-grid {
+  margin-top: 56px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.discipline-card {
+  background: var(--white);
+  padding: 40px 36px;
+  display: flex; flex-direction: column; gap: 14px;
+  min-height: 240px;
+}
+.discipline-card .d-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.14em;
+  color: var(--red);
+}
+.discipline-card h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.45rem; font-weight: 400;
+  line-height: 1.15;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.discipline-card p {
+  font-size: 0.92rem; line-height: 1.6;
+  color: var(--mute);
+}
+.discipline-card p em { color: var(--ink); font-style: italic; }
+
+.final-filter {
+  margin-top: 96px;
+  background: var(--graphite);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 64px 56px;
+}
+.final-filter .ff-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 28px;
+}
+.final-filter .ff-eyebrow .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--red);
+}
+.final-filter .ff-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 400; line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 48px;
+}
+.final-filter .ff-title em { color: var(--red); font-style: italic; }
+.ff-grid { display: flex; flex-direction: column; }
+.ff-row {
+  display: grid; grid-template-columns: 60px 1.2fr 2fr;
+  gap: 32px; align-items: start;
+  padding: 24px 0;
+  border-top: 1px solid rgba(250,250,247,0.1);
+}
+.ff-row:first-child { border-top: none; }
+.ff-row.hero { background: rgba(139,26,34,0.18); margin: 0 -24px; padding: 28px 24px; border-radius: 4px; border-top: 1px solid rgba(139,26,34,0.3); margin-top: 12px; }
+.ff-row.hero .ff-mark { color: var(--red); }
+.ff-mark {
+  font-family: 'Fraunces', 'Instrument Serif', serif;
+  font-size: 1.6rem; font-weight: 500;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+.ff-q {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.15rem; font-weight: 400;
+  line-height: 1.3;
+  color: var(--white);
+}
+.ff-q strong { font-weight: 500; font-style: normal; }
+.ff-a {
+  font-size: 0.9rem; line-height: 1.55;
+  color: rgba(250,250,247,0.65);
+}
+.ff-a em { color: var(--white); font-style: italic; }
+.ff-close {
+  margin-top: 40px; padding-top: 28px;
+  border-top: 1px solid rgba(250,250,247,0.1);
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.1rem; font-style: italic;
+  color: rgba(250,250,247,0.85);
+  text-align: center;
+}
+.ff-close em { color: var(--red); }
+@media (max-width: 1024px) {
+  .discipline-grid { grid-template-columns: 1fr; }
+  .ff-row { grid-template-columns: 1fr; gap: 12px; }
+}
+
+.close-section {
+  background: var(--ink); color: var(--white);
+  padding: 160px 48px;
+  text-align: center;
+}
+.close-inner { max-width: 900px; margin: 0 auto; }
+.close-section .mark {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 40px;
+}
+.close-section .mark .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--red);
+}
+.close-section h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1.05; letter-spacing: -0.02em;
+  font-weight: 400;
+  margin-bottom: 32px;
+}
+.close-section h2 em { font-style: italic; color: var(--red); }
+.close-section .footer-note {
+  margin-top: 80px;
+  font-size: 0.78rem; letter-spacing: 0.06em;
+  color: rgba(250,250,247,0.4);
+}
+
+/* ---------- UTILITY ---------- */
+@media (max-width: 1024px) {
+  .nav-links { display: none; }
+  .pyramid-wrap, .portfolio-intro, .naming-inner, .checklist { grid-template-columns: 1fr; }
+  .product-grid, .tier-cards, .persona-grid, .asset-grid, .type-system, .color-system { grid-template-columns: 1fr; }
+  .flow-stage { grid-template-columns: 1fr; gap: 16px; }
+  .matrix-header, .matrix-row, .cadence-row { grid-template-columns: 1fr; }
+  .matrix-row > div, .cadence-row > div { border-right: none; border-bottom: 1px solid var(--line-soft); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand-mark" style="text-transform: none; letter-spacing: -0.02em; font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 1.25rem;"><span class="dot"></span>aiss<span style="position: relative;">i<span style="position: absolute; top: -0.35em; left: 50%; transform: translateX(-50%); font-size: 0.55em; line-height: 1;">~</span></span>sted <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-left: 6px;">· OS</span></div>
+    <div class="nav-links">
+      <a href="#foundation">Foundation</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#portfolio">Portfolio</a>
+      <a href="#audience">Audience</a>
+      <a href="#visual">Visual</a>
+      <a href="#assets">Assets</a>
+      <a href="#filter">Filter</a>
+      <a href="#discipline">Discipline</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="foundation">
+  <div class="hero-meta">
+    <div>v 2.0 · Brand Operating System</div>
+    <div>Internal · April 2026</div>
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow">The Architecture Beneath the Brand</div>
+    <h1 class="hero-title">Built for one.<br/><em>Designed to scale.</em></h1>
+    <div class="hero-sub">A complete operating system for how Aissisted speaks, looks, builds, and grows — across every product, every layer, every surface.</div>
+    <div class="hero-line">
+      <span class="pill accent">One Master Brand</span>
+      <span class="pill">Four Modules</span>
+      <span class="pill">Three Audience Layers</span>
+      <span class="pill">Three Tiers</span>
+    </div>
+  </div>
+  <div class="scroll-cue">Scroll · The system begins</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============ THE ONE QUESTION ============ -->
+<section class="one-question">
+  <div class="inner">
+    <div class="label">The Single Filter</div>
+    <h2>Does this make the person feel like it was <em>built for them</em>?</h2>
+    <div class="answer">If yes — it belongs to Aissisted.<br/>If no — it is noise. Refine until it does.</div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE PYRAMID ============ -->
+<section class="pyramid-section" id="architecture">
+  <div class="pyramid-wrap">
+    <div class="pyramid">
+      <div class="pyramid-tier tier-3">
+        <div class="tier-content">
+          <div class="tier-num">LAYER 03</div>
+          <div class="tier-name">Luxury Wellness</div>
+        </div>
+      </div>
+      <div class="pyramid-tier tier-2">
+        <div class="tier-content">
+          <div class="tier-num">LAYER 02</div>
+          <div class="tier-name">Science &amp; Trust</div>
+        </div>
+      </div>
+      <div class="pyramid-tier tier-1">
+        <div class="tier-content">
+          <div class="tier-num">LAYER 01</div>
+          <div class="tier-name">Everyday Empowerment</div>
+        </div>
+      </div>
+    </div>
+    <div class="pyramid-info">
+      <div class="eyebrow">Master Architecture</div>
+      <h2 class="section-title">Three layers.<br/><em>One brand.</em></h2>
+      <p style="font-size:1.05rem; line-height:1.55; color:var(--mute); margin-bottom:32px;">We do not pick a lane. We engineer the full vertical — entry, proof, and aspiration — so the same brand can welcome a first-time buyer and a Fortune 500 CEO without compromising either.</p>
+      <div class="role-row">
+        <div><strong>Attract</strong>Layer 01 brings them in.</div>
+        <div><strong>Convince</strong>Layer 02 makes them stay.</div>
+        <div><strong>Elevate</strong>Layer 03 makes them want it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TIER DETAIL CARDS ============ -->
+<section class="tier-cards">
+  <div class="tier-card t1">
+    <span class="badge">Layer 01 · Gateway</span>
+    <h3>Everyday Empowerment</h3>
+    <div class="micro">The brand at its most human.</div>
+    <div class="row"><div class="key">Role</div><div>Mass adoption · daily use · friction removal</div></div>
+    <div class="row"><div class="key">Tone</div><div>Clear · supportive · reassuring</div></div>
+    <div class="row"><div class="key">Reaches</div><div>Busy professionals · first adopters · the overwhelmed</div></div>
+    <div class="row"><div class="key">Channels</div><div>Performance media · CRM · D2C site · paid social</div></div>
+    <div class="row"><div class="key">Hero metric</div><div>Activation · trial-to-subscribe</div></div>
+    <div class="quote">"No more guesswork. Just what your body needs."</div>
+  </div>
+  <div class="tier-card t2">
+    <span class="badge">Layer 02 · Proof</span>
+    <h3>Science &amp; Trust</h3>
+    <div class="micro">Where belief is built.</div>
+    <div class="row"><div class="key">Role</div><div>Validation · authority · objection removal</div></div>
+    <div class="row"><div class="key">Tone</div><div>Confident · grounded · transparent</div></div>
+    <div class="row"><div class="key">Reaches</div><div>Quantified self · clinicians · skeptics · partners</div></div>
+    <div class="row"><div class="key">Channels</div><div>Long-form content · podcasts · whitepapers · clinical decks</div></div>
+    <div class="row"><div class="key">Hero metric</div><div>Trust velocity · NPS · physician adoption</div></div>
+    <div class="quote">"Your formula adapts to your data — so what you take always matches what you need."</div>
+  </div>
+  <div class="tier-card t3">
+    <span class="badge">Layer 03 · Halo</span>
+    <h3>Luxury Wellness</h3>
+    <div class="micro">Where the brand becomes coveted.</div>
+    <div class="row"><div class="key">Role</div><div>Identity · status · cultural pull</div></div>
+    <div class="row"><div class="key">Tone</div><div>Elevated · minimal · cinematic</div></div>
+    <div class="row"><div class="key">Reaches</div><div>High performers · culture drivers · earned media</div></div>
+    <div class="row"><div class="key">Channels</div><div>Editorial · OOH · partnerships · launch films</div></div>
+    <div class="row"><div class="key">Hero metric</div><div>Brand search lift · earned mentions · waitlist depth</div></div>
+    <div class="quote">"The new luxury is how you feel."</div>
+  </div>
+</section>
+
+<!-- ============ PORTFOLIO ============ -->
+<section class="portfolio-section" id="portfolio">
+  <div class="portfolio-intro">
+    <div>
+      <div class="eyebrow">Branded House Model</div>
+      <h2 class="section-title">One name.<br/>Four <em>working modules.</em></h2>
+      <p class="lede">Aissisted is not a product. It is a system with four working parts — each with a job, each with a name, each capable of standing alone yet engineered to compound when used together.</p>
+    </div>
+    <div class="architecture-model">
+      <div class="ring">
+        <div class="connection-line" style="transform: translate(-50%, 0) rotate(0deg);"></div>
+        <div class="connection-line" style="transform: translate(-50%, 0) rotate(90deg);"></div>
+        <div class="connection-line" style="transform: translate(-50%, 0) rotate(180deg);"></div>
+        <div class="connection-line" style="transform: translate(-50%, 0) rotate(270deg);"></div>
+        <div class="center">Aissisted</div>
+        <div class="satellite s1">Core</div>
+        <div class="satellite s2">Signal</div>
+        <div class="satellite s3">Jeffrey</div>
+        <div class="satellite s4">Continuum</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-grid">
+    <div class="product-card">
+      <div class="module-tag">Module 01 · The Substance</div>
+      <h3>Aissisted <span class="accent">Core</span></h3>
+      <div class="role">The personalized formula.</div>
+      <div class="desc">The physical product. The personalized supplement system, manufactured per individual, refined continuously, delivered as a ritual. This is what they hold. This is what they take. This is what bears their name.</div>
+      <div class="signal"><span><strong>Layer fit:</strong> All three</span><span><strong>Lead asset:</strong> Packaging · Press</span></div>
+    </div>
+    <div class="product-card">
+      <div class="module-tag">Module 02 · The Input</div>
+      <h3>Aissisted <span class="accent">Signal</span></h3>
+      <div class="role">The data layer.</div>
+      <div class="desc">Lab integration via Epic / SMART on FHIR. Wearable streams from WHOOP, Oura, Apple Watch. Subjective inputs from the user. Signal turns biology into something the system can understand. It is the listening apparatus of the brand.</div>
+      <div class="signal"><span><strong>Layer fit:</strong> Layer 02 dominant</span><span><strong>Lead asset:</strong> Onboarding · Dashboard</span></div>
+    </div>
+    <div class="product-card">
+      <div class="module-tag">Module 03 · The Voice</div>
+      <h3>Aissisted <span class="accent">Jeffrey</span></h3>
+      <div class="role">The intelligence concierge.</div>
+      <div class="desc">The voice-first interface. Health concierge, decision assistant, behavioral coach. Jeffrey is the human face of the system — the one who asks how you slept and explains what changed in your formula and why it matters today.</div>
+      <div class="signal"><span><strong>Layer fit:</strong> Layer 01 + 03</span><span><strong>Lead asset:</strong> Voice · App · CRM</span></div>
+    </div>
+    <div class="product-card">
+      <div class="module-tag">Module 04 · The Memory</div>
+      <h3>Aissisted <span class="accent">Continuum</span></h3>
+      <div class="role">The longitudinal engine.</div>
+      <div class="desc">The system of record. Continuum is the persistent memory — the layer that remembers what you cared about six months ago, sees what your biology is doing now, and projects what your body will need next quarter. The brand's compounding moat.</div>
+      <div class="signal"><span><strong>Layer fit:</strong> Layer 02</span><span><strong>Lead asset:</strong> Reports · Year-in-Body</span></div>
+    </div>
+  </div>
+
+  <!-- TIER LADDER -->
+  <div class="tier-ladder">
+    <div class="eyebrow" style="color: var(--gold);">Product Tier System</div>
+    <h3>Same system. <em style="font-style:italic; color:var(--red);">Three levels of depth.</em></h3>
+    <div class="sub">Tier names are how the same Aissisted system meets the customer at the depth they're ready for. Architected once. Expanded over time.</div>
+    <div class="ladder-grid">
+      <div class="ladder-item">
+        <div class="step">Tier 01 · Entry</div>
+        <div class="name">Foundation</div>
+        <div class="who">For the person who wants to start.</div>
+        <div class="traits">
+          <span>Wearable + intake-driven personalization</span>
+          <span>Quarterly formula refinement</span>
+          <span>Jeffrey · daily check-ins</span>
+        </div>
+      </div>
+      <div class="ladder-item">
+        <div class="step">Tier 02 · Optimizer</div>
+        <div class="name">Performance</div>
+        <div class="who">For the person who wants to win.</div>
+        <div class="traits">
+          <span>Adds bloodwork integration (Signal Pro)</span>
+          <span>Monthly formula refinement</span>
+          <span>Jeffrey · 24/7 responsive</span>
+          <span>Performance window protocols</span>
+        </div>
+      </div>
+      <div class="ladder-item">
+        <div class="step">Tier 03 · Apex</div>
+        <div class="name">Longevity</div>
+        <div class="who">For the person playing the long game.</div>
+        <div class="traits">
+          <span>Full clinical labs · Epic integration</span>
+          <span>Continuous formula refinement</span>
+          <span>Jeffrey · concierge-grade</span>
+          <span>Continuum reports · physician interface</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NAMING SYSTEM ============ -->
+<section class="naming-system">
+  <div class="naming-inner">
+    <div>
+      <div class="eyebrow">Nomenclature</div>
+      <h2 class="section-title">How we <em>name things.</em></h2>
+      <p style="font-size:1rem; color:var(--mute); margin-bottom:32px; line-height:1.55;">Every name in the Aissisted system follows a single law: it must feel inevitable, ownable, and human. Function over feature. Word over jargon.</p>
+      <div class="naming-rules">
+        <div class="rule">
+          <div class="num">RULE 01</div>
+          <div class="text">One word, when possible. Two, when necessary. Never three.</div>
+        </div>
+        <div class="rule">
+          <div class="num">RULE 02</div>
+          <div class="text">Function-led. Names describe a job, not a technology.</div>
+        </div>
+        <div class="rule">
+          <div class="num">RULE 03</div>
+          <div class="text">Human-readable. A sixth-grader could pronounce it. A Vogue editor could write it.</div>
+        </div>
+        <div class="rule">
+          <div class="num">RULE 04</div>
+          <div class="text">No "AI", no "smart", no "pro" suffixes. The intelligence is invisible.</div>
+        </div>
+        <div class="rule">
+          <div class="num">RULE 05</div>
+          <div class="text">Stand-alone capable. A name should survive being spoken without its parent brand.</div>
+        </div>
+      </div>
+    </div>
+    <div class="naming-examples">
+      <div class="naming-card good">
+        <div class="label">Right · Module</div>
+        <div class="name">Signal</div>
+        <div class="why">A noun that describes its job: receiving and interpreting biological information.</div>
+      </div>
+      <div class="naming-card good">
+        <div class="label">Right · Module</div>
+        <div class="name">Continuum</div>
+        <div class="why">Carries the meaning of the product itself — adaptation across time.</div>
+      </div>
+      <div class="naming-card good">
+        <div class="label">Right · Tier</div>
+        <div class="name">Foundation</div>
+        <div class="why">Honest about its position. Aspirational without inflation.</div>
+      </div>
+      <div class="naming-card good">
+        <div class="label">Right · Asset</div>
+        <div class="name">Year in Body</div>
+        <div class="why">Owns a recurring moment. Spotify Wrapped logic, applied to biology.</div>
+      </div>
+      <div class="naming-card bad">
+        <div class="label">Avoid</div>
+        <div class="name">Aissisted AI Engine Pro</div>
+        <div class="why">Leads with technology. Stacks suffixes. Reads like a B2B SKU.</div>
+      </div>
+      <div class="naming-card bad">
+        <div class="label">Avoid</div>
+        <div class="name">SmartFormula 2.0</div>
+        <div class="why">Generic, dated, version-numbered. The system evolves silently — versions don't ship.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AUDIENCE ============ -->
+<section class="audience-section" id="audience">
+  <div class="audience-inner">
+    <div class="eyebrow">Audience Architecture</div>
+    <h2 class="section-title">Not demographics.<br/><em>States of being.</em></h2>
+    <p class="lede">We do not segment by age, income, or zip. We segment by the tension a person is living inside. Each persona has a quote, a stress, and a specific door into Aissisted.</p>
+    <div class="persona-grid">
+      <div class="persona">
+        <div class="codename">P01 · Layer 01 → 02 entry</div>
+        <h4>The Time-Starved Operator</h4>
+        <div class="quote">"I don't have time to figure out my health. I just need it to work."</div>
+        <div class="stat-row">
+          <div><div class="key">Tension</div><div class="val">Performance vs. exhaustion</div></div>
+          <div><div class="key">Will pay for</div><div class="val">Removed friction</div></div>
+          <div><div class="key">Reads</div><div class="val">Newsletters · podcasts</div></div>
+          <div><div class="key">Believes when</div><div class="val">A peer endorses it</div></div>
+        </div>
+        <div class="product-pulls">
+          <span class="pull">Foundation</span>
+          <span class="pull">Jeffrey</span>
+        </div>
+      </div>
+      <div class="persona">
+        <div class="codename">P02 · Layer 02 dominant</div>
+        <h4>The Quantified Self</h4>
+        <div class="quote">"Show me the data. Show me what changed. Show me why."</div>
+        <div class="stat-row">
+          <div><div class="key">Tension</div><div class="val">Data overload vs. action</div></div>
+          <div><div class="key">Will pay for</div><div class="val">Insight depth · integrations</div></div>
+          <div><div class="key">Reads</div><div class="val">Whitepapers · long-form</div></div>
+          <div><div class="key">Believes when</div><div class="val">The math checks out</div></div>
+        </div>
+        <div class="product-pulls">
+          <span class="pull">Performance</span>
+          <span class="pull">Signal</span>
+          <span class="pull">Continuum</span>
+        </div>
+      </div>
+      <div class="persona">
+        <div class="codename">P03 · Layer 01 → 03 evangelist</div>
+        <h4>The Remedy Seeker</h4>
+        <div class="quote">"I've tried everything. None of it has been mine."</div>
+        <div class="stat-row">
+          <div><div class="key">Tension</div><div class="val">Hope vs. disappointment</div></div>
+          <div><div class="key">Will pay for</div><div class="val">Personal recognition</div></div>
+          <div><div class="key">Reads</div><div class="val">Reviews · forums · stories</div></div>
+          <div><div class="key">Believes when</div><div class="val">They feel a difference</div></div>
+        </div>
+        <div class="product-pulls">
+          <span class="pull">Foundation</span>
+          <span class="pull">Jeffrey</span>
+        </div>
+      </div>
+      <div class="persona">
+        <div class="codename">P04 · Layer 03 anchor</div>
+        <h4>The Apex Investor</h4>
+        <div class="quote">"I've optimized my company. I'd like to optimize the operator."</div>
+        <div class="stat-row">
+          <div><div class="key">Tension</div><div class="val">Capital vs. time</div></div>
+          <div><div class="key">Will pay for</div><div class="val">Status · longevity · access</div></div>
+          <div><div class="key">Reads</div><div class="val">Editorial · curated platforms</div></div>
+          <div><div class="key">Believes when</div><div class="val">A trusted name does it first</div></div>
+        </div>
+        <div class="product-pulls">
+          <span class="pull">Longevity</span>
+          <span class="pull">Continuum</span>
+          <span class="pull">Concierge Jeffrey</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VISUAL SYSTEM ============ -->
+<section class="visual-section" id="visual">
+  <div class="eyebrow">Visual Language</div>
+  <h2 class="section-title">Color is a <em>signal,</em><br/>not decoration.</h2>
+  <p class="lede">Red is biology. Aqua is intelligence. White is the system that holds them together. Every visual decision laddered to those three roles.</p>
+
+  <div class="color-system">
+    <div class="color-swatch swatch-red">
+      <div class="meta">
+        <h4>Medical Red</h4>
+        <div class="role">Biology in motion</div>
+      </div>
+      <div>
+        <div class="codes">
+          <div>HEX  #8B1A22</div>
+          <div>RGB  139 · 26 · 34</div>
+          <div>FINISH  matte · never glossy</div>
+        </div>
+        <div class="usage">Deep, slightly desaturated, controlled. Use as moment color: caps, activation states, charts, hero punctuation. On brand-mark surfaces (where the wordmark IS the message), the red can carry a full surface — never inside product UI or reading environments.</div>
+      </div>
+    </div>
+    <div class="color-swatch swatch-aqua">
+      <div class="meta">
+        <h4>Electric Aqua</h4>
+        <div class="role">Intelligence layer</div>
+      </div>
+      <div>
+        <div class="codes">
+          <div>HEX  #00C7C0</div>
+          <div>RGB  0 · 199 · 192</div>
+        </div>
+        <div class="usage">Data signals · activation lines · system feedback. Cool counter-balance to Medical Red.</div>
+      </div>
+    </div>
+    <div class="color-swatch swatch-graphite">
+      <div class="meta">
+        <h4>Graphite</h4>
+        <div class="role">Structure</div>
+      </div>
+      <div>
+        <div class="codes">
+          <div>HEX  #14141A</div>
+        </div>
+        <div class="usage">Primary text · luxury moments · structural surfaces.</div>
+      </div>
+    </div>
+  </div>
+  <div class="color-system" style="grid-template-columns: 1fr 1fr; margin-top: 1px;">
+    <div class="color-swatch swatch-white">
+      <div class="meta">
+        <h4>Cleanroom White</h4>
+        <div class="role">Absence of noise</div>
+      </div>
+      <div>
+        <div class="codes"><div>HEX  #FAFAF7</div></div>
+        <div class="usage">The default surface. The cleanroom. The frame that lets the rest speak.</div>
+      </div>
+    </div>
+    <div class="color-swatch swatch-gold">
+      <div class="meta">
+        <h4>Soft Gold</h4>
+        <div class="role">Luxury whisper</div>
+      </div>
+      <div>
+        <div class="codes"><div>HEX  #C9A86A</div></div>
+        <div class="usage">Reserved for Layer 03 only. Cap rings, foil debossing, editorial accents. Used like a signature, not a decoration.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="color-rules">
+    <div class="rule-block do">
+      <h4>Always</h4>
+      <ul>
+        <li><span class="marker">+</span><span>Lead with white. Use red as a signal — caps, activation moments, key data points, hero punctuation.</span></li>
+        <li><span class="marker">+</span><span>Allow red to flood ONLY on brand-mark surfaces (where the wordmark IS the message): hero backdrops, brand mark plates, social brand frames.</span></li>
+        <li><span class="marker">+</span><span>Pair red with cool counterweights — aqua, graphite, white. That triad is the visual signature.</span></li>
+        <li><span class="marker">+</span><span>Maintain matte finishes everywhere. Physical and digital. Always.</span></li>
+      </ul>
+    </div>
+    <div class="rule-block dont">
+      <h4>Never</h4>
+      <ul>
+        <li><span class="marker">×</span><span>Bright, saturated, or fire-engine red. Never emergency-red palettes.</span></li>
+        <li><span class="marker">×</span><span>Red as a full background in product UI, reading environments, or long-form content.</span></li>
+        <li><span class="marker">×</span><span>Glossy gradients, holographic effects, or candy finishes.</span></li>
+        <li><span class="marker">×</span><span>Red as a warning state inside the product. Red is the brand — it cannot also be an alert.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div style="margin-top: 100px;">
+    <div class="eyebrow">Typography</div>
+    <h2 class="section-title">Where <em>science</em><br/>meets serif.</h2>
+  </div>
+  <div class="type-system">
+    <div class="type-card sans-card">
+      <div class="role">Display · Headlines · UI</div>
+      <div class="name">Inter Tight (Briston substitute)</div>
+      <div class="display">Your Body.<br/>Understood.</div>
+      <div class="specs">
+        <div>500 / 600</div>
+        <div>-3% tracking</div>
+        <div>0.95 leading</div>
+      </div>
+    </div>
+    <div class="type-card serif-card">
+      <div class="role">Editorial · Emotion · Story</div>
+      <div class="name">Instrument Serif (Baskerville expression)</div>
+      <div class="display"><em>Built from your data.</em><br/><em>Designed for your life.</em></div>
+      <div class="specs">
+        <div>Italic · 400</div>
+        <div>-2% tracking</div>
+        <div>1.1 leading</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORDMARK SYSTEM -->
+  <div style="margin-top: 120px;">
+    <div class="eyebrow">Wordmark System</div>
+    <h2 class="section-title">The mark.<br/><em>And the rules that protect it.</em></h2>
+    <p class="lede">The Aissisted wordmark is the brand. It carries three signals — lowercase confidence, the tilde signature, and serif warmth. Every lockup, every application, every reduction follows from those three.</p>
+  </div>
+
+  <div style="margin-top: 60px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden;">
+    <div style="background: var(--white); color: var(--graphite); padding: 80px 60px; min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
+      <div class="mono" style="position: absolute; top: 24px; left: 28px; color: var(--mute); font-size: 0.65rem;">PRIMARY · DEFAULT</div>
+      <div style="font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 6rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--graphite);">aiss<span style="display: inline-block; position: relative;">i<span style="position: absolute; top: -0.18em; left: 50%; transform: translateX(-50%); font-size: 0.5em; line-height: 1; color: var(--red);">~</span></span>sted</div>
+      <div style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.1rem; margin-top: 24px; color: var(--mute);">( + intelligent science )</div>
+    </div>
+    <div style="background: var(--paper); padding: 48px 40px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div class="mono" style="color: var(--red); margin-bottom: 16px;">Primary Lockup</div>
+        <h3 style="font-family: 'Instrument Serif', serif; font-size: 1.8rem; font-weight: 400; line-height: 1.1; margin-bottom: 12px;">Graphite on white. Tilde in red.</h3>
+        <p style="font-size: 0.92rem; color: var(--mute); line-height: 1.55; margin-bottom: 28px;">The default everywhere — packaging, product UI, editorial, decks, dashboards, signage. The wordmark sits in graphite on Cleanroom White. The tilde carries the only red. Quiet. Permanent. Owned. The descriptor "(+ intelligent science)" is parenthetical by design — never the headline.</p>
+      </div>
+      <div style="border-top: 1px solid var(--line-soft); padding-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.78rem;">
+        <div><div class="mono" style="color: var(--mute); margin-bottom: 4px; font-size: 0.65rem;">CASE</div><div>Always lowercase</div></div>
+        <div><div class="mono" style="color: var(--mute); margin-bottom: 4px; font-size: 0.65rem;">CLEAR SPACE</div><div>1× cap-height min</div></div>
+        <div><div class="mono" style="color: var(--mute); margin-bottom: 4px; font-size: 0.65rem;">MIN SIZE</div><div>120px digital · 18mm print</div></div>
+        <div><div class="mono" style="color: var(--mute); margin-bottom: 4px; font-size: 0.65rem;">TILDE</div><div>Always centered on middle "i"</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand-marketing surface — red flood -->
+  <div style="margin-top: 24px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden;">
+    <div style="background: var(--red); color: var(--white); padding: 80px 60px; min-height: 360px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
+      <div class="mono" style="position: absolute; top: 24px; left: 28px; color: rgba(255,255,255,0.7); font-size: 0.65rem;">BRAND-MARKETING ONLY</div>
+      <div style="font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 5.4rem; line-height: 0.9; letter-spacing: -0.04em;">aiss<span style="display: inline-block; position: relative;">i<span style="position: absolute; top: -0.18em; left: 50%; transform: translateX(-50%); font-size: 0.5em; line-height: 1;">~</span></span>sted</div>
+      <div style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1rem; margin-top: 22px; opacity: 0.92;">( + intelligent science )</div>
+    </div>
+    <div style="background: var(--white); padding: 48px 40px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div class="mono" style="color: var(--red); margin-bottom: 16px;">Brand Mark Surface</div>
+        <h3 style="font-family: 'Instrument Serif', serif; font-size: 1.6rem; font-weight: 400; line-height: 1.15; margin-bottom: 12px;">When the wordmark <em>is</em> the message.</h3>
+        <p style="font-size: 0.92rem; color: var(--mute); line-height: 1.55; margin-bottom: 24px;">Reserved for surfaces where the brand is the only thing being said: hero film bumpers, social brand frames, event backdrops, campaign title cards. Never product UI. Never reading environments. Never packaging.</p>
+      </div>
+      <div style="border-top: 1px solid var(--line-soft); padding-top: 20px; font-size: 0.78rem;">
+        <div class="mono" style="color: var(--mute); margin-bottom: 8px; font-size: 0.65rem;">RULE</div>
+        <div style="color: var(--ink); line-height: 1.5;">Red is a signal — except where the wordmark <em>is</em> the signal. On those rare surfaces, red can flood. Everywhere else, red stays small.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Tilde Mark (monogram) -->
+  <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden;">
+    <div style="background: var(--graphite); color: var(--white); padding: 48px; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px;">
+      <div class="mono" style="color: var(--gold);">Monogram · The Tilde</div>
+      <div style="display: flex; align-items: center; justify-content: center; flex: 1;">
+        <div style="font-family: 'Fraunces', serif; font-size: 8rem; line-height: 1; color: var(--red); position: relative;">~</div>
+      </div>
+      <div style="font-size: 0.85rem; color: rgba(250,250,247,0.6); line-height: 1.5;">The diacritic over the second "i" is the brand's standalone signature. Use as: app icon, foil deboss, social avatar, packaging cap detail.</div>
+    </div>
+    <div style="background: var(--white); padding: 48px;">
+      <div class="mono" style="color: var(--red); margin-bottom: 16px;">Wordmark — Reverse</div>
+      <div style="background: var(--graphite); padding: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; height: 140px; margin-bottom: 16px;">
+        <div style="font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 2.4rem; color: var(--white); letter-spacing: -0.03em;">aiss<span style="position: relative;">i<span style="position: absolute; top: -0.2em; left: 50%; transform: translateX(-50%); font-size: 0.5em;">~</span></span>sted</div>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--mute); line-height: 1.5;">Used on dark surfaces. Wordmark always in pure white — never tinted, never broken with red.</div>
+    </div>
+    <div style="background: var(--white); padding: 48px;">
+      <div class="mono" style="color: var(--red); margin-bottom: 16px;">Wordmark — Standard</div>
+      <div style="background: var(--paper); padding: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; height: 140px; margin-bottom: 16px;">
+        <div style="font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 2.4rem; color: var(--graphite); letter-spacing: -0.03em;">aiss<span style="position: relative;">i<span style="position: absolute; top: -0.2em; left: 50%; transform: translateX(-50%); font-size: 0.5em;">~</span></span>sted</div>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--mute); line-height: 1.5;">Default for editorial, print, and light backgrounds. Graphite over Cleanroom White or Paper.</div>
+    </div>
+  </div>
+
+  <!-- Wordmark rules -->
+  <div style="margin-top: 24px; background: var(--paper); border-radius: 6px; padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+    <div>
+      <div class="mono" style="color: var(--ink); margin-bottom: 16px;">Approved · Wordmark Pairings</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+        <div style="display: flex; gap: 12px;"><span style="color: var(--aqua); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">+</span><span>Graphite wordmark on Cleanroom White — <strong>default for everything</strong>.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--aqua); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">+</span><span>White wordmark on Graphite — luxury, editorial, low-light.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--aqua); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">+</span><span>White wordmark on Medical Red — <strong>brand-mark surfaces only</strong> (campaign title cards, social brand frames, event backdrops).</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--aqua); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">+</span><span>Tilde monogram in red, white, or gold — standalone use only.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="mono" style="color: var(--ink); margin-bottom: 16px;">Never</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+        <div style="display: flex; gap: 12px;"><span style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">×</span><span>Use red as the surface for product UI, packaging, dashboards, or reading environments.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">×</span><span>Capitalize, italicize, or letter-space the wordmark.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">×</span><span>Place the wordmark over photography or busy texture.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">×</span><span>Detach the tilde — it lives on the middle "i" or stands alone, never elsewhere.</span></div>
+        <div style="display: flex; gap: 12px;"><span style="color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">×</span><span>Re-render in any typeface other than the licensed wordmark file.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREATMENT MATRIX -->
+  <div style="margin-top: 100px;">
+    <div class="eyebrow">Visual Treatment Matrix</div>
+    <h2 class="section-title">Same brand.<br/><em>Three different rooms.</em></h2>
+    <p class="lede">Each audience layer gets its own visual register — same DNA, different volume. Use this matrix the way a designer uses a type ramp: as the operating ruleset, not a suggestion.</p>
+  </div>
+  <div class="treatment-matrix">
+    <div class="matrix-header">
+      <div>Treatment</div>
+      <div>Layer 01 — Everyday</div>
+      <div>Layer 02 — Science &amp; Trust</div>
+      <div>Layer 03 — Luxury</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Color Lead</div>
+      <div>White-dominant. Red as warm punctuation. Aqua used for friendly feedback.</div>
+      <div>Graphite + aqua dominant. Red restrained to charts &amp; key data points.</div>
+      <div>Graphite + white. Soft Gold permitted. Red as a single, cinematic accent.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Type Mix</div>
+      <div>Sans-led. Serif used sparingly for warmth.</div>
+      <div>Sans-only. Tight, technical. Numerals are heroes.</div>
+      <div>Serif-led. Sans drops to small caps and meta.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Photography</div>
+      <div>Real moments — morning light, hands, water, single person.</div>
+      <div>Material studies — glass, liquid, equipment shot like still life.</div>
+      <div>Cinematic portraits. Negative space. Editorial fashion meets biotech.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Composition</div>
+      <div>Generous whitespace. Centered. Calm. Single focal point.</div>
+      <div>Grid-driven. Annotated. Data feels architectural.</div>
+      <div>Asymmetric. Cropped tight. Confident silence.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Motion</div>
+      <div>Soft fades. Mass-friendly micro-interactions.</div>
+      <div>Reveal patterns. Numbers count up. Charts redraw.</div>
+      <div>Long, slow camera moves. Liquid mixing. Restraint above all.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">Sound (when used)</div>
+      <div>Gentle ambient. Spoken word.</div>
+      <div>Silence. Or a single signal tone (Aqua note).</div>
+      <div>Cinematic score. Sparse. Negative pauses.</div>
+    </div>
+    <div class="matrix-row">
+      <div class="row-label">CTA Style</div>
+      <div>Soft and inviting — "See how it works"</div>
+      <div>Direct and proven — "View the science"</div>
+      <div>Restrained and exclusive — "Request access"</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ASSET BLUEPRINT LIBRARY ============ -->
+<section class="assets-section" id="assets">
+  <div class="assets-inner">
+    <div class="eyebrow">Asset Blueprint Library</div>
+    <h2 class="section-title">Every asset.<br/><em>Engineered.</em></h2>
+    <p class="lede">Each surface in the Aissisted ecosystem has a defined job, channel home, and copy temperature. This is the ruleset designers and marketers build against — not a mood board, an operating spec.</p>
+    <div class="asset-grid">
+
+      <div class="asset-card">
+        <div class="num">A01 · Layer 03</div>
+        <h4>Hero Site</h4>
+        <div class="channel">aissisted.com · Above the fold</div>
+        <div class="specs"><strong>Job:</strong> Reframe the category in five seconds. <strong>Anchor:</strong> Rally cry + single hero image. <strong>Constraint:</strong> Zero feature copy. <strong>Test:</strong> Could this exist as a single billboard?</div>
+        <div class="copy-sample">Your Body. Understood.<br/>— Built from your data. Designed for your life.</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A02 · Layer 01</div>
+        <h4>Product Page</h4>
+        <div class="channel">D2C · Conversion surface</div>
+        <div class="specs"><strong>Job:</strong> Move from intrigue to commitment. <strong>Anchor:</strong> The system, not the bottle. <strong>Constraint:</strong> No SKU language. <strong>Test:</strong> Can a first-time visitor explain the system after one scroll?</div>
+        <div class="copy-sample">This isn't a supplement. It's your system.</div>
+      </div>
+
+      <div class="asset-card peak">
+        <div class="num">A03 · Layer 03</div>
+        <h4>The Press</h4>
+        <div class="channel">Packaging · Iconic moment</div>
+        <div class="specs"><strong>Job:</strong> Become the brand's swoosh. <strong>Anchor:</strong> Frosted white vessel + matte Medical Red cap as the hero element. Aqua activation line illuminates as the cap presses. Wordmark wraps the bottle in graphite. Member signature foiled at the base. <strong>Constraint:</strong> The bottle neutralizes the red so the cap can carry it. The cap is the moment — not the label. <strong>Test:</strong> Does someone who has never seen it instinctively press? Does the act of pressing feel like a system activating inside them?</div>
+        <div class="copy-sample">Blood → Data → Action.<br/>josh webber · member · est. 2026</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A04 · Layer 02</div>
+        <h4>Onboarding Flow</h4>
+        <div class="channel">App · First-run experience</div>
+        <div class="specs"><strong>Job:</strong> Make the user feel seen by question 3. <strong>Anchor:</strong> Inputs that mirror back insight, not data collection. <strong>Constraint:</strong> Never more than one question per screen. <strong>Test:</strong> Does the user feel smarter at the end than the start?</div>
+        <div class="copy-sample">"You sleep best on cool, slow nights. We'll remember that."</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A05 · Layer 02</div>
+        <h4>Dashboard</h4>
+        <div class="channel">App · Recurring surface</div>
+        <div class="specs"><strong>Job:</strong> Be the mirror. <strong>Anchor:</strong> One headline insight, then progressive disclosure. <strong>Constraint:</strong> No more than three numbers above the fold. <strong>Test:</strong> Can the user describe how they're trending in one sentence?</div>
+        <div class="copy-sample">Recovery is up 12%. Your formula reflects that.</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A06 · Layer 01</div>
+        <h4>Adaptation Email</h4>
+        <div class="channel">CRM · Lifecycle</div>
+        <div class="specs"><strong>Job:</strong> Make the system feel alive. <strong>Anchor:</strong> Triggered by an actual change. <strong>Constraint:</strong> Under 60 words. <strong>Test:</strong> Does it make the recipient open the next one faster?</div>
+        <div class="copy-sample">Your recovery has been trending down. We've adjusted your formula. You don't have to think about it. We already did.</div>
+      </div>
+
+      <div class="asset-card peak">
+        <div class="num">A07 · Layer 03</div>
+        <h4>Launch Film (60s)</h4>
+        <div class="channel">YouTube · Pre-roll · OOH cuts</div>
+        <div class="specs"><strong>Job:</strong> Establish category leadership. <strong>Anchor:</strong> One human, one body, one truth. <strong>Constraint:</strong> Show the system working before naming it. <strong>Test:</strong> Could this run with no logo and still be unmistakable?</div>
+        <div class="copy-sample">"Most of your health has been guesswork. This is what it looks like when it's understood."</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A08 · Layer 02</div>
+        <h4>The Continuum Report</h4>
+        <div class="channel">PDF · Quarterly · Premium tiers</div>
+        <div class="specs"><strong>Job:</strong> Prove the system is learning. <strong>Anchor:</strong> Visualized longitudinal change. <strong>Constraint:</strong> No medical hedging. Speak in terms the user lives in. <strong>Test:</strong> Would a clinician respect it? Would a non-medical user feel proud of it?</div>
+        <div class="copy-sample">"Q1 was your highest-recovery quarter on record. Here's what you did differently — and what we changed in response."</div>
+      </div>
+
+      <div class="asset-card peak">
+        <div class="num">A09 · Layer 03</div>
+        <h4>Year in Body</h4>
+        <div class="channel">Annual · Cross-channel ritual</div>
+        <div class="specs"><strong>Job:</strong> Become a cultural moment. <strong>Anchor:</strong> The user's biological year, narrated. <strong>Constraint:</strong> Shareable without sharing data. <strong>Test:</strong> Does it make people who don't use Aissisted feel left out?</div>
+        <div class="copy-sample">"This is what your body did in 2026. Here's what we'll do together next."</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A10 · Layer 01</div>
+        <h4>Social Lead Unit</h4>
+        <div class="channel">Meta · TikTok · paid social</div>
+        <div class="specs"><strong>Job:</strong> Stop the scroll on a single tension. <strong>Anchor:</strong> 1 problem · 1 reframe · 1 outcome. <strong>Constraint:</strong> Never a product shot in the first 2 seconds. <strong>Test:</strong> Is the first frame a state of being, not a bottle?</div>
+        <div class="copy-sample">"You don't need more supplements. You need the right one."</div>
+      </div>
+
+      <div class="asset-card">
+        <div class="num">A11 · Layer 02</div>
+        <h4>Clinician One-Sheet</h4>
+        <div class="channel">B2B · Clinical partnerships</div>
+        <div class="specs"><strong>Job:</strong> Make a doctor confident enough to refer. <strong>Anchor:</strong> Mechanism + integration + auditability. <strong>Constraint:</strong> No marketing copy. Source every claim. <strong>Test:</strong> Could this be reviewed by an MD without an eye-roll?</div>
+        <div class="copy-sample">"Adaptive supplementation, derived from your patient's biomarkers — auditable at every step."</div>
+      </div>
+
+      <div class="asset-card peak">
+        <div class="num">A12 · Layer 03</div>
+        <h4>Investor / Founder Deck</h4>
+        <div class="channel">Capital raises · Strategic partners</div>
+        <div class="specs"><strong>Job:</strong> Position Aissisted as the category, not a brand in it. <strong>Anchor:</strong> Personalization → ownership → compounding moat. <strong>Constraint:</strong> Sound like a conviction, not a pitch. <strong>Test:</strong> Would a founder forward it unprompted?</div>
+        <div class="copy-sample">"While others personalize once, we personalize continuously. The product gets smarter the longer you use it."</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ MARKETING CADENCE ============ -->
+<section class="cadence-section">
+  <div class="eyebrow">Channel Cadence</div>
+  <h2 class="section-title">What runs <em>where,</em> and <em>how often.</em></h2>
+  <p class="lede">Not all channels carry all layers. Each has a frequency, a primary job, and a tone register. This is the operational rhythm of the brand.</p>
+  <div class="cadence-grid">
+    <div class="cadence-row head">
+      <div class="channel-name">Channel</div>
+      <div>Cadence</div>
+      <div>Layer Lead</div>
+      <div>Primary Job</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Owned · Site</div>
+      <div>Always-on · refreshed quarterly</div>
+      <div>Layer 03 above the fold · Layer 01 below</div>
+      <div>Reframe the category in five seconds. Convert in ninety.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">CRM · Email</div>
+      <div>Triggered by data, not by calendar</div>
+      <div>Layer 01</div>
+      <div>Make the system feel alive. Each message earns the next open.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Social · Organic</div>
+      <div>3–4 / week · single-focus</div>
+      <div>Layer 01 + 03 alternating</div>
+      <div>Train the algorithm to recognize Aissisted's visual signature.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Social · Paid</div>
+      <div>Always-on · audience-segmented</div>
+      <div>Layer 01</div>
+      <div>Pull the right person through the right door — at the right moment.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Long-form / Editorial</div>
+      <div>1 deep piece / month</div>
+      <div>Layer 02</div>
+      <div>Build the proof shelf. Become quotable.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Earned · PR</div>
+      <div>Quarterly tentpoles</div>
+      <div>Layer 03</div>
+      <div>Move the brand from product coverage to culture coverage.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Partnerships</div>
+      <div>2–3 strategic / year</div>
+      <div>Layer 03</div>
+      <div>Borrow trust. Lend story. Refuse anything that dilutes either.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Clinical / B2B</div>
+      <div>Quiet · referral-led</div>
+      <div>Layer 02</div>
+      <div>Win the practitioner. Their endorsement is worth a thousand ads.</div>
+    </div>
+    <div class="cadence-row">
+      <div class="channel-name">Year in Body</div>
+      <div>Annual · January</div>
+      <div>Layer 03</div>
+      <div>Create the cultural moment that defines the category each year.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FILTER ============ -->
+<section class="filter-section" id="filter">
+  <div class="filter-inner">
+    <div class="eyebrow">Decision Filter</div>
+    <h2 class="section-title">Before anything ships,<br/>it must <em>survive five questions.</em></h2>
+    <p class="lede">This is the gate every piece of work passes through — designer, copywriter, founder. If a single answer is no, the work goes back. The filter is what keeps the brand from drifting under deadline pressure.</p>
+
+    <div class="checklist">
+      <div class="check-block">
+        <h3>The Five Questions</h3>
+        <ul class="check-list">
+          <li><div class="num">01</div><div><div class="q">Does it feel built for one person?</div><div class="a">Not a segment. Not an avatar. One human.</div></div></li>
+          <li><div class="num">02</div><div><div class="q">Is it simpler than what we'd be tempted to make?</div><div class="a">If you removed three more elements, would it still work? Then remove them.</div></div></li>
+          <li><div class="num">03</div><div><div class="q">Does the intelligence feel invisible in the lead?</div><div class="a">AI/intelligence belongs in the descriptor lockup ("(+ intelligent science)") and the credibility line. It never leads the rally cry. Three jobs, three registers.</div></div></li>
+          <li><div class="num">04</div><div><div class="q">Is the science felt, not just stated?</div><div class="a">A claim is a feature. A felt outcome is a benefit.</div></div></li>
+          <li><div class="num">05</div><div><div class="q">Could this only have come from Aissisted?</div><div class="a">Drop the logo. Could a competitor ship the same thing? Then it isn't ours.</div></div></li>
+        </ul>
+      </div>
+      <div class="check-block">
+        <h3>Brand Drift Indicators</h3>
+        <ul class="check-list">
+          <li><div class="num">!1</div><div><div class="q">It uses the word "users" or "customers."</div><div class="a">We speak to a person. Always.</div></div></li>
+          <li><div class="num">!2</div><div><div class="q">A bottle appears in the first frame of an ad.</div><div class="a">Lead with the state of being. The product is the resolution.</div></div></li>
+          <li><div class="num">!3</div><div><div class="q">It feels like wellness. Or like biotech. Or like luxury alone.</div><div class="a">Aissisted is the merge. If it lives in one lane, it isn't us.</div></div></li>
+          <li><div class="num">!4</div><div><div class="q">A claim has no underlying mechanism we can show.</div><div class="a">We earn trust through precision. Cut the claim or back it.</div></div></li>
+          <li><div class="num">!5</div><div><div class="q">It would make a 25-year-old and a 65-year-old recoil for different reasons.</div><div class="a">The architecture exists so we can be precise. Use it.</div></div></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gates">
+      <h3>Approval gates · who signs off</h3>
+      <div class="gate-row head">
+        <div>Level</div>
+        <div>What triggers it</div>
+        <div>Filter applied</div>
+        <div>Owner</div>
+      </div>
+      <div class="gate-row">
+        <div class="level">G1</div>
+        <div>Any internal asset, draft</div>
+        <div class="signal">Self-check: 5 Questions</div>
+        <div class="action">Author</div>
+      </div>
+      <div class="gate-row">
+        <div class="level">G2</div>
+        <div>Customer-facing copy or visual</div>
+        <div class="signal">5 Questions + Drift Indicators</div>
+        <div class="action">Brand lead</div>
+      </div>
+      <div class="gate-row">
+        <div class="level">G3</div>
+        <div>Hero campaigns · packaging · Layer 03</div>
+        <div class="signal">Full filter + Founder review</div>
+        <div class="action">Founder + Brand</div>
+      </div>
+      <div class="gate-row">
+        <div class="level">G4</div>
+        <div>Clinical, regulated, or financial claims</div>
+        <div class="signal">Full filter + Compliance + Medical</div>
+        <div class="action">Founder + Counsel + MD</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DESIGN DISCIPLINE — OUTPUT REQUIREMENTS ============ -->
+<section class="discipline-section" id="discipline">
+  <div class="discipline-inner">
+    <div class="eyebrow">Design Output Requirements</div>
+    <h2 class="section-title">Every visual deliverable<br/>answers <em>six questions.</em></h2>
+    <p class="lede">Before any concept moves to execution — packaging, hero film, ad, dashboard, deck — the brief must articulate all six. No exceptions. No "we'll figure it out in design." The clarity lives in the brief, not the pixels.</p>
+
+    <div class="discipline-grid">
+      <div class="discipline-card">
+        <div class="d-num">01</div>
+        <h3>Visual concept description</h3>
+        <p>One paragraph. Plain language. What the viewer sees in the first second, and what they understand in the second second. If you can't write it, you can't design it.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="d-num">02</div>
+        <h3>Color usage breakdown</h3>
+        <p>Percentage allocation across white, graphite, red, aqua, gold. Red is a signal — it should rarely exceed 8% of the surface. Brand-mark exceptions called out explicitly.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="d-num">03</div>
+        <h3>Material &amp; texture direction</h3>
+        <p>Matte, frosted, brushed, soft-touch, paper-grain. Physical and digital. If a surface looks glossy or plastic, it isn't us. Specify the tactile language before any render starts.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="d-num">04</div>
+        <h3>Emotional intent</h3>
+        <p>One sentence. What should the viewer <em>feel</em> — calm, certain, seen, curious, owned. The feeling drives composition, pacing, and silence. Without it, the work defaults to generic.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="d-num">05</div>
+        <h3>How personalization is expressed</h3>
+        <p>Where does the work say "this is yours"? A name. A signature. A data line. A handwritten line. Personalization must be visible — not implied. If it's not on the surface, it isn't real.</p>
+      </div>
+      <div class="discipline-card">
+        <div class="d-num">06</div>
+        <h3>How it reinforces "The Press"</h3>
+        <p>Every asset connects back to the iconic moment — the cap, the activation line, the act of pressing. Even a banner ad echoes it through pacing, punctuation, or the swoosh of color. Nothing exists in isolation.</p>
+      </div>
+    </div>
+
+    <!-- Final Filter -->
+    <div class="final-filter">
+      <div class="ff-eyebrow"><span class="dot"></span> Final Filter · Five Benchmarks</div>
+      <h3 class="ff-title">If the answer to any of these is <em>no</em>,<br/>the work is not ready.</h3>
+      <div class="ff-grid">
+        <div class="ff-row">
+          <div class="ff-mark">A</div>
+          <div class="ff-q"><strong>Apple-level simplicity?</strong></div>
+          <div class="ff-a">Could a child describe what it does? Is every removed element invisible because it was never needed?</div>
+        </div>
+        <div class="ff-row">
+          <div class="ff-mark">N</div>
+          <div class="ff-q"><strong>Nike-level performance?</strong></div>
+          <div class="ff-a">Does the work say <em>you become more</em> by using this — not just <em>you get something</em>?</div>
+        </div>
+        <div class="ff-row">
+          <div class="ff-mark">Æ</div>
+          <div class="ff-q"><strong>Aesop-level design discipline?</strong></div>
+          <div class="ff-a">Is every choice intentional, restrained, and quiet? Does silence do as much work as the typography?</div>
+        </div>
+        <div class="ff-row">
+          <div class="ff-mark">B</div>
+          <div class="ff-q"><strong>Biologically real?</strong></div>
+          <div class="ff-a">Does the science feel earned — referenced through mechanism, not adjective? No miracles. No magic.</div>
+        </div>
+        <div class="ff-row hero">
+          <div class="ff-mark">★</div>
+          <div class="ff-q"><strong>Made for one person?</strong></div>
+          <div class="ff-a">Strip every brand mark off. Could one human still recognize this as theirs? If yes, it ships.</div>
+        </div>
+      </div>
+      <div class="ff-close">If all five answer yes — and the six output requirements are documented — the work is on-brand. <em>Then ship.</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FULL FLOW EXAMPLE ============ -->
+<section class="flow-section">
+  <div class="flow-inner">
+    <div class="eyebrow">The Full Flow · Hero Sequence</div>
+    <h2 class="section-title">How the system speaks<br/><em>in sequence.</em></h2>
+    <p class="lede" style="margin-bottom: 20px;">A complete walk-through of the messaging hierarchy in motion — applied here as a homepage, but the same six beats apply to a launch film, a sales deck, or a single keynote.</p>
+
+    <div class="flow-stage">
+      <div class="stage-label">01 · Hook</div>
+      <div class="copy">Your Body. <em>Understood.</em></div>
+      <div class="gloss"><strong>Goal:</strong> Recognition in three words. <strong>Effect:</strong> The reader instantly senses something different exists.</div>
+    </div>
+    <div class="flow-stage">
+      <div class="stage-label">02 · Shift</div>
+      <div class="copy">Most supplements are built for <em>everyone.</em> Yours is built for you.</div>
+      <div class="gloss"><strong>Goal:</strong> Reframe the category. <strong>Effect:</strong> The old model becomes visibly insufficient. Contrast does the selling.</div>
+    </div>
+    <div class="flow-stage">
+      <div class="stage-label">03 · System</div>
+      <div class="copy">We use your data, behavior, and biology to design a formula that <em>evolves with you.</em></div>
+      <div class="gloss"><strong>Goal:</strong> Introduce the intelligence — quietly. <strong>Effect:</strong> Adaptability becomes the new expectation.</div>
+    </div>
+    <div class="flow-stage">
+      <div class="stage-label">04 · Proof</div>
+      <div class="copy">Powered by wearable data, biomarkers, and intelligent science — your formula <em>adjusts as your life changes.</em></div>
+      <div class="gloss"><strong>Goal:</strong> Validate without overwhelming. <strong>Effect:</strong> The skeptic stops looking for the catch.</div>
+    </div>
+    <div class="flow-stage">
+      <div class="stage-label">05 · Outcome</div>
+      <div class="copy">Better energy. Better clarity. Better recovery. Because what you take <em>finally matches what you need.</em></div>
+      <div class="gloss"><strong>Goal:</strong> Make it tangible. <strong>Effect:</strong> The benefit lives in the body, not the marketing.</div>
+    </div>
+    <div class="flow-stage">
+      <div class="stage-label">06 · Ownership</div>
+      <div class="copy">Your formula. Your system. <em>Your edge.</em></div>
+      <div class="gloss"><strong>Goal:</strong> Lock in identity. <strong>Effect:</strong> Conversion becomes commitment, not transaction.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSE ============ -->
+<section class="close-section">
+  <div class="close-inner">
+    <div class="mark"><span class="dot"></span> The Operating Truth</div>
+    <h2>We don't sell supplements.<br/>We build a <em>system</em><br/>that produces them.</h2>
+    <div style="margin-top: 64px; display: flex; align-items: center; justify-content: center; gap: 16px;">
+      <div style="font-family: 'Fraunces', 'Instrument Serif', serif; font-weight: 500; font-size: 2.4rem; color: var(--white); letter-spacing: -0.03em;">aiss<span style="position: relative;">i<span style="position: absolute; top: -0.22em; left: 50%; transform: translateX(-50%); font-size: 0.5em;">~</span></span>sted</div>
+      <div style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1rem; color: rgba(250,250,247,0.5);">( + intelligent science )</div>
+    </div>
+    <div class="footer-note">Brand Operating System · v2.2 · Internal · April 2026</div>
+  </div>
+</section>
+
+<script>
+// Active section in nav
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aissisted — Brand Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --red: #8B1A22;
+  --aqua: #00C9B1;
+  --gold: #C9A96E;
+  --graphite: #1C1C1A;
+  --white: #FAFAF7;
+  --ink: #1C1C1A;
+  --mute: #8A8A86;
+  --paper: #F4F3EF;
+  --line: #D8D7D0;
+}
+html { background: var(--white); }
+body {
+  font-family: 'Inter Tight', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--white);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 96px 64px 120px;
+}
+
+/* HEADER */
+.brief-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 56px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 56px;
+}
+.brief-wordmark {
+  font-family: 'Fraunces', serif;
+  font-size: 2.4rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  position: relative;
+}
+.brief-wordmark .tilde {
+  color: var(--red);
+  font-size: 0.55em;
+  position: relative;
+  top: -0.32em;
+  margin: 0 -0.04em;
+}
+.brief-meta {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+.brief-meta span {
+  display: block;
+}
+
+/* FIELD */
+.field {
+  margin-bottom: 40px;
+}
+.field-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.field-value {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.field-value.large {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.45rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.field-value.large em {
+  font-style: italic;
+  color: var(--red);
+}
+
+/* DIVIDER */
+.divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 48px 0;
+}
+.divider-bold {
+  border: none;
+  border-top: 1px solid var(--ink);
+  margin: 56px 0;
+}
+
+/* BULLET LIST */
+.brief-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.brief-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.brief-list li .mark {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--red);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.brief-list li .text strong {
+  font-weight: 600;
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+/* DESCRIPTOR BLOCK */
+.descriptor {
+  margin-top: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--mute);
+}
+
+/* COLUMN GRID */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+/* TAG ROW */
+.tag-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+}
+.tag.red {
+  background: rgba(139,26,34,0.06);
+  border-color: rgba(139,26,34,0.2);
+  color: var(--red);
+}
+
+/* VISUAL IDENTITY BLOCK */
+.vi-block {
+  background: var(--graphite);
+  color: var(--white);
+  border-radius: 4px;
+  padding: 32px;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+.vi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vi-item .vi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.vi-item .vi-value {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(250,250,247,0.85);
+}
+.vi-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* BALANCE GRID */
+.balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.balance-cell {
+  background: var(--white);
+  padding: 20px 22px;
+}
+.balance-cell .bc-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+.balance-cell .bc-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.balance-cell .bc-arrow {
+  font-size: 0.78rem;
+  color: var(--red);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+/* FOOTER */
+.brief-footer {
+  margin-top: 80px;
+  padding-top: 32px;
+  border-top: 2px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-line {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* PRINT */
+@media print {
+  body { background: white; }
+  .page { padding: 48px 48px 80px; }
+}
+
+@media (max-width: 680px) {
+  .page { padding: 48px 24px 80px; }
+  .two-col { grid-template-columns: 1fr; }
+  .vi-block { grid-template-columns: 1fr; }
+  .balance-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="brief-header">
+    <div class="brief-wordmark">
+      aiss<span class="tilde">~</span>sted
+    </div>
+    <div class="brief-meta">
+      <span>Brand Brief · v1.0</span>
+      <span>Internal · April 2026</span>
+      <span style="color: var(--red); margin-top: 4px;">Confidential</span>
+    </div>
+  </header>
+
+  <!-- NAME -->
+  <div class="field">
+    <div class="field-label">Brand / Business Name</div>
+    <div class="field-value large">aissisted<br/><em>( + intelligent science )</em></div>
+  </div>
+
+  <!-- CORE IDEA -->
+  <div class="field">
+    <div class="field-label">Core Brand / Business Idea</div>
+    <div class="field-value">Your body, understood. A supplement system built from your data — not a demographic, not a guess. Reformulated as your biology changes.</div>
+  </div>
+
+  <!-- POSITIONING -->
+  <div class="field">
+    <div class="field-label">Key Insight &amp; Positioning Statement</div>
+    <div class="field-value large">Personalization isn't a feature. <em>It's the product.</em><br/>Supplements have always been built for everyone. Yours is built from you.</div>
+  </div>
+
+  <hr class="divider-bold"/>
+
+  <!-- THE BALANCE -->
+  <div class="field">
+    <div class="field-label">The Balance — How We Merge Science, Simplicity, and Identity</div>
+    <div class="balance-grid">
+      <div class="balance-cell">
+        <div class="bc-label">Science</div>
+        <div class="bc-value">Credibility</div>
+        <div class="bc-arrow">→ biomarkers, mechanisms, evidence</div>
+      </div>
+      <div class="balance-cell">
+        <div class="bc-label">Simplicity</div>
+        <div class="bc-value">Usability</div>
+        <div class="bc-arrow">→ one question per screen, one truth per surface</div>
+      </div>
+      <div class="balance-cell">
+        <div class="bc-label">Luxury</div>
+        <div class="bc-value">Desirability</div>
+        <div class="bc-arrow">→ premium materials, restraint, silence</div>
+      </div>
+      <div class="balance-cell">
+        <div class="bc-label">Personalization</div>
+        <div class="bc-value">Ownership</div>
+        <div class="bc-arrow">→ member signature, name on the formula, yours</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- MEMBERS -->
+  <div class="field">
+    <div class="field-label">Members</div>
+    <ul class="brief-list">
+      <li>
+        <span class="mark">○</span>
+        <span class="text">
+          <strong>The Optimized Achiever</strong>
+          High output, data-literate, already tracking everything. Wearing WHOOP or Oura. Ready to connect the dots between their biometrics and what they consume.
+        </span>
+      </li>
+      <li>
+        <span class="mark">○</span>
+        <span class="text">
+          <strong>The Health-Conscious Professional</strong>
+          Not a biohacker. Wants to feel better with certainty, not guesswork. Has tried supplements — none of it ever felt built for them. Done with the shelf.
+        </span>
+      </li>
+      <li>
+        <span class="mark">○</span>
+        <span class="text">
+          <strong>The Longevity Investor</strong>
+          40+, proactive, spending on health because the cost of not investing is now visible. Wants the system behind the supplement, not just the bottle.
+        </span>
+      </li>
+    </ul>
+    <div class="descriptor">
+      All three want the same thing: to feel that what they're putting in their body was made specifically for them. Not designed for a body like theirs. For <em>their</em> body.
+    </div>
+  </div>
+
+  <hr class="divider-bold"/>
+
+  <!-- BRAND VERBS -->
+  <div class="field">
+    <div class="field-label">Brand Verbs</div>
+    <div class="field-value" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; letter-spacing: 0.08em;">UNDERSTAND · ADAPT · EVOLVE</div>
+  </div>
+
+  <!-- BRAND VOICE -->
+  <div class="field">
+    <div class="field-label">Brand Voice</div>
+    <div class="field-value" style="line-height: 1.8;">
+      Calm. Clear. Certain. Never clinical — but never soft, either.<br/>
+      The voice of someone who has done the work, not someone selling you on it.<br/>
+      Data-precise. Biologically honest. Always personal.<br/>
+      We don't pitch the product. We reveal the mechanism.<br/>
+      We don't sell outcomes. We make them feel inevitable.
+    </div>
+  </div>
+
+  <!-- BRAND VALUES -->
+  <div class="field">
+    <div class="field-label">Brand Values</div>
+    <div class="tag-row">
+      <span class="tag red">Precision over promise</span>
+      <span class="tag red">Owned, not rented</span>
+      <span class="tag red">Adaptive intelligence</span>
+      <span class="tag">Evidence-based optimism</span>
+      <span class="tag">Radical personalization</span>
+      <span class="tag">Earned simplicity</span>
+    </div>
+  </div>
+
+  <!-- VISUAL IDENTITY -->
+  <div class="field">
+    <div class="field-label">Visual Identity</div>
+    <div class="field-value" style="margin-bottom: 12px;">Clean data visualization. Frosted white vessel. Medical Red as signal. Science lab meets luxury wellness. The Press is the icon. Silence does as much work as the typography.</div>
+    <div class="vi-block">
+      <div class="vi-item">
+        <div class="vi-label">Primary Surface</div>
+        <div class="vi-value"><span class="vi-swatch" style="background:#FAFAF7; border: 1px solid rgba(255,255,255,0.2);"></span>Cleanroom White<br/>Frosted. Matte. Clinical.</div>
+      </div>
+      <div class="vi-item">
+        <div class="vi-label">Signal Color</div>
+        <div class="vi-value"><span class="vi-swatch" style="background:#8B1A22;"></span>Medical Red #8B1A22<br/>Cap · data · punctuation.</div>
+      </div>
+      <div class="vi-item">
+        <div class="vi-label">Activation</div>
+        <div class="vi-value"><span class="vi-swatch" style="background:#00C9B1;"></span>Electric Aqua #00C9B1<br/>Live data · feedback.</div>
+      </div>
+      <div class="vi-item">
+        <div class="vi-label">Typography · Display</div>
+        <div class="vi-value">Fraunces (wordmark)<br/>Instrument Serif (editorial)</div>
+      </div>
+      <div class="vi-item">
+        <div class="vi-label">Typography · Body</div>
+        <div class="vi-value">Inter Tight (all UI + body)<br/>JetBrains Mono (data + code)</div>
+      </div>
+      <div class="vi-item">
+        <div class="vi-label">The Iconic Moment</div>
+        <div class="vi-value">The Press — red cap activates aqua line. Blood → Data → Action.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider-bold"/>
+
+  <!-- PRODUCT OFFERING -->
+  <div class="field">
+    <div class="field-label">Current Product Offering</div>
+    <div class="field-value">An adaptive supplement system across four modules: <strong>Core</strong> (daily foundation), <strong>Signal</strong> (targeted performance from wearable data), <strong>Jeffrey</strong> (voice-first AI health concierge), and <strong>Continuum</strong> (longitudinal tracking + reformulation service). Across three tiers: Foundation · Performance · Longevity.</div>
+  </div>
+
+  <!-- VALUE PROPOSITION -->
+  <div class="field">
+    <div class="field-label">Value Proposition</div>
+    <div class="field-value" style="line-height: 1.8;">
+      Most supplements are built for a demographic. Aissisted is built from your data.<br/>
+      What you take, when you take it, how much — every variable is yours.<br/>
+      It evolves as you do. Not because we reformulate every supplement.<br/>
+      Because we reformulate <em>yours</em>.
+    </div>
+  </div>
+
+  <!-- CONTENT STRATEGY -->
+  <div class="field">
+    <div class="field-label">Content Strategy</div>
+    <div class="field-value" style="line-height: 1.8;">
+      Lead with biology. Let the data tell the story.<br/>
+      Surface the science that earned the outcome — never the outcome alone.<br/>
+      Never hype. Only mechanism. Precision over adjective.<br/>
+      Celebrate the member, not the product. The system, not the bottle.<br/>
+      Partner with scientists, clinicians, and high-performers who can show the work.<br/>
+      Never sell the bottle in frame one. Lead with the state of being.
+    </div>
+  </div>
+
+  <!-- THE WEBSITE DIRECTION -->
+  <hr class="divider"/>
+  <div class="field">
+    <div class="field-label">Website &amp; Digital Design Direction</div>
+    <ul class="brief-list">
+      <li>
+        <span class="mark">+</span>
+        <span class="text"><strong>Apple.com simplicity</strong> — One thought per section. Full-bleed, minimal, typography-first composition. Confidence through restraint.</span>
+      </li>
+      <li>
+        <span class="mark">+</span>
+        <span class="text"><strong>WHOOP.com data aesthetics</strong> — Live data rings, recovery scores, biometric feeds. Data visualization as the product's beauty, not its proof.</span>
+      </li>
+      <li>
+        <span class="mark">+</span>
+        <span class="text"><strong>Hims.com product interaction</strong> — Product as hero. Clean, intimate rendering. The bottle is centered, lit, and human-scale. The cap is always red.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="brief-footer">
+    <div class="footer-line">Your Body. Understood.</div>
+    <div class="footer-meta">aissisted.com · Internal · 2026</div>
+  </footer>
+
+</div>
+</body>
+</html>
