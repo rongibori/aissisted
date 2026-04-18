@@ -65,15 +65,15 @@ const TIME_SLOT_ICONS: Record<string, string> = {
 };
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "text-emerald-400";
-  if (score >= 60) return "text-yellow-400";
-  return "text-red-400";
+  if (score >= 80) return "text-ok";
+  if (score >= 60) return "text-warn";
+  return "text-danger";
 }
 
 function scoreRingColor(score: number): string {
-  if (score >= 80) return "#34d399";
-  if (score >= 60) return "#fbbf24";
-  return "#f87171";
+  if (score >= 80) return "var(--ok)";
+  if (score >= 60) return "var(--warn)";
+  return "var(--danger)";
 }
 
 // ─── Adherence Ring ───────────────────────────────────────
@@ -87,7 +87,7 @@ function AdherenceRing({ score }: { score: number }) {
   return (
     <div className="relative flex items-center justify-center w-32 h-32">
       <svg className="absolute" width="128" height="128" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="64" cy="64" r={r} fill="none" stroke="#2a2a38" strokeWidth="10" />
+        <circle cx="64" cy="64" r={r} fill="none" stroke="var(--line)" strokeWidth="10" />
         <circle
           cx="64"
           cy="64"
@@ -102,7 +102,7 @@ function AdherenceRing({ score }: { score: number }) {
       </svg>
       <div className="flex flex-col items-center">
         <span className={`text-2xl font-bold ${scoreColor(score)}`}>{score}%</span>
-        <span className="text-[10px] text-[#7a7a98] uppercase tracking-wide">adherence</span>
+        <span className="text-[10px] text-muted uppercase tracking-wide">adherence</span>
       </div>
     </div>
   );
@@ -125,15 +125,15 @@ function SupplementRow({
   const skipped = log && log.skipped;
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-[#1c1c26] last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-surface-2 last:border-0">
       {/* Status indicator */}
       <div
         className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-medium ${
           taken
-            ? "bg-emerald-900 text-emerald-400"
+            ? "bg-ok-soft text-ok"
             : skipped
-            ? "bg-[#2a2a38] text-[#7a7a98]"
-            : "bg-[#1c1c26] text-[#7a7a98] border border-[#2a2a38]"
+            ? "bg-line text-muted"
+            : "bg-surface-2 text-muted border border-line"
         }`}
       >
         {taken ? "✓" : skipped ? "–" : "○"}
@@ -144,15 +144,15 @@ function SupplementRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span
             className={`text-sm font-medium ${
-              taken ? "text-[#7a7a98] line-through" : "text-[#e8e8f0]"
+              taken ? "text-muted line-through" : "text-ink"
             }`}
           >
             {rec.name}
           </span>
-          <span className="text-xs text-[#7a7a98]">{rec.dosage}</span>
+          <span className="text-xs text-muted">{rec.dosage}</span>
         </div>
         {taken && log?.takenAt && (
-          <p className="text-[11px] text-[#7a7a98] mt-0.5">
+          <p className="text-[11px] text-muted mt-0.5">
             Taken at{" "}
             {new Date(log.takenAt).toLocaleTimeString([], {
               hour: "2-digit",
@@ -308,8 +308,8 @@ export default function AdherencePage() {
     <div className="max-w-3xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#e8e8f0]">Adherence</h1>
-        <p className="text-[#7a7a98] text-sm mt-0.5">
+        <h1 className="text-2xl font-bold text-ink">Adherence</h1>
+        <p className="text-muted text-sm mt-0.5">
           Track your daily supplement schedule
         </p>
       </div>
@@ -320,11 +320,11 @@ export default function AdherencePage() {
           <div className="flex items-center gap-5">
             <AdherenceRing score={weekScore?.score ?? 0} />
             <div>
-              <p className="text-sm font-medium text-[#e8e8f0]">This Week</p>
-              <p className="text-xs text-[#7a7a98] mt-1">
+              <p className="text-sm font-medium text-ink">This Week</p>
+              <p className="text-xs text-muted mt-1">
                 {weekScore?.taken ?? 0} taken · {weekScore?.skipped ?? 0} skipped
               </p>
-              <p className="text-xs text-[#7a7a98]">
+              <p className="text-xs text-muted">
                 {weekScore?.total ?? 0} logged total
               </p>
             </div>
@@ -335,11 +335,11 @@ export default function AdherencePage() {
           <div className="flex items-center gap-5">
             <AdherenceRing score={monthScore?.score ?? 0} />
             <div>
-              <p className="text-sm font-medium text-[#e8e8f0]">Last 30 Days</p>
-              <p className="text-xs text-[#7a7a98] mt-1">
+              <p className="text-sm font-medium text-ink">Last 30 Days</p>
+              <p className="text-xs text-muted mt-1">
                 {monthScore?.taken ?? 0} taken · {monthScore?.skipped ?? 0} skipped
               </p>
-              <p className="text-xs text-[#7a7a98]">
+              <p className="text-xs text-muted">
                 {monthScore?.total ?? 0} logged total
               </p>
             </div>
@@ -350,8 +350,8 @@ export default function AdherencePage() {
       {/* Today's Schedule */}
       <Card className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-[#e8e8f0]">Today's Schedule</h2>
-          <span className="text-xs text-[#7a7a98]">
+          <h2 className="font-semibold text-ink">Today's Schedule</h2>
+          <span className="text-xs text-muted">
             {new Date().toLocaleDateString(undefined, {
               weekday: "long",
               month: "long",
@@ -371,10 +371,10 @@ export default function AdherencePage() {
               <div key={slot}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-base">{TIME_SLOT_ICONS[slot]}</span>
-                  <span className="text-xs font-semibold text-[#7a7a98] uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted uppercase tracking-wider">
                     {TIME_SLOT_LABELS[slot]}
                   </span>
-                  <div className="flex-1 h-px bg-[#2a2a38]" />
+                  <div className="flex-1 h-px bg-line" />
                 </div>
                 {recs.map((rec) => (
                   <SupplementRow
@@ -391,10 +391,10 @@ export default function AdherencePage() {
             {unslotted.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-semibold text-[#7a7a98] uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted uppercase tracking-wider">
                     Anytime
                   </span>
-                  <div className="flex-1 h-px bg-[#2a2a38]" />
+                  <div className="flex-1 h-px bg-line" />
                 </div>
                 {unslotted.map((rec) => (
                   <SupplementRow
@@ -414,11 +414,11 @@ export default function AdherencePage() {
       {/* Recent History */}
       {Object.keys(historyByDate).length > 0 && (
         <Card>
-          <h2 className="font-semibold text-[#e8e8f0] mb-4">Recent History</h2>
+          <h2 className="font-semibold text-ink mb-4">Recent History</h2>
           <div className="flex flex-col gap-4">
             {Object.entries(historyByDate).map(([date, logs]) => (
               <div key={date}>
-                <p className="text-xs font-semibold text-[#7a7a98] uppercase tracking-wider mb-2">
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                   {date}
                 </p>
                 <div className="flex flex-col gap-1">
@@ -429,22 +429,22 @@ export default function AdherencePage() {
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          log.skipped ? "bg-[#7a7a98]" : "bg-emerald-500"
+                          log.skipped ? "bg-muted" : "bg-ok"
                         }`}
                       />
                       <span
                         className={
-                          log.skipped ? "text-[#7a7a98]" : "text-[#e8e8f0]"
+                          log.skipped ? "text-muted" : "text-ink"
                         }
                       >
                         {log.supplementName}
                       </span>
                       {log.dosage && (
-                        <span className="text-[#7a7a98]">{log.dosage}</span>
+                        <span className="text-muted">{log.dosage}</span>
                       )}
                       <span
                         className={`ml-auto text-xs ${
-                          log.skipped ? "text-[#7a7a98]" : "text-emerald-500"
+                          log.skipped ? "text-muted" : "text-ok"
                         }`}
                       >
                         {log.skipped ? "Skipped" : "Taken"}

@@ -32,11 +32,11 @@ interface ProtocolSummary {
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
-  sleep: "text-indigo-400 bg-indigo-950",
-  inflammation: "text-red-400 bg-red-950",
-  hormones: "text-amber-400 bg-amber-950",
-  energy: "text-green-400 bg-green-950",
-  cognition: "text-purple-400 bg-purple-950",
+  sleep: "text-signal bg-surface-2",
+  inflammation: "text-danger bg-danger-soft",
+  hormones: "text-warn bg-warn-soft",
+  energy: "text-ok bg-ok-soft",
+  cognition: "text-signal bg-surface-2",
 };
 
 function StackPage() {
@@ -96,9 +96,9 @@ function StackPage() {
       <div className="pt-14 max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#e8e8f0]">My Stack</h1>
+            <h1 className="text-2xl font-bold text-ink">My Stack</h1>
             {currentProtocol && (
-              <p className="text-xs text-[#7a7a98] mt-1">
+              <p className="text-xs text-muted mt-1">
                 Generated{" "}
                 {new Date(currentProtocol.createdAt).toLocaleDateString()}
               </p>
@@ -125,13 +125,13 @@ function StackPage() {
           <>
             {/* Summary */}
             <Card className="mb-5">
-              <p className="text-sm text-[#7a7a98] leading-relaxed">
+              <p className="text-sm text-muted leading-relaxed">
                 {currentProtocol.summary}
               </p>
               {currentProtocol.warnings.length > 0 && (
-                <div className="mt-3 p-3 bg-amber-950 border border-amber-900 rounded-lg">
+                <div className="mt-3 p-3 bg-warn-soft border border-warn/20 rounded-lg">
                   {currentProtocol.warnings.map((w, i) => (
-                    <p key={i} className="text-xs text-amber-400">
+                    <p key={i} className="text-xs text-warn">
                       ⚠ {w}
                     </p>
                   ))}
@@ -152,33 +152,33 @@ function StackPage() {
                   <div className="flex items-start gap-4">
                     {/* Score indicator */}
                     <div className="flex flex-col items-center gap-1 shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-[#2a2a38] flex items-center justify-center">
-                        <span className="text-xs font-bold text-indigo-400">
+                      <div className="w-10 h-10 rounded-full bg-line flex items-center justify-center">
+                        <span className="text-xs font-bold text-signal">
                           {Math.round(rec.score * 100)}
                         </span>
                       </div>
-                      <span className="text-[10px] text-[#7a7a98]">score</span>
+                      <span className="text-[10px] text-muted">score</span>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-medium text-[#e8e8f0]">
+                        <span className="font-medium text-ink">
                           {rec.name}
                         </span>
                         <Badge variant="info">{rec.dosage}</Badge>
                       </div>
-                      <p className="text-xs text-[#7a7a98]">
+                      <p className="text-xs text-muted">
                         🕐 {rec.timing}
                       </p>
 
                       {expanded === rec.id && (
-                        <p className="mt-3 text-sm text-[#c0c0d8] leading-relaxed">
+                        <p className="mt-3 text-sm text-muted leading-relaxed">
                           {rec.rationale}
                         </p>
                       )}
                     </div>
 
-                    <span className="text-[#7a7a98] text-sm shrink-0">
+                    <span className="text-muted text-sm shrink-0">
                       {expanded === rec.id ? "▲" : "▼"}
                     </span>
                   </div>
@@ -191,7 +191,7 @@ function StackPage() {
               <div className="mt-6">
                 <button
                   onClick={() => setShowHistory((s) => !s)}
-                  className="text-sm text-[#7a7a98] hover:text-[#e8e8f0] transition-colors mb-3 flex items-center gap-1"
+                  className="text-sm text-muted hover:text-ink transition-colors mb-3 flex items-center gap-1"
                 >
                   {showHistory ? "▲" : "▼"} Protocol history ({history.length})
                 </button>
@@ -200,16 +200,16 @@ function StackPage() {
                     {history.slice(1).map((p) => (
                       <div
                         key={p.id}
-                        className="p-3 bg-[#1c1c26] rounded-lg border border-[#2a2a38]"
+                        className="p-3 bg-surface-2 rounded-lg border border-line"
                       >
-                        <p className="text-xs text-[#7a7a98] mb-1">
+                        <p className="text-xs text-muted mb-1">
                           {new Date(p.createdAt).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                         </p>
-                        <p className="text-sm text-[#c0c0d8] leading-relaxed line-clamp-2">
+                        <p className="text-sm text-muted leading-relaxed line-clamp-2">
                           {p.summary}
                         </p>
                       </div>
@@ -219,7 +219,7 @@ function StackPage() {
               </div>
             )}
 
-            <p className="text-xs text-center text-[#7a7a98] mt-6">
+            <p className="text-xs text-center text-muted mt-6">
               Not medical advice. Discuss with your physician before starting
               any supplement regimen.
             </p>
