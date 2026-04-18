@@ -75,7 +75,7 @@ The branch `feat/postgres-migration` has its own `docs/ARCHITECTURE.md`, `docs/E
 
 ## Historical backup
 
-The source backup folder has been archived to `~/Documents/Claude/Projects/_archive/Aissisted-specs-pre-v2/` (completed 2026-04-17, Issue #26). It is retained as a read-only reference only. Do not restore from it without Planner approval — the canonical state is this repo.
+The source backup folder has been archived to `~/Documents/Claude/Projects/_archive/Aissisted-specs-pre-v2/` (archived 2026-04-17 by Planner as part of the spec-triage workflow tracked in Issue #28). It is retained as a read-only reference only. Do not restore from it without Planner approval — the canonical state is this repo.
 
 ## How to evolve these specs
 
@@ -84,4 +84,4 @@ The source backup folder has been archived to `~/Documents/Claude/Projects/_arch
 3. Update dependency versions in any spec that depends on yours.
 4. If a change rewrites more than 20% of a spec, open a governance issue first.
 
-— Planner (Cowork) · last updated 2026-04-17 (Brand Bible v1.0 landing)
+— Planner (Cowork) · last updated 2026-04-17 (Brand Bible v1.1 landing + red swap)
