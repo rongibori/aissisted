@@ -29,7 +29,15 @@ When one of these needs to be used in product, the appropriate export (PNG, WebP
 | `Vitamins and Supplement - Market Overview.pdf` | PDF | — | Market overview |
 | `Vitamins and Supplement - Projections.pdf` | PDF | — | Financial projections |
 
-**Logo (committed)** — `docs/brand/assets/Aissisted-logo-H.png` — 13 KB horizontal lockup, committed because it is small and needs to ship with the brand docs.
+**Logo (committed)** — `docs/brand/assets/` holds the horizontal wordmark in three forms, all small enough to ship with the brand docs:
+
+| File | Surface | Ink | Notes |
+|------|---------|-----|-------|
+| `Aissisted-logo-H.svg` | **primary** (light) | Graphite `#1C1C1E` | Use on 70%-white default surfaces. Matches locked Brand Bible token. |
+| `Aissisted-logo-H-dark.svg` | inverse (dark) | White `#FFFFFF` | Use on graphite / midnight / red surfaces. |
+| `Aissisted-logo-H-dark.png` | inverse (dark) | White | 455×85 raster fallback of the dark SVG — for email/social clients without SVG support. |
+
+**Gap:** no raster PNG of the primary (light-surface) variant yet. Export from `Aissisted-logo-H.svg` or from the Illustrator source when an email/social asset needs it.
 
 ---
 
