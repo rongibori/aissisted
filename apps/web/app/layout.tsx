@@ -12,7 +12,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="bg-[#0a0a0f] text-[#e8e8f0]">{children}</body>
+      {/*
+        Background/foreground intentionally left to globals.css body selector,
+        which binds to --background / --text (Brand Bible v1.1 tokens).
+        Do not re-hardcode colors here — they override the token system.
+      */}
+      <body>{children}</body>
     </html>
   );
 }

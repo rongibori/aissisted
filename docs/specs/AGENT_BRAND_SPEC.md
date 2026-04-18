@@ -69,6 +69,8 @@ The creative scope is narrow on purpose. The agent has no latitude to add inform
 
 ### 4.3 Runtime Alignment — Current Repo
 
+> **Status:** every path in this table is a **target** under the AGENT_LAYER_IMPLEMENTATION_PLAN. None of these files are on disk yet — they are introduced by the 5-PR brand-agent implementation sequence. Treat inline references elsewhere in this spec as *planned* locations.
+
 | Spec Reference | Planned Path | Notes |
 |----------------|-------------|-------|
 | Agent types & interface | `packages/types/agents/BrandAgent.ts` | New file under existing `packages/types/` |
@@ -125,7 +127,8 @@ interface BrandAgentInput extends AgentInput {
 }
 
 // Imported from BRAND_FILTER_SPEC.md §6.2 — kept here for reference only.
-// Canonical definition lives in packages/config/agents/brand/tone.ts.
+// Canonical definition will live in packages/config/agents/brand/tone.ts
+// (planned — path is part of the §4 File Layout target, not yet on disk).
 export type ToneMode =
   | "core_brand_default"     // calm · clear · assured (default hero/marketing)
   | "inspirational"          // elevated · emotional · expansive (campaign hero)
@@ -518,7 +521,7 @@ The revision adds one LLM call. Budget:
 
 ### Test 1 — `question.protocol` via voice_jeffrey
 **Input:** Product decision with slots `[preferredName: "Ron", drivingBiomarker: "HRV", ingredient: "magnesium"]`, channel=voice_jeffrey, maxWords=25
-**Expected:** ≤40 words, ≤2 sentences, includes "Ron", references HRV and magnesium. No forbidden words. Tone: core_brand_default.
+**Expected:** ≤40 words, ≤2 sentences, includes "Ron", references HRV and magnesium. No forbidden words. Tone: `conversational_crm` (per BRAND_FILTER_SPEC §7.2.4 routing table — `voice_jeffrey` default).
 
 ### Test 2 — `reflection.progress` via app_card
 **Input:** Product decision with `framing: "on_track"`, slots `[preferredName: "Sara", sleepScoreChange: "+12%", hrvTrend: "improving"]`, channel=app_card
@@ -534,7 +537,7 @@ The revision adds one LLM call. Budget:
 
 ### Test 5 — `system.scheduled.review` via email_lifecycle
 **Input:** Product decision with multiple sections (sleep, HRV, protocol adherence), slots filled, channel=email_lifecycle
-**Expected:** ≤200 words. Multi-section `sections[]` output. Each section has personalization. Tone: conversational_crm. Lists OK.
+**Expected:** ≤200 words. Multi-section `sections[]` output. Each section has personalization. Tone: `core_brand_default` (per BRAND_FILTER_SPEC §7.2.4 routing table — `email_lifecycle` default). Lists OK.
 
 ### Test 6 — Revision loop
 **Input:** First-pass draft that includes "optimize your health" (forbidden).
