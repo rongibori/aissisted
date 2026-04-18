@@ -3,11 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "description": "Aissisted Brand Bible v1.1 design tokens — single source of truth shared across apps/web and apps/site.",
-  "main": "index.js",
+  "type": "module",
   "exports": {
     "./tokens.css": "./tokens.css",
     "./package.json": "./package.json"
   },
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
     "tokens.css",
     "README.md"
