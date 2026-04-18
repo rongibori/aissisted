@@ -12,7 +12,19 @@
  * Briston is licensed — not yet shipped as a webfont. Fallback stack in
  * --font-display holds the visual feel until the webfont license is resolved.
  *
+ * Token usage in components:
+ *   bg-surface / bg-surface-2  — backgrounds on the white-first interface
+ *   text-ink / text-muted       — primary and secondary typography
+ *   bg-brand / text-brand       — medical red, 8% budget — use sparingly
+ *   bg-data / text-data         — midnight blue, for data/system surfaces
+ *   bg-signal / text-signal     — aqua, activation + feedback states
+ *   border-line / border-strong — hairline and emphasized borders
+ *   bg-ok / text-ok, bg-warn…   — semantic feedback states
+ *
  * Changelog:
+ *   v1.2 (2026-04-17) — added @theme block to expose tokens as Tailwind v4
+ *     utilities. Added rally-cry + display typography classes. Extended
+ *     semantic color variables for white-first interface migration.
  *   v1.1 (2026-04-17) — --brand-red swapped from #8A0F1A (deep oxblood) to
  *     #EE2B37 (confident saturated medical red). --accent-hover recomputed
  *     to #CA252F (#EE2B37 × 0.85). Matte finish applies to physical execution
@@ -38,23 +50,62 @@
   --background: var(--brand-white);
   --surface: var(--brand-white);
   --surface-2: #F7F7F8;           /* Subtle elevation on white — not a brand token, utility only */
-  --border: #E5E5EA;              /* Hairline dividers on white */
-  --text: var(--brand-graphite);
-  --text-muted: var(--brand-graphite-soft);
+  --line: #E5E5EA;                /* Hairline dividers on white */
+  --line-strong: #D1D1D6;         /* Emphasized borders (focus, selected) */
+  --ink: var(--brand-graphite);
+  --ink-muted: var(--brand-graphite-soft);
+  --ink-soft: #6E6E73;            /* Tertiary text — captions, timestamps */
   --accent: var(--brand-red);
   --accent-hover: #CA252F;        /* brand-red × 0.85 — hover/pressed state */
   --data: var(--brand-midnight);
   --signal: var(--brand-aqua);
 
   /* Feedback states — tuned to the brand palette, not generic */
-  --success: #0F7A4C;             /* Desaturated, matte — no retail green */
-  --warning: #B76B00;             /* Graphite-adjacent amber */
+  --ok: #0F7A4C;                  /* Desaturated, matte — no retail green */
+  --ok-soft: #E6F4ED;             /* Success surface tint */
+  --warn: #B76B00;                /* Graphite-adjacent amber */
+  --warn-soft: #FBF1E2;           /* Warning surface tint */
   --danger: var(--brand-red);     /* Brand red already is the "attention" signal */
+  --danger-soft: #FCE6E8;         /* Danger surface tint */
+
+  /* Aliases kept for back-compat with earlier tokens */
+  --border: var(--line);
+  --text: var(--ink);
+  --text-muted: var(--ink-muted);
+  --success: var(--ok);
+  --warning: var(--warn);
 
   /* ── Typography stacks ── */
   --font-display: "Briston", "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-system: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-accent: "Baskerville", "Libre Baskerville", Georgia, serif;
+}
+
+/*
+ * @theme — expose Brand Bible tokens as first-class Tailwind v4 utilities.
+ * This generates bg-*, text-*, border-*, ring-* utilities automatically.
+ * Names are brand-semantic (ink/line/brand/signal/ok/warn/danger) — do not
+ * introduce literal color utilities (bg-red-500, text-indigo-400) anywhere
+ * in apps/web/** from here on.
+ */
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--accent);
+  --color-brand-hover: var(--accent-hover);
+  --color-data: var(--data);
+  --color-signal: var(--signal);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
 }
 
 body {
@@ -73,10 +124,28 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text);
 }
 
+/*
+ * Rally cry — "Your Body. Understood."
+ * Canonical styling for the brand rally cry anywhere it appears.
+ * Display font, oversized, tight tracking, period-separated phrasing.
+ * Never underline, never italicize, never all-caps.
+ */
+.rally-cry {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.05;
+}
+
 /* Baskerville reserved for emotional accents — apply via utility class, never default. */
 .font-accent {
   font-family: var(--font-accent);
 }
+
+/* Display / system font utility hooks for arbitrary elements. */
+.font-display { font-family: var(--font-display); }
+.font-system  { font-family: var(--font-system);  }
 
 * {
   box-sizing: border-box;
@@ -89,6 +158,9 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--surface-2);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--line);
   border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
 }

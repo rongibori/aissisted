@@ -27,15 +27,15 @@ export class ErrorBoundary extends React.Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
       return (
         <div className="flex flex-col items-center justify-center min-h-[40vh] px-6 text-center">
-          <p className="text-lg font-semibold text-[#e8e8f0] mb-2">
-            Something went wrong
+          <p className="text-lg font-semibold text-ink mb-2">
+            Something&rsquo;s off
           </p>
-          <p className="text-sm text-[#7a7a98] mb-6 max-w-sm">
-            {this.state.error?.message ?? "An unexpected error occurred."}
+          <p className="text-sm text-muted mb-6 max-w-sm">
+            {this.state.error?.message ?? "We hit a snag. Try again in a moment."}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="text-sm text-indigo-400 hover:text-indigo-300 underline"
+            className="text-sm text-ink underline hover:text-brand transition-colors"
           >
             Try again
           </button>

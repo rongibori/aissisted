@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "../../lib/auth-context";
-import { Button, Input, Card } from "../../components/ui";
+import { Button, Input, Card, RallyCry } from "../../components/ui";
 
 function LoginPage() {
   const { login } = useAuth();
@@ -22,24 +23,30 @@ function LoginPage() {
       await login(email, password);
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message ?? "Login failed");
+      setError(err.message ?? "Sign-in failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-surface">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#e8e8f0]">Aissisted</h1>
-          <p className="text-[#7a7a98] text-sm mt-1">
-            Your AI health concierge
-          </p>
+        {/* Hero — wordmark + rally cry */}
+        <div className="text-center mb-10">
+          <Image
+            src="/brand/Aissisted-logo-H.svg"
+            alt="Aissisted"
+            width={180}
+            height={34}
+            priority
+            className="mx-auto mb-6"
+          />
+          <RallyCry size="sm" />
         </div>
 
         <Card>
-          <h2 className="text-lg font-semibold text-[#e8e8f0] mb-5">
+          <h2 className="text-lg font-semibold text-ink mb-5">
             Sign in
           </h2>
 
@@ -63,7 +70,7 @@ function LoginPage() {
             />
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-950 rounded-lg px-3 py-2">
+              <p className="text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -73,13 +80,13 @@ function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#7a7a98] mt-4">
-            Don&apos;t have an account?{" "}
+          <p className="text-center text-sm text-muted mt-4">
+            New here?{" "}
             <Link
               href="/register"
-              className="text-indigo-400 hover:text-indigo-300"
+              className="text-ink underline underline-offset-2 hover:text-brand transition-colors"
             >
-              Create one
+              Create your account
             </Link>
           </p>
         </Card>

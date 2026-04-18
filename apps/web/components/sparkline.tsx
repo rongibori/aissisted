@@ -6,6 +6,11 @@ interface SparklineProps {
   values: number[];
   width?: number;
   height?: number;
+  /**
+   * Stroke color. Defaults to the Brand Bible aqua activation signal
+   * (`var(--signal)`). Any caller-supplied value takes precedence — use
+   * `var(--data)` for neutral trends, `var(--accent)` for concerning ones.
+   */
   color?: string;
   className?: string;
 }
@@ -14,7 +19,7 @@ export function Sparkline({
   values,
   width = 80,
   height = 28,
-  color = "#6366f1",
+  color = "var(--signal)",
   className = "",
 }: SparklineProps) {
   if (values.length < 2) {
