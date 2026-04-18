@@ -8,21 +8,46 @@
  * tokens here — change them in packages/brand/tokens.css and every app
  * updates simultaneously.
  *
- * Typography is per-app. apps/site ships IBM Plex (SIL OFL 1.1):
- *   Plex Sans   → headlines, body prose, Jeffrey prose (warmth, approved deviation)
- *   Plex Mono   → system affordances (timestamps, citations, data, intent badges)
- *   Plex Serif  → emotional accents only — never UI, never body default
+ * Typography (M2 arbitration — Ron, 2026-04-18):
+ *   Briston Bold  → display, headlines (Brand Bible primary — locked)
+ *   Plex Sans     → body prose, Jeffrey prose
+ *   Plex Mono     → system affordances (timestamps, citations, data, intent badges)
+ *   Plex Serif    → emotional accents only — never UI, never body default
  *
- * Fonts are self-hosted via @fontsource (ships woff2 files with the bundle).
- * No CDN dependency on the critical render path.
+ * Briston Bold is self-hosted from apps/site/public/fonts/.
+ * IBM Plex is self-hosted via @fontsource. No CDN on critical render path.
+ *
+ * ⚠ TODO: Drop Briston-Bold.woff2 + Briston-Bold.woff into
+ *   apps/site/public/fonts/ from the brand assets package to activate.
+ *   Until files land, font-display: swap falls back to IBM Plex Sans Bold
+ *   automatically — nothing breaks, weight-700 renders correctly.
  */
 @import "@aissisted/brand/tokens.css";
 
+/*
+ * Briston Bold — brand primary display font.
+ * Files: apps/site/public/fonts/Briston-Bold.woff2 (not yet in repo)
+ * Source: brand assets package / Adobe Fonts license.
+ * Fallback: IBM Plex Sans Bold (weight 700) renders until file lands.
+ */
+@font-face {
+  font-family: "Briston Bold";
+  src: url("/fonts/Briston-Bold.woff2") format("woff2"),
+       url("/fonts/Briston-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* ── Typography stacks (IBM Plex, per-app — NOT shared with apps/web) ── */
-  --font-display: "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* ── Typography stacks ── */
+  /* Display/heading: Briston Bold (Brand Bible primary). Falls back to IBM Plex Sans Bold. */
+  --font-display: "Briston Bold", "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Body prose: IBM Plex Sans — warmth, humanist, approved for digital body text. */
   --font-body: "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* System: IBM Plex Mono — data, timestamps, UI labels, precision affordances. */
   --font-system: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Accent: IBM Plex Serif — one emotional beat per page, never UI, never body default. */
   --font-accent: "IBM Plex Serif", "Baskerville", Georgia, serif;
 }
 

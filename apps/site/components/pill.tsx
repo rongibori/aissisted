@@ -40,6 +40,7 @@ export function Pill({ tone = "ink", className, children }: Props) {
         "inline-flex items-center",
         "font-system text-[11px] font-medium tracking-[0.08em] uppercase",
         "px-2 py-0.5 border",
+        "transition-opacity duration-150 ease-out",
         TONES[tone],
         className
       )}

@@ -9,6 +9,13 @@
  * Keep in sync with tokens.css. When you change one, change both.
  */
 
+export const fontFamily = {
+  display: '"Briston Bold", "IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  body:    '"IBM Plex Sans Variable", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  system:  '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  accent:  '"IBM Plex Serif", "Baskerville", Georgia, serif',
+} as const;
+
 export const color = {
   brandRed:         '#EE2B37',
   brandRedHover:    '#CA252F',
@@ -116,10 +123,11 @@ export const motion = {
 } as const;
 
 export const shadow = {
-  none:  'none',
-  sm:    '0 1px 2px rgba(28, 28, 30, 0.06)',
-  md:    '0 4px 16px rgba(28, 28, 30, 0.08)',
-  focus: '0 0 0 3px rgba(0, 194, 209, 0.25)',
+  none:        'none',
+  sm:          '0 1px 2px rgba(28, 28, 30, 0.06)',
+  md:          '0 4px 16px rgba(28, 28, 30, 0.08)',
+  elevation1:  '0 1px 2px rgba(28, 28, 30, 0.04), 0 2px 8px rgba(28, 28, 30, 0.06)',
+  focus:       '0 0 0 3px rgba(0, 194, 209, 0.25)',
 } as const;
 
 /** Convenience bundle — import * as tokens from '@aissisted/brand/tokens' */
