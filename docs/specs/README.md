@@ -41,6 +41,7 @@ Classification pass used Path B from issue #28: *commit canonical specs as-is, f
 | `assets/Aissisted-logo-H.svg` | **PRIMARY** | Horizontal wordmark, graphite `#1C1C1E` ink on transparent — light-surface variant. Use on 70%-white default surfaces. |
 | `assets/Aissisted-logo-H-dark.svg` | **KEEP** | Horizontal wordmark, white ink on transparent — dark-surface inverse. Use on graphite/midnight/red backgrounds. |
 | `assets/Aissisted-logo-H-dark.png` | **KEEP** | 455×85 raster fallback of the dark SVG (13 KB) — for email/social where SVG isn't supported. |
+| `assets/Aissisted-logo-H-red.svg` | **KEEP** | Horizontal wordmark, Medical Red `#EE2B37` ink on transparent — iconic-moment variant. Use sparingly on white for brand moments that extend the cap-press red across the wordmark. Not a general-purpose alternative to the graphite primary. |
 
 > **Outstanding:** no raster PNG of the primary (light-surface) variant yet. Generate from `Aissisted-logo-H.svg` or export from the Illustrator source when an email/social asset needs it.
 | `DESIGN_SOURCES.md` | **KEEP** | Pointer index to large binary design sources kept off-repo. |

@@ -1620,15 +1620,15 @@
 
 # **`1. CORE COLOR PALETTE`** 
 
-## **`Primary Color: Medical Red (Matte)`**
+## **`Primary Color: Medical Red`**
 
-`This is not bright red.`  
-`Not loud red.`  
-`Not aggressive red.`
+`This is confident red.`  
+`Saturated red.`  
+`Unmistakable red.`
 
 `This is:`
 
-**`Deep. Controlled. Oxygen-rich red.`**
+**`Assertive. Controlled. Oxygen-rich red.`**
 
 `Think:`
 
@@ -1706,7 +1706,7 @@
 
 ### **`Now: Matte Medical Red Cap`**
 
-* `Deep matte red finish`  
+* `Matte red finish (#EE2B37)`  
 * `Soft, non-reflective surface`  
 * `Precision-milled feel`
 
@@ -2400,10 +2400,14 @@
 
 # **VISUAL STYLE GUIDE**
 
-# **`AISSISTED — LOCKED VISUAL STYLE GUIDE (v1.0)`**
+# **`AISSISTED — LOCKED VISUAL STYLE GUIDE (v1.1)`**
 
 **`Purpose:`** `This document defines exact rules for design execution.`  
 **`No deviations. No reinterpretation. No “creative liberties.”`**
+
+**Changelog:**
+- **v1.1 (2026-04-17)** — Primary red updated from `#8A0F1A` (deep oxblood) to `#EE2B37` (confident saturated medical red). The "never bright red" rule is retired; the brand now leads with a more assertive red while preserving matte finish in physical execution and controlled application digitally.
+- **v1.0** — Initial locked visual style guide.
 
 `Reference foundation:`
 
@@ -2456,8 +2460,8 @@ Black Logo
 
 ## **`PRIMARY COLOR — MEDICAL RED`**
 
-* **`Hex:`** `#8A0F1A`  
-* **`RGB:`** `138, 15, 26`  
+* **`Hex:`** `#EE2B37`  
+* **`RGB:`** `238, 43, 55`  
 * **`Usage:`**  
   * `Cap`  
   * `Key CTA accents`  
@@ -2465,9 +2469,9 @@ Black Logo
 
 **`Rules:`**
 
-* `Matte finish only`  
-* `Never bright red`  
-* `Never gradient red`
+* `Matte finish only in physical execution (cap, packaging)`  
+* `Never gradient red`  
+* `Never tinted or shaded — use exactly #EE2B37 for primary; hover state #CA252F only`
 
 ## **`CORE NEUTRALS`**
 
@@ -2628,7 +2632,7 @@ Black Logo
 
 ## **`Cap (Hero Object)`**
 
-* `Color: #8A0F1A (Matte Red)`  
+* `Color: #EE2B37 (Medical Red)`  
 * `Finish: Soft-touch matte`  
 * `Accent:`  
   * `Graphite ring`  
@@ -2724,7 +2728,7 @@ Black Logo
   * `Source Code Pro (system/UI)`  
   * `Baskerville (minimal emotional accents)`  
 * `Use exact hex codes:`  
-  * `Red: #8A0F1A`  
+  * `Red: #EE2B37`  
   * `White: #FFFFFF`  
   * `Graphite: #1C1C1E / #2E2E2E`  
   * `Midnight Blue: #0B1D3A`  
