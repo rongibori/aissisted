@@ -26,6 +26,9 @@ importers:
       '@aissisted/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@aissisted/jeffrey':
+        specifier: workspace:*
+        version: link:../../packages/jeffrey
       '@aissisted/types':
         specifier: workspace:*
         version: link:../../packages/types

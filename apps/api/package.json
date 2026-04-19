@@ -15,6 +15,7 @@
   "dependencies": {
     "@aissisted/config": "workspace:*",
     "@aissisted/db": "workspace:*",
+    "@aissisted/jeffrey": "workspace:*",
     "@aissisted/types": "workspace:*",
     "@anthropic-ai/sdk": "^0.88.0",
     "@fastify/cookie": "^11.0.2",
