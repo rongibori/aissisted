@@ -55,6 +55,13 @@ export async function jeffreyRoutes(app: FastifyInstance) {
               items: { type: "string", maxLength: 4000 },
               maxItems: 8,
             },
+            // Opt-in flag: inject the authenticated user's health profile /
+            // long-term memory into the session. Only honoured for
+            // onboarding / concierge / product-walkthrough surfaces and
+            // only when the user is asking about themselves. Investor and
+            // brand surfaces ignore this flag entirely (zero health
+            // context, by policy).
+            selfContext: { type: "boolean" },
           },
         },
       },
@@ -66,6 +73,7 @@ export async function jeffreyRoutes(app: FastifyInstance) {
         message: string;
         conversationId?: string;
         extraContext?: string[];
+        selfContext?: boolean;
       };
 
       if (!isSurface(body.surface)) {
@@ -90,12 +98,16 @@ export async function jeffreyRoutes(app: FastifyInstance) {
           });
         }
 
-        // Non-health surfaces: clean session, no health context.
+        // Non-health surfaces: clean session by default, no health context.
+        // Investor and brand always run clean; onboarding / concierge /
+        // product-walkthrough may opt in to self-context via selfContext=true
+        // (enforced further in services/jeffrey.service.ts).
         const text = await askSurface({
           surface: body.surface,
           userId: sub,
           message: body.message,
           extraContext: body.extraContext,
+          selfContext: body.selfContext === true,
         });
         return reply.send({
           data: { surface: body.surface, reply: text },
@@ -129,19 +141,26 @@ export async function jeffreyRoutes(app: FastifyInstance) {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!config.elevenLabs.apiKey || !config.elevenLabs.voiceId) {
-        return reply.status(503).send({
-          error: {
-            message: "Voice not configured (ELEVENLABS_API_KEY missing)",
-            code: "VOICE_UNAVAILABLE",
-          },
-        });
-      }
-
       const { text, voiceId } = request.body as {
         text: string;
         voiceId?: string;
       };
+
+      // Guard: API key is always required. A voice ID is required too, but
+      // can come from the request body OR from the server default env var.
+      const effectiveVoiceId = voiceId ?? config.elevenLabs.voiceId;
+      if (!config.elevenLabs.apiKey || !effectiveVoiceId) {
+        const missing = [
+          !config.elevenLabs.apiKey ? "ELEVENLABS_API_KEY" : null,
+          !effectiveVoiceId ? "ELEVENLABS_JEFFREY_VOICE_ID" : null,
+        ].filter((v): v is string => v !== null);
+        return reply.status(503).send({
+          error: {
+            message: `Voice not configured (${missing.join(", ")} missing)`,
+            code: "VOICE_UNAVAILABLE",
+          },
+        });
+      }
 
       reply.raw.setHeader("content-type", "audio/mpeg");
       reply.raw.setHeader("cache-control", "no-store");
@@ -150,7 +169,7 @@ export async function jeffreyRoutes(app: FastifyInstance) {
       try {
         for await (const chunk of synthesizeStream({
           text,
-          voiceId: voiceId ?? config.elevenLabs.voiceId,
+          voiceId: effectiveVoiceId,
         })) {
           if (chunk.final) break;
           if (chunk.bytes.byteLength === 0) continue;
