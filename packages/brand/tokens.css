@@ -1,10 +1,10 @@
 /*
- * @aissisted/brand — Brand Bible v1.1 color tokens.
- * Single source of truth. Imported by apps/web and apps/site.
+ * @aissisted/brand — Design tokens. Single source of truth.
+ * Imported by apps/web and apps/site.
  *
- * Scope: color palette, semantic color mapping, @theme exposure for Tailwind v4.
- * NOT scoped here: typography stacks, font-face declarations, app-specific
- * utility classes. Those live per-app so each surface can evolve independently
+ * Scope: color palette, type scale, spacing, radius, motion, elevation.
+ * NOT scoped here: font-face declarations, app-specific font stacks.
+ * Those live per-app so each surface can evolve independently
  * (apps/web keeps Briston fallback until migration; apps/site ships IBM Plex).
  *
  * Color ratio (enforced by design review, not CSS):
@@ -20,6 +20,8 @@
  *   bg-ok / text-ok, bg-warn…   — semantic feedback states
  *
  * Changelog:
+ *   v2.0 (2026-04-18) — added type scale, spacing, radius, motion, and
+ *     elevation tokens. TS constants exported from ./tokens.ts.
  *   v1.3 (2026-04-18) — extracted from apps/web/app/globals.css into
  *     @aissisted/brand package. apps/web and apps/site now import this
  *     single file. Typography intentionally NOT extracted (per-app scope).
@@ -75,6 +77,80 @@
   --text-muted: var(--ink-muted);
   --success: var(--ok);
   --warning: var(--warn);
+
+  /* ── Type scale ── */
+  /* Sizes map to named roles; never use raw px/rem at call sites */
+  --font-size-display: 4.5rem;     /* 72px — rally cry, hero headline */
+  --font-size-h1:      3rem;       /* 48px */
+  --font-size-h2:      2rem;       /* 32px */
+  --font-size-h3:      1.5rem;     /* 24px */
+  --font-size-h4:      1.25rem;    /* 20px */
+  --font-size-body-lg: 1.125rem;   /* 18px — lede, intro paragraphs */
+  --font-size-body:    1rem;       /* 16px — default prose */
+  --font-size-body-sm: 0.875rem;   /* 14px — secondary prose */
+  --font-size-mono-lg: 0.9375rem;  /* 15px — prominent UI labels */
+  --font-size-mono:    0.8125rem;  /* 13px — inline system affordances */
+  --font-size-caption: 0.75rem;    /* 12px — timestamps, footnotes */
+
+  /* ── Line heights ── */
+  --line-height-display:    1.02;
+  --line-height-heading:    1.05;
+  --line-height-subheading: 1.15;
+  --line-height-body:       1.65;
+  --line-height-mono:       1.5;
+  --line-height-caption:    1.4;
+
+  /* ── Letter spacing ── */
+  --tracking-display:    -0.025em;
+  --tracking-heading:    -0.02em;
+  --tracking-subheading: -0.015em;
+  --tracking-body:        0em;
+  --tracking-mono:        0.01em;
+  --tracking-label:       0.08em;  /* uppercase UI labels */
+  --tracking-caption:     0.04em;
+
+  /* ── Font weights ── */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ── Spacing (4px base, 10-step progression) ── */
+  --space-1:  0.25rem;  /*  4px */
+  --space-2:  0.5rem;   /*  8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.5rem;   /* 24px */
+  --space-6:  2rem;     /* 32px */
+  --space-7:  3rem;     /* 48px */
+  --space-8:  4rem;     /* 64px */
+  --space-9:  6rem;     /* 96px */
+  --space-10: 8rem;     /* 128px */
+
+  /* ── Border radius ── */
+  --radius-none: 0px;
+  --radius-xs:   2px;   /* hairline rounding — focus rings */
+  --radius-sm:   4px;   /* form elements */
+  --radius-md:   8px;   /* cards, modals */
+  --radius-lg:   16px;  /* large panels */
+  --radius-pill: 9999px;
+
+  /* ── Motion — earned-only; matches lib/motion.ts constants ── */
+  --duration-instant: 120ms;  /* micro: hover, focus ring */
+  --duration-quick:   180ms;  /* small state: toggle, press */
+  --duration-base:    240ms;  /* default: disclosure, tab */
+  --duration-calm:    360ms;  /* deliberate: hero reveal */
+  --duration-slow:    520ms;  /* rare: investor-room reveal */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter:    cubic-bezier(0, 0, 0, 1);
+  --ease-exit:     cubic-bezier(0.4, 0, 1, 1);
+
+  /* ── Elevation ── */
+  --shadow-none: none;
+  --shadow-sm:   0 1px 2px rgba(28, 28, 30, 0.06);
+  --shadow-elevation-1: 0 1px 2px rgba(28, 28, 30, 0.04), 0 2px 8px rgba(28, 28, 30, 0.06);  /* default card */
+  --shadow-md:   0 4px 16px rgba(28, 28, 30, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(0, 194, 209, 0.25);  /* aqua ring */
 }
 
 /*
@@ -85,21 +161,47 @@
  * in apps/web/** or apps/site/** from here on.
  */
 @theme {
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-ink: var(--ink);
-  --color-muted: var(--ink-muted);
-  --color-soft: var(--ink-soft);
-  --color-line: var(--line);
+  /* Colors */
+  --color-surface:    var(--surface);
+  --color-surface-2:  var(--surface-2);
+  --color-ink:        var(--ink);
+  --color-muted:      var(--ink-muted);
+  --color-soft:       var(--ink-soft);
+  --color-line:       var(--line);
   --color-line-strong: var(--line-strong);
-  --color-brand: var(--accent);
+  --color-brand:      var(--accent);
   --color-brand-hover: var(--accent-hover);
-  --color-data: var(--data);
-  --color-signal: var(--signal);
-  --color-ok: var(--ok);
-  --color-ok-soft: var(--ok-soft);
-  --color-warn: var(--warn);
-  --color-warn-soft: var(--warn-soft);
-  --color-danger: var(--danger);
+  --color-data:       var(--data);
+  --color-signal:     var(--signal);
+  --color-ok:         var(--ok);
+  --color-ok-soft:    var(--ok-soft);
+  --color-warn:       var(--warn);
+  --color-warn-soft:  var(--warn-soft);
+  --color-danger:     var(--danger);
   --color-danger-soft: var(--danger-soft);
+
+  /* Spacing */
+  --spacing-1:  var(--space-1);
+  --spacing-2:  var(--space-2);
+  --spacing-3:  var(--space-3);
+  --spacing-4:  var(--space-4);
+  --spacing-5:  var(--space-5);
+  --spacing-6:  var(--space-6);
+  --spacing-7:  var(--space-7);
+  --spacing-8:  var(--space-8);
+  --spacing-9:  var(--space-9);
+  --spacing-10: var(--space-10);
+
+  /* Border radius */
+  --radius-none: var(--radius-none);
+  --radius-xs:   var(--radius-xs);
+  --radius-sm:   var(--radius-sm);
+  --radius-md:   var(--radius-md);
+  --radius-lg:   var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  /* Shadows */
+  --shadow-sm:    var(--shadow-sm);
+  --shadow-md:    var(--shadow-md);
+  --shadow-focus: var(--shadow-focus);
 }

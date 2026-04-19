@@ -23,3 +23,6 @@ apps/api/data/*.db
 # AWS bootstrap outputs — generated locally, contains account-specific infra IDs
 infra/aws/.bootstrap-output.env
 infra/**/.bootstrap-output.env
+
+# Next.js auto-generated type file — regenerated on every build, not source
+apps/*/next-env.d.ts
