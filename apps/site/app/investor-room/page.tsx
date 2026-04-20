@@ -19,43 +19,40 @@ import { DataFlywheel } from "@/components/investor/data-flywheel";
 import { ValuationBars } from "@/components/investor/valuation-bars";
 import { InvestorConsole } from "@/components/investor/investor-console";
 import { InvestorCTAGrid } from "@/components/investor/investor-cta-grid";
+import { BigStat } from "@/components/investor/big-stat";
+import { MarketInevitability } from "@/components/investor/market-inevitability";
+import { TrustGrid } from "@/components/investor/trust-grid";
+import { OneLinePunch } from "@/components/investor/one-line-punch";
+import { InvestorCohortCTA } from "@/components/investor/investor-cohort-cta";
 
 /**
- * Investor Room v2 — luxury technology walkthrough.
+ * Investor Room v3 — $10B-company posture.
  *
- * Chapters (Ron lock):
- *   01 · Thesis
- *   02 · Product vision
- *   03 · Business model
- *   04 · Comparables
- *   05 · Projections (illustrative)
- *   06 · Moat / data flywheel
- *   07 · Peptide expansion roadmap
- *   08 · The next step  (no raise size — three quiet conversion modules)
+ * Same 8-chapter frame (Ron lock), upgraded to read like an Apple keynote:
+ *   · One-line headlines. No multi-clause throat-clears.
+ *   · Iconic beats: BigStat, MarketInevitability, TrustGrid, OneLinePunch.
+ *   · Founder cohort scarcity CTA (honest framing — no fake seat counts).
+ *   · Magical Jeffrey opener with prompt suggestion cards.
  *
- * Jeffrey is the narrator. Every chapter pipes a precise question into the
- * InvestorConsole via the `aissisted:ask-jeffrey` event so the page reads
- * like a deck you can interrogate.
+ * Chapters:
+ *   01 · Thesis       — one-line punch + 4-up inevitability grid
+ *   02 · Product      — "Built for one body." · 6-step arc
+ *   03 · Model        — "Subscription. Compounds. Owned." + trust grid beat
+ *   04 · Comparables  — ValuationBars + ComparablesRow + "what we are not"
+ *   05 · Projections  — OneLinePunch intro + ProjectionsGrid
+ *   06 · Moat         — DataFlywheel · "A category brand cannot run this loop."
+ *   07 · Roadmap      — "One system. Four categories."
+ *   08 · Cohort       — FounderCohort scarcity + InvestorCTAGrid underneath
  *
  * Data isolation: console + CTA endpoints all use surface:"investor" with
  * noopMemoryAdapter. Server-log-only for now; no PHI, no cross-session
  * memory, no userId. CRM/email lands in the next PR.
- *
- * v2 priorities:
- *   1. World-class luxury technology brand
- *   2. Tighter typography hierarchy + spacing
- *   3. Earned motion (Reveal, KineticNumber, draw-in arcs)
- *   4. Premium charts (ValuationBars in Chapter 04)
- *   5. Apple × OpenAI console posture
- *   6. CTA grid: deck request, founder session, watchlist
- *   7. Copy tightened to billionaire-investor cadence
- *   8. Mobile-first elite layout
  */
 
 export const metadata: Metadata = {
   title: "Investor Room",
   description:
-    "Aissisted is the operating intelligence for one person's body. A private, Jeffrey-led walkthrough of the thesis, product, model, comparables, projections, moat, and roadmap.",
+    "Aissisted is operating intelligence for one person's body. A private, founder-led walkthrough — thesis, product, model, comparables, projections, moat, roadmap, cohort.",
   robots: { index: false, follow: false },
 };
 
@@ -70,73 +67,50 @@ export default function InvestorRoomPage() {
       <ChapterShell
         id="chapter-thesis"
         chapterLabel="Chapter 01 · Thesis"
-        question={<>What is the world pricing in — and what is it missing?</>}
-        lede="The supplement industry sells average. Wearables sell data. Neither sells a body understood. Aissisted is the first system that closes the loop between what is measured, what is changing, and what the body is taking every day."
+        question={<>The body is finally legible. We are the layer above it.</>}
+        lede="Four forces are moving at once. None of them alone builds this company. Together, they make the next one inevitable."
         askQuestion="Give me the thesis in two minutes — the shift, the wedge, and why now."
         askLabel="Walk the thesis"
-        tone="surface"
+        tone="midnight"
       >
-        <div className="grid gap-12 md:grid-cols-2 items-start">
-          <div className="space-y-7">
-            <H3 as="h3" className="max-w-md">
-              Three shifts. Stacked at once.
-            </H3>
-            <ul className="space-y-5">
-              <li>
-                <UILabel className="text-brand">01 · Data</UILabel>
-                <Body className="mt-2">
-                  Labs and wearables are finally interoperable. FHIR, HealthKit,
-                  WHOOP, Oura — the pipes exist. The intelligence layer doesn't.
-                </Body>
-              </li>
-              <li>
-                <UILabel className="text-brand">02 · Consumer</UILabel>
-                <Body className="mt-2">
-                  The top of the market wants ownership, not consumption. They
-                  already pay for Function, Oura, and WHOOP. They want one
-                  system that ties it together.
-                </Body>
-              </li>
-              <li>
-                <UILabel className="text-brand">03 · Intelligence</UILabel>
-                <Body className="mt-2">
-                  Reasoning models are finally good enough to explain a protocol
-                  rather than obscure it. Explainability is the wedge.
-                </Body>
-              </li>
-            </ul>
+        <MarketInevitability />
+
+        <div className="mt-16 grid gap-12 md:grid-cols-2 items-start">
+          <div className="border-l-2 border-data pl-6">
+            <ValueProp className="text-white">
+              The supplement aisle gives you the average. We learn you, and
+              build what you need.
+            </ValueProp>
           </div>
-          <div className="space-y-8">
-            <div className="border-l-2 border-brand pl-6">
-              <ValueProp>
-                The supplement aisle gives you the average. We learn you, and
-                build what you need.
-              </ValueProp>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <MetricCard
-                tone="data"
-                label="Addressable"
-                value="$150B+"
-                unit="global"
-                context="Supplements + personalized wellness. Converging."
-              />
-              <MetricCard
-                tone="default"
-                label="Beachhead"
-                value="Top 5%"
-                context="Data-native, longevity-literate early adopters."
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              tone="data"
+              label="Addressable"
+              value="$150B+"
+              unit="global"
+              context="Supplements + personalized wellness. Converging."
+            />
+            <MetricCard
+              tone="default"
+              label="Beachhead"
+              value="Top 5%"
+              context="Data-native, longevity-literate early adopters."
+            />
           </div>
         </div>
       </ChapterShell>
 
+      {/* Transitional punch — Apple-style beat */}
+      <OneLinePunch
+        primary="Built for one body."
+        secondary="Not a category. A person."
+      />
+
       {/* 02 · Product vision */}
       <ChapterShell
         id="chapter-product"
-        chapterLabel="Chapter 02 · Product vision"
-        question={<>What does it feel like on day one — and on day three hundred?</>}
+        chapterLabel="Chapter 02 · Product"
+        question={<>Day one feels like a conversation. Day three hundred feels like a system that knows you.</>}
         lede="Onboarding is not a form. It is a conversation. Jeffrey introduces himself, asks for what he needs, and returns with a protocol that looks nothing like a category product — because it was built for one body."
         askQuestion="Describe the product vision. What does onboarding feel like, and what does the system do once it knows a person?"
         askLabel="Show the product arc"
@@ -179,9 +153,9 @@ export default function InvestorRoomPage() {
       {/* 03 · Business model */}
       <ChapterShell
         id="chapter-model"
-        chapterLabel="Chapter 03 · Business model"
-        question={<>Where does the revenue come from — and what does it compound on?</>}
-        lede="Subscription at the core. Diagnostics at the edge. The real asset is the longitudinal record that Jeffrey reasons over — every month of adherence makes the next month sharper."
+        chapterLabel="Chapter 03 · Model"
+        question={<>Subscription. Compounds. Owned.</>}
+        lede="Recurring revenue at the core. Diagnostics at the edge. The real asset is the longitudinal record — every month of adherence makes the next month sharper and the switching cost higher."
         askQuestion="Walk me through the business model. Where does revenue come from, what's recurring, and what does the data layer unlock?"
         askLabel="Break down the model"
         tone="surface"
@@ -208,7 +182,7 @@ export default function InvestorRoomPage() {
         </div>
         <div className="mt-12 grid gap-12 md:grid-cols-2 items-start">
           <div>
-            <H4 as="h3">Why the model compounds.</H4>
+            <H4 as="h3">The loop runs on data the customer is actively producing.</H4>
             <Body className="mt-4">
               Personalization increases adherence. Adherence lengthens
               retention. Longer retention produces more longitudinal signal.
@@ -216,8 +190,7 @@ export default function InvestorRoomPage() {
               outcomes. Better outcomes compound word-of-mouth and cohort LTV.
             </Body>
             <Body className="mt-4">
-              The loop runs on data the customer is actively producing. It can
-              not be bought. A new entrant can not fake a year of it.
+              It cannot be bought. A new entrant cannot fake a year of it.
             </Body>
           </div>
           <div className="bg-ink/5 p-7 md:p-9">
@@ -233,11 +206,31 @@ export default function InvestorRoomPage() {
         </div>
       </ChapterShell>
 
+      {/* Trust signal beat — proves the posture */}
+      <section className="bg-[color:var(--brand-midnight)] text-white py-24 md:py-32">
+        <Container width="wide">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-data" />
+            <UILabel className="text-data">Posture · six proof points</UILabel>
+          </div>
+          <h2 className="mt-8 font-display font-bold text-white text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.05] tracking-[-0.015em] max-w-4xl">
+            Built for operators who read technical due diligence first.
+          </h2>
+          <p className="mt-6 max-w-2xl font-body text-lg md:text-xl text-white/75 leading-[1.5]">
+            We are not hand-waving. Each of these is a posture that is already
+            true, locked in the repo, or committed as the ship standard.
+          </p>
+          <div className="mt-14">
+            <TrustGrid tone="midnight" />
+          </div>
+        </Container>
+      </section>
+
       {/* 04 · Comparables */}
       <ChapterShell
         id="chapter-comparables"
         chapterLabel="Chapter 04 · Comparables"
-        question={<>Which analogs are the right frame — and which are lazy?</>}
+        question={<>Each mechanic already cleared. Combined, none have.</>}
         lede="We sit at the crossing of continuous diagnostics, data-compounding health platforms, wearable subscriptions, and recurring personalization. The right comparables prove each individual mechanic already cleared at scale."
         askQuestion="Which comparables should we use to price this, and why are they the right analog rather than Hims or Care/Of?"
         askLabel="Frame the comparables"
@@ -258,11 +251,24 @@ export default function InvestorRoomPage() {
         </div>
       </ChapterShell>
 
+      {/* Scale anchor — one big number before projections */}
+      <section className="bg-surface py-20 md:py-28">
+        <Container width="wide">
+          <BigStat
+            tone="surface"
+            eyebrow="Market · reference comp"
+            value="$13.9B"
+            punch="Livongo sold for $13.9B on one thesis — continuous data changes outcomes."
+            caption="We run the same loop on a category with ten times the behavioral frequency. One record. Adapts every thirty days. For a lifetime."
+          />
+        </Container>
+      </section>
+
       {/* 05 · Projections */}
       <ChapterShell
         id="chapter-projections"
         chapterLabel="Chapter 05 · Projections"
-        question={<>Through Year 3 — what do the drivers actually move?</>}
+        question={<>The drivers, not the spreadsheet.</>}
         lede="Public-surface scenarios. The working model, cohort assumptions, and sensitivities live in the data room. Ask Jeffrey for the drivers — he will walk what moves and what does not."
         askQuestion="What do the projections look like through Year 3? Walk me through the drivers — the levers that move and the ones that don't."
         askLabel="Walk the projections"
@@ -295,7 +301,7 @@ export default function InvestorRoomPage() {
       <ChapterShell
         id="chapter-moat"
         chapterLabel="Chapter 06 · Moat"
-        question={<>Why can't a well-funded incumbent catch this?</>}
+        question={<>A category brand cannot run this loop.</>}
         lede="The moat is not a proprietary ingredient, a cheaper supply chain, or a clever ad creative. It is a compounding data loop around one person — which a category brand, by definition, does not run."
         askQuestion="Explain the moat. How does the data flywheel compound and why can't Hims or Care/Of catch this?"
         askLabel="Show the flywheel"
@@ -308,7 +314,7 @@ export default function InvestorRoomPage() {
       <ChapterShell
         id="chapter-roadmap"
         chapterLabel="Chapter 07 · Roadmap"
-        question={<>What comes after the stick? Peptides, prescriptions, the long arc.</>}
+        question={<>One system. Four categories.</>}
         lede="Supplements are the beachhead. The rails — intake, normalization, protocol, adherence, re-test — work for anything taken daily. Peptides are the first expansion. Prescriptions are the second. Diagnostics is the third."
         askQuestion="Lay out the peptide roadmap and how the supplement rails extend to peptides, prescriptions, and diagnostics."
         askLabel="Walk the roadmap"
@@ -347,7 +353,7 @@ export default function InvestorRoomPage() {
         person, for a lifetime.
       </PullQuote>
 
-      {/* 08 · Next step — luxury CTA grid */}
+      {/* 08 · Cohort — scarcity CTA + three quiet conversion paths underneath */}
       <section
         id="chapter-cta"
         aria-labelledby="chapter-cta-heading"
@@ -356,7 +362,7 @@ export default function InvestorRoomPage() {
         <Container width="wide">
           <div className="flex items-center gap-3">
             <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-data" />
-            <UILabel className="text-data">Chapter 08 · The next step</UILabel>
+            <UILabel className="text-data">Chapter 08 · Cohort</UILabel>
           </div>
           <h2
             id="chapter-cta-heading"
@@ -366,13 +372,16 @@ export default function InvestorRoomPage() {
             <br className="hidden md:block" />
             <span className="text-white/55">Not a term sheet.</span>
           </h2>
-          <p className="mt-8 max-w-2xl text-white/80 font-body text-lg md:text-xl leading-[1.5]">
-            If the thesis lands, choose how you want to engage. Each path is
-            personal. Each is read by Ron and Jeffrey. Nothing automated.
-          </p>
 
-          <div className="mt-16">
-            <InvestorCTAGrid />
+          <div className="mt-14">
+            <InvestorCohortCTA />
+          </div>
+
+          <div className="mt-16 border-t border-white/10 pt-14">
+            <UILabel className="text-white/55">Or choose your path</UILabel>
+            <div className="mt-6">
+              <InvestorCTAGrid />
+            </div>
           </div>
 
           <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -381,6 +390,9 @@ export default function InvestorRoomPage() {
             </JeffreySystem>
             <JeffreySystem className="text-white/45">
               Private surface · no PHI captured
+            </JeffreySystem>
+            <JeffreySystem className="text-white/45">
+              Founder-read · no auto-reply
             </JeffreySystem>
           </div>
         </Container>

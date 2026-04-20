@@ -55,6 +55,37 @@ type QuickAsk = {
   question: string;
 };
 
+type OpenerPrompt = {
+  id: string;
+  kicker: string;
+  label: string;
+  question: string;
+};
+
+const OPENER_PROMPTS: OpenerPrompt[] = [
+  {
+    id: "opener-thesis",
+    kicker: "Thesis",
+    label: "Walk me through the thesis in two minutes.",
+    question:
+      "Give me the thesis in two minutes — the shift, the wedge, and why now.",
+  },
+  {
+    id: "opener-moat",
+    kicker: "Moat",
+    label: "Why can't a category brand catch this?",
+    question:
+      "Explain the moat. Why can't a well-funded category brand like Hims or Care/Of catch this?",
+  },
+  {
+    id: "opener-cohort",
+    kicker: "Cohort",
+    label: "What does a founder session look like?",
+    question:
+      "What does a founder session actually look like — who's in the cohort, what do we talk about, and what do I walk away with?",
+  },
+];
+
 const DEFAULT_QUICK_ASKS: QuickAsk[] = [
   {
     id: "thesis",
@@ -129,6 +160,10 @@ export function InvestorConsole({
         "Good. I'm Jeffrey. Ask me anything — thesis, model, moat, comparables, peptide plan. Short, honest, structured.",
     },
   ]);
+  // Whether the console is in "opener" mode (only the seed message shown).
+  // When true, we render three premium prompt suggestion cards that set the
+  // tone and remove the cold-start problem.
+  const atOpener = messages.length === 1;
 
   const prefersReducedMotion = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -394,6 +429,50 @@ export function InvestorConsole({
             {messages.map((m) => (
               <MessageRow key={m.id} message={m} />
             ))}
+
+            {/* Opener — three premium prompt cards. Only on first open. */}
+            {atOpener ? (
+              <div className="pt-2 pb-1">
+                <UILabel className="text-white/40 text-[10px] tracking-[0.16em]">
+                  Try one
+                </UILabel>
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  {OPENER_PROMPTS.map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => void send(p.question)}
+                      disabled={sending}
+                      className={cn(
+                        "group relative text-left",
+                        "rounded-xl px-4 py-3",
+                        "bg-white/[0.04] ring-1 ring-inset ring-white/10",
+                        "hover:bg-white/[0.07] hover:ring-data/30",
+                        "transition-[background,box-shadow,transform]",
+                        "active:scale-[0.99]",
+                        "disabled:opacity-40 disabled:pointer-events-none",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-data",
+                      )}
+                      style={{
+                        animationDelay: `${i * 80}ms`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-system text-[10px] uppercase tracking-[0.18em] text-data">
+                          {p.kicker}
+                        </span>
+                        <span aria-hidden className="text-white/30 text-[11px]">
+                          ⏎
+                        </span>
+                      </div>
+                      <p className="mt-2 font-body text-[14px] leading-[1.45] text-white/85">
+                        {p.label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Quick asks */}
