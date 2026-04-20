@@ -8,26 +8,34 @@ import {
   UILabel,
   H4,
 } from "@/components/typography";
+import {
+  INTENT_COPY,
+  submitLead,
+  type LeadIntent,
+} from "@/lib/lead-capture";
 
 /**
- * RequestDeckModal — decisive, no-nonsense deck + data-room request.
+ * RequestDeckModal — decisive, intent-aware capture surface.
  *
  * Full-screen on mobile, centered dialog on desktop. Captures:
- *   · Name
- *   · Email (required)
+ *   · Name · Email (required)
  *   · Firm (optional)
- *   · Check size range (optional, select)
+ *   · Check size range (optional, shown only for allocation/founder-call/
+ *     founder-session/deck-request/thesis-memo intents)
  *   · Private note (optional)
  *
- * Submits to /api/investor/request-deck. Server-side log + 202 confirmation.
- * Escape closes. Backdrop click closes. Focus-trap via first-focus ref.
+ * Submits to /api/investor/lead with the current intent tag. The server
+ * fans out to HubSpot + Airtable (best-effort) and returns intent-specific
+ * confirmation copy.
  *
+ * Escape closes. Backdrop click closes. Focus-trap via first-focus ref.
  * Brand discipline: midnight surface, aqua signal, zero red in the modal.
  */
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  intent?: LeadIntent;
 };
 
 const CHECK_SIZES = [
@@ -39,7 +47,11 @@ const CHECK_SIZES = [
   { value: "strategic", label: "Strategic / LP" },
 ] as const;
 
-export function RequestDeckModal({ open, onClose }: Props) {
+export function RequestDeckModal({
+  open,
+  onClose,
+  intent = "deck-request",
+}: Props) {
   const headingId = useId();
   const descId = useId();
   const firstFocusRef = useRef<HTMLInputElement | null>(null);
@@ -53,6 +65,21 @@ export function RequestDeckModal({ open, onClose }: Props) {
     checkSize: "",
     note: "",
   });
+
+  const copy = INTENT_COPY[intent];
+  const showCheckSize =
+    intent === "allocation" ||
+    intent === "deck-request" ||
+    intent === "founder-session" ||
+    intent === "thesis-memo";
+
+  // Reset confirmation / form when intent changes while open.
+  useEffect(() => {
+    if (!open) {
+      setConfirmation(null);
+      setError(null);
+    }
+  }, [open, intent]);
 
   // Close on Escape.
   useEffect(() => {
@@ -81,30 +108,21 @@ export function RequestDeckModal({ open, onClose }: Props) {
       if (submitting) return;
       setError(null);
       setSubmitting(true);
-      try {
-        const res = await fetch("/api/investor/request-deck", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(form),
-        });
-        const data = (await res.json().catch(() => null)) as
-          | { ok?: boolean; message?: string; error?: { message?: string } }
-          | null;
-        if (!res.ok || !data?.ok) {
-          setError(data?.error?.message ?? "Something went wrong. Try again.");
-          return;
-        }
-        setConfirmation(
-          data.message ??
-            "Received. Ron will be in touch within a business day.",
-        );
-      } catch {
-        setError("Network error. Please try again in a moment.");
-      } finally {
-        setSubmitting(false);
+      const result = await submitLead(intent, {
+        name: form.name,
+        email: form.email,
+        firm: form.firm || undefined,
+        checkSize: showCheckSize ? form.checkSize || undefined : undefined,
+        note: form.note || undefined,
+      });
+      setSubmitting(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
       }
+      setConfirmation(result.message);
     },
-    [form, submitting],
+    [form, submitting, intent, showCheckSize],
   );
 
   if (!open) return null;
@@ -144,7 +162,7 @@ export function RequestDeckModal({ open, onClose }: Props) {
               aria-hidden
               className="inline-block h-1.5 w-1.5 rounded-full bg-data"
             />
-            <UILabel className="text-data">Private request · deck + data room</UILabel>
+            <UILabel className="text-data">{copy.kicker}</UILabel>
           </div>
           <button
             type="button"
@@ -158,11 +176,10 @@ export function RequestDeckModal({ open, onClose }: Props) {
 
         <div className="px-6 md:px-8 pt-4 pb-2">
           <H4 as="h2" className="text-white text-2xl md:text-3xl" >
-            <span id={headingId}>Request the deck.</span>
+            <span id={headingId}>{copy.heading}</span>
           </H4>
           <Lede id={descId} className="mt-3 text-white/75 text-base md:text-base">
-            Share enough context for a thoughtful reply. The deck and data
-            room land in your inbox after a short review.
+            {copy.lede}
           </Lede>
         </div>
 
@@ -216,7 +233,12 @@ export function RequestDeckModal({ open, onClose }: Props) {
               />
             </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-4",
+                showCheckSize ? "sm:grid-cols-2" : "",
+              )}
+            >
               <Field label="Firm">
                 <input
                   type="text"
@@ -227,23 +249,25 @@ export function RequestDeckModal({ open, onClose }: Props) {
                   placeholder="Fund / company"
                 />
               </Field>
-              <Field label="Check size">
-                <select
-                  value={form.checkSize}
-                  onChange={(e) => setForm((s) => ({ ...s, checkSize: e.target.value }))}
-                  className={cn(inputClass, "appearance-none pr-8 bg-[length:10px_10px] bg-no-repeat bg-[right_0.75rem_center] bg-[image:linear-gradient(45deg,transparent_50%,rgba(255,255,255,0.6)_50%),linear-gradient(-45deg,transparent_50%,rgba(255,255,255,0.6)_50%)] bg-[position:calc(100%-0.75rem)_center,calc(100%-0.35rem)_center] bg-[size:5px_5px,5px_5px]")}
-                >
-                  {CHECK_SIZES.map((c) => (
-                    <option
-                      key={c.value}
-                      value={c.value}
-                      className="bg-[color:var(--brand-midnight)] text-white"
-                    >
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {showCheckSize ? (
+                <Field label="Check size">
+                  <select
+                    value={form.checkSize}
+                    onChange={(e) => setForm((s) => ({ ...s, checkSize: e.target.value }))}
+                    className={cn(inputClass, "appearance-none pr-8 bg-[length:10px_10px] bg-no-repeat bg-[right_0.75rem_center] bg-[image:linear-gradient(45deg,transparent_50%,rgba(255,255,255,0.6)_50%),linear-gradient(-45deg,transparent_50%,rgba(255,255,255,0.6)_50%)] bg-[position:calc(100%-0.75rem)_center,calc(100%-0.35rem)_center] bg-[size:5px_5px,5px_5px]")}
+                  >
+                    {CHECK_SIZES.map((c) => (
+                      <option
+                        key={c.value}
+                        value={c.value}
+                        className="bg-[color:var(--brand-midnight)] text-white"
+                      >
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
             </div>
 
             <Field label="One line of context">
@@ -276,7 +300,7 @@ export function RequestDeckModal({ open, onClose }: Props) {
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
                 )}
               >
-                {submitting ? "Sending…" : "Request deck"}
+                {submitting ? "Sending…" : copy.cta}
               </button>
             </div>
           </form>

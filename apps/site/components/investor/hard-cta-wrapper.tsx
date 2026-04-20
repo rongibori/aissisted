@@ -3,30 +3,37 @@
 import { useState } from "react";
 import { HardCTA, type HardCTAIntent } from "./hard-cta";
 import { RequestDeckModal } from "./request-deck-modal";
+import type { LeadIntent } from "@/lib/lead-capture";
 
 /**
  * HardCTAWrapper — page-level wrapper that wires the HardCTA's three intents
- * to the existing deck-request modal.
+ * to the unified lead-capture modal.
  *
- * Keeps page.tsx a server component while HardCTA itself stays presentational.
- * When dedicated endpoints (/api/investor/allocation, /api/investor/founder-call,
- * /api/investor/waitlist) ship, swap the modal per-intent here without
- * touching the visual surface.
+ * Maps the HardCTA intent enum onto the LeadIntent enum consumed by the
+ * modal + /api/investor/lead route. The modal reads INTENT_COPY for heading,
+ * lede, kicker, and CTA label — so each tier opens a capture surface that
+ * reads like it was built for that specific ask.
  */
+
+const toLeadIntent = (intent: HardCTAIntent): LeadIntent => intent;
 
 export function HardCTAWrapper() {
   const [open, setOpen] = useState(false);
-  const [, setLastIntent] = useState<HardCTAIntent | null>(null);
+  const [intent, setIntent] = useState<LeadIntent>("allocation");
 
   return (
     <>
       <HardCTA
-        onRequest={(intent) => {
-          setLastIntent(intent);
+        onRequest={(i) => {
+          setIntent(toLeadIntent(i));
           setOpen(true);
         }}
       />
-      <RequestDeckModal open={open} onClose={() => setOpen(false)} />
+      <RequestDeckModal
+        open={open}
+        onClose={() => setOpen(false)}
+        intent={intent}
+      />
     </>
   );
 }

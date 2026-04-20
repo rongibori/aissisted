@@ -25,30 +25,33 @@ import { ProofArchitecture } from "@/components/investor/proof-architecture";
 import { FounderPosture } from "@/components/investor/founder-posture";
 import { RoadmapTimeline } from "@/components/investor/roadmap-timeline";
 import { HardCTAWrapper } from "@/components/investor/hard-cta-wrapper";
+import { FounderVideo } from "@/components/investor/founder-video";
+import { LiveMetrics } from "@/components/investor/live-metrics";
+import { SocialProofStrip } from "@/components/investor/social-proof-strip";
+import { WhyNow } from "@/components/investor/why-now";
 
 /**
- * Investor Room v4 — unforgettable in seven seconds.
+ * Investor Room v5 — billion-dollar surface · CRM-wired · founder-on-camera.
  *
- * v4 layers on top of v3's $10B-company posture with four heavyweight surfaces:
- *   · Cinematic hero — staggered word reveal + one-shot glow + ethos strip.
- *   · ProofArchitecture — three rails (Standards · Systems · People).
- *   · FounderPosture — elite credibility framed as four operating commitments.
- *   · RoadmapTimeline — horizontal Now → Year 03 temporal arc.
- *   · HardCTA (3-tier) — Request allocation · Founder call · Strategic waitlist.
+ * v5 layers on top of v4's seven-second cinematic posture with five new
+ * surfaces and one architectural change:
+ *   · SocialProofStrip — quiet six-token band right under the hero.
+ *   · FounderVideo     — 90-second founder-on-camera surface (or honest
+ *                        placeholder when the file is not yet uploaded).
+ *   · WhyNow           — four-force urgency block after the thesis.
+ *   · LiveMetrics      — system-status dashboard (architecture-level signal,
+ *                        no fabricated traction); GET /api/investor/live-metrics.
+ *   · Lead capture     — every public CTA funnels through /api/investor/lead
+ *                        with an intent tag; HubSpot + Airtable fan-out.
  *
- * Chapters:
- *   01 · Thesis       — one-line punch + 4-up inevitability grid
- *   02 · Product      — "Built for one body." · 6-step arc
- *   03 · Model        — "Subscription. Compounds. Owned." + trust grid beat
- *   04 · Comparables  — ValuationBars + ComparablesRow + "what we are not"
- *   05 · Projections  — OneLinePunch intro + ProjectionsGrid
- *   06 · Moat         — DataFlywheel · "A category brand cannot run this loop."
- *   07 · Roadmap      — "One system. Four categories."
- *   08 · Cohort       — FounderCohort scarcity + InvestorCTAGrid underneath
+ * Chapters (unchanged):
+ *   01 · Thesis · 02 · Product · 03 · Model · 04 · Comparables ·
+ *   05 · Projections · 06 · Moat · 07 · Roadmap · 08 · Cohort
  *
- * Data isolation: console + CTA endpoints all use surface:"investor" with
- * noopMemoryAdapter. Server-log-only for now; no PHI, no cross-session
- * memory, no userId. CRM/email lands in the next PR.
+ * Data isolation: console + every CTA endpoint use surface:"investor" with
+ * noopMemoryAdapter. Lead route logs locally and best-effort writes to
+ * HubSpot + Airtable when env vars are present. No PHI, no userId, no
+ * cross-session memory.
  */
 
 export const metadata: Metadata = {
@@ -64,6 +67,12 @@ export default function InvestorRoomPage() {
       <ChapterProgress />
 
       <InvestorHero />
+
+      {/* Quiet beat — six tokens of architecture-language proof under the hero */}
+      <SocialProofStrip />
+
+      {/* Founder on camera — first-person validation of the thesis */}
+      <FounderVideo />
 
       {/* 01 · Thesis */}
       <ChapterShell
@@ -101,6 +110,9 @@ export default function InvestorRoomPage() {
           </div>
         </div>
       </ChapterShell>
+
+      {/* Why now — four converging forces, surface tone contrast */}
+      <WhyNow />
 
       {/* Transitional punch — Apple-style beat */}
       <OneLinePunch
@@ -337,6 +349,9 @@ export default function InvestorRoomPage() {
 
       {/* Roadmap timeline — horizontal temporal arc */}
       <RoadmapTimeline />
+
+      {/* Live metrics — architecture-level system status */}
+      <LiveMetrics />
 
       {/* Signature line */}
       <PullQuote attribution="Aissisted · closing line">
