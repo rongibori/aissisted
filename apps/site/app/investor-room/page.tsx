@@ -4,7 +4,6 @@ import { MetricCard } from "@/components/metric-card";
 import { PullQuote } from "@/components/pull-quote";
 import {
   Body,
-  H3,
   H4,
   JeffreySystem,
   UILabel,
@@ -18,21 +17,24 @@ import { ProjectionsGrid } from "@/components/investor/projections-grid";
 import { DataFlywheel } from "@/components/investor/data-flywheel";
 import { ValuationBars } from "@/components/investor/valuation-bars";
 import { InvestorConsole } from "@/components/investor/investor-console";
-import { InvestorCTAGrid } from "@/components/investor/investor-cta-grid";
 import { BigStat } from "@/components/investor/big-stat";
 import { MarketInevitability } from "@/components/investor/market-inevitability";
-import { TrustGrid } from "@/components/investor/trust-grid";
 import { OneLinePunch } from "@/components/investor/one-line-punch";
 import { InvestorCohortCTA } from "@/components/investor/investor-cohort-cta";
+import { ProofArchitecture } from "@/components/investor/proof-architecture";
+import { FounderPosture } from "@/components/investor/founder-posture";
+import { RoadmapTimeline } from "@/components/investor/roadmap-timeline";
+import { HardCTAWrapper } from "@/components/investor/hard-cta-wrapper";
 
 /**
- * Investor Room v3 — $10B-company posture.
+ * Investor Room v4 — unforgettable in seven seconds.
  *
- * Same 8-chapter frame (Ron lock), upgraded to read like an Apple keynote:
- *   · One-line headlines. No multi-clause throat-clears.
- *   · Iconic beats: BigStat, MarketInevitability, TrustGrid, OneLinePunch.
- *   · Founder cohort scarcity CTA (honest framing — no fake seat counts).
- *   · Magical Jeffrey opener with prompt suggestion cards.
+ * v4 layers on top of v3's $10B-company posture with four heavyweight surfaces:
+ *   · Cinematic hero — staggered word reveal + one-shot glow + ethos strip.
+ *   · ProofArchitecture — three rails (Standards · Systems · People).
+ *   · FounderPosture — elite credibility framed as four operating commitments.
+ *   · RoadmapTimeline — horizontal Now → Year 03 temporal arc.
+ *   · HardCTA (3-tier) — Request allocation · Founder call · Strategic waitlist.
  *
  * Chapters:
  *   01 · Thesis       — one-line punch + 4-up inevitability grid
@@ -105,6 +107,9 @@ export default function InvestorRoomPage() {
         primary="Built for one body."
         secondary="Not a category. A person."
       />
+
+      {/* Proof architecture — three rails of non-fabricated signal */}
+      <ProofArchitecture tone="midnight" />
 
       {/* 02 · Product vision */}
       <ChapterShell
@@ -206,26 +211,6 @@ export default function InvestorRoomPage() {
         </div>
       </ChapterShell>
 
-      {/* Trust signal beat — proves the posture */}
-      <section className="bg-[color:var(--brand-midnight)] text-white py-24 md:py-32">
-        <Container width="wide">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-data" />
-            <UILabel className="text-data">Posture · six proof points</UILabel>
-          </div>
-          <h2 className="mt-8 font-display font-bold text-white text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.05] tracking-[-0.015em] max-w-4xl">
-            Built for operators who read technical due diligence first.
-          </h2>
-          <p className="mt-6 max-w-2xl font-body text-lg md:text-xl text-white/75 leading-[1.5]">
-            We are not hand-waving. Each of these is a posture that is already
-            true, locked in the repo, or committed as the ship standard.
-          </p>
-          <div className="mt-14">
-            <TrustGrid tone="midnight" />
-          </div>
-        </Container>
-      </section>
-
       {/* 04 · Comparables */}
       <ChapterShell
         id="chapter-comparables"
@@ -310,6 +295,9 @@ export default function InvestorRoomPage() {
         <DataFlywheel />
       </ChapterShell>
 
+      {/* Founder posture — elite credibility, principle-based */}
+      <FounderPosture />
+
       {/* 07 · Roadmap */}
       <ChapterShell
         id="chapter-roadmap"
@@ -347,6 +335,9 @@ export default function InvestorRoomPage() {
         </div>
       </ChapterShell>
 
+      {/* Roadmap timeline — horizontal temporal arc */}
+      <RoadmapTimeline />
+
       {/* Signature line */}
       <PullQuote attribution="Aissisted · closing line">
         We don't give answers. We build the system that produces them — for one
@@ -377,14 +368,24 @@ export default function InvestorRoomPage() {
             <InvestorCohortCTA />
           </div>
 
-          <div className="mt-16 border-t border-white/10 pt-14">
-            <UILabel className="text-white/55">Or choose your path</UILabel>
-            <div className="mt-6">
-              <InvestorCTAGrid />
+          <div className="mt-20 border-t border-white/10 pt-14">
+            <div className="flex items-center gap-3">
+              <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-data" />
+              <UILabel className="text-data">Three ways in</UILabel>
+            </div>
+            <h3 className="mt-6 font-display font-bold text-white text-[clamp(1.5rem,3vw,2.5rem)] leading-[1.1] tracking-[-0.015em] max-w-3xl">
+              Pick the door that matches where you sit.
+            </h3>
+            <p className="mt-4 max-w-2xl font-body text-[16px] md:text-[17px] leading-[1.55] text-white/70">
+              Each path goes to the founder. Each reply comes from the founder.
+              No auto-reply. No deck theater.
+            </p>
+            <div className="mt-10">
+              <HardCTAWrapper />
             </div>
           </div>
 
-          <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-3">
             <JeffreySystem className="text-white/45">
               ⌘K · ask Jeffrey anything first
             </JeffreySystem>
