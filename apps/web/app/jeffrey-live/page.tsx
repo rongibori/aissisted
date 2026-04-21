@@ -12,10 +12,13 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "../../lib/auth-context";
-import { useJeffreyRealtime } from "../../lib/hooks/use-jeffrey-realtime";
+import {
+  useJeffreyRealtime,
+  type RealtimeState,
+} from "../../lib/hooks/use-jeffrey-realtime";
 import { Button, Card, Badge, Spinner } from "../../components/ui";
 
-const STATE_LABEL: Record<string, string> = {
+const STATE_LABEL: Record<RealtimeState, string> = {
   idle: "Ready",
   "requesting-ticket": "Requesting access",
   connecting: "Connecting",
@@ -52,10 +55,12 @@ function JeffreyLivePage() {
   }
 
   const live =
+    state === "requesting-ticket" ||
     state === "connecting" ||
     state === "ready" ||
     state === "listening" ||
-    state === "speaking";
+    state === "speaking" ||
+    state === "closing";
 
   return (
     <div className="min-h-screen bg-surface-2">
