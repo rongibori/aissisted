@@ -1,4 +1,21 @@
-import Anthropic from "@anthropic-ai/sdk";
+/**
+ * Intent parser — classifies the incoming chat message into a known intent
+ * so the rest of jeffrey.service can route to the right data path.
+ *
+ * Canonical brain: OpenAI (matches @aissisted/jeffrey). We use a small,
+ * cheap model here (gpt-4o-mini) because intent classification is a
+ * high-frequency, low-reasoning call — the full gpt-4o brain is used
+ * downstream for the actual reply.
+ *
+ * Degradation:
+ *   - no OPENAI_API_KEY               → classifyLocally (regex heuristics)
+ *   - OpenAI error / malformed JSON   → classifyLocally (same heuristics)
+ *
+ * The local classifier is intentionally generous so the product remains
+ * useful even if the upstream provider is unhealthy.
+ */
+
+import { getOpenAIClient } from "@aissisted/jeffrey";
 import { config } from "../config.js";
 
 export type IntentType =
@@ -19,7 +36,10 @@ export interface ParsedIntent {
   entities: Record<string, string>;
 }
 
-const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+// Small/fast model — intent classification does not need the flagship brain.
+// Kept in-file rather than env because swapping this is a code-review decision,
+// not an operator decision.
+const INTENT_MODEL = "gpt-4o-mini";
 
 const INTENT_SYSTEM = `You are an intent parser for Aissisted, a personalized health platform.
 Classify the user message into one of these intent types:
@@ -38,22 +58,60 @@ Extract relevant entities (supplement name, biomarker name, goal text, dosage, s
 
 Respond ONLY with JSON: { "type": "...", "confidence": 0.0-1.0, "entities": {} }`;
 
+const VALID_INTENTS: ReadonlySet<IntentType> = new Set<IntentType>([
+  "generate_protocol",
+  "update_goal",
+  "explain_supplement",
+  "ask_biomarker",
+  "general_health_question",
+  "greeting",
+  "log_supplement",
+  "check_adherence",
+  "health_state_check",
+  "unknown",
+]);
+
 export async function parseIntent(message: string): Promise<ParsedIntent> {
-  if (!config.anthropicApiKey) {
+  if (!config.openaiApiKey) {
     return classifyLocally(message);
   }
 
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 256,
-      system: INTENT_SYSTEM,
-      messages: [{ role: "user", content: message }],
+    const openai = getOpenAIClient({
+      OPENAI_API_KEY: config.openaiApiKey,
+      // The rest are irrelevant to a chat.completions call; satisfy the type.
+      OPENAI_JEFFREY_MODEL: "gpt-4o",
+      OPENAI_JEFFREY_REALTIME_MODEL: "gpt-4o-realtime-preview",
+      ELEVENLABS_MODEL: "eleven_flash_v2_5",
+      JEFFREY_DEFAULT_TEMPERATURE: 0.4,
+      JEFFREY_DEFAULT_MAX_TOKENS: 800,
     });
 
-    const raw =
-      response.content[0].type === "text" ? response.content[0].text : "{}";
-    return JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+    const completion = await openai.chat.completions.create({
+      model: INTENT_MODEL,
+      max_tokens: 256,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: INTENT_SYSTEM },
+        { role: "user", content: message },
+      ],
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(raw) as Partial<ParsedIntent>;
+
+    const type = (parsed.type && VALID_INTENTS.has(parsed.type))
+      ? parsed.type
+      : "unknown";
+    const confidence = typeof parsed.confidence === "number"
+      ? Math.max(0, Math.min(1, parsed.confidence))
+      : 0.5;
+    const entities = (parsed.entities && typeof parsed.entities === "object")
+      ? parsed.entities
+      : {};
+
+    return { type, confidence, entities };
   } catch {
     return classifyLocally(message);
   }
