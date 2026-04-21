@@ -4,6 +4,7 @@ import { Container } from "@/components/container";
 import { Eyebrow } from "@/components/eyebrow";
 import { H2, Lede } from "@/components/typography";
 import { AskAffordance } from "./ask-affordance";
+import { Reveal } from "./reveal";
 
 /**
  * ChapterShell — single chapter container for the investor room.
@@ -14,6 +15,13 @@ import { AskAffordance } from "./ask-affordance";
  *   · Lede (one sentence of framing)
  *   · Visual slot (charts, metric cards, diagrams, quotes)
  *   · AskAffordance — pipes a precise question into the InvestorConsole
+ *
+ * v2:
+ *   · Wider vertical rhythm (28/40 vs 24/32) — luxury negative space.
+ *   · Eyebrow → headline → lede → body → ask, each Revealed on scroll
+ *     for an earned, once-only entry.
+ *   · A single hairline aqua marker sits left of the eyebrow on midnight
+ *     chapters, anchoring the eye like a Stripe / Linear product page.
  *
  * Tone options:
  *   · midnight   · hero/moat chapters (premium night)
@@ -48,6 +56,12 @@ const LEDE_COLOR: Record<Tone, string> = {
   surface: "text-ink/85",
 };
 
+const MARKER_COLOR: Record<Tone, string> = {
+  midnight: "bg-data",
+  graphite: "bg-brand",
+  surface: "bg-brand",
+};
+
 type Props = {
   id: string;
   chapterLabel: string; // "Chapter 03 · Moat"
@@ -75,33 +89,67 @@ export function ChapterShell({
     <section
       id={id}
       className={cn(
-        "py-24 md:py-32 scroll-mt-20",
+        "py-28 md:py-40 scroll-mt-24",
         SURFACE_STYLES[tone],
         className,
       )}
       aria-labelledby={`${id}-heading`}
     >
       <Container width="wide">
-        <Eyebrow tone={EYEBROW_TONE[tone]}>{chapterLabel}</Eyebrow>
-        <H2
-          as="h2"
-          className={cn("mt-6 max-w-3xl", HEADING_COLOR[tone])}
-        >
-          <span id={`${id}-heading`}>{question}</span>
-        </H2>
+        <Reveal>
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className={cn(
+                "inline-block h-1.5 w-1.5 rounded-full",
+                MARKER_COLOR[tone],
+              )}
+            />
+            <Eyebrow tone={EYEBROW_TONE[tone]}>{chapterLabel}</Eyebrow>
+          </div>
+        </Reveal>
+
+        <Reveal delayMs={80}>
+          <H2
+            as="h2"
+            className={cn(
+              "mt-8 max-w-4xl",
+              "text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.05] tracking-[-0.015em]",
+              HEADING_COLOR[tone],
+            )}
+          >
+            <span id={`${id}-heading`}>{question}</span>
+          </H2>
+        </Reveal>
+
         {lede && (
-          <Lede className={cn("mt-6 max-w-2xl", LEDE_COLOR[tone])}>
-            {lede}
-          </Lede>
+          <Reveal delayMs={160}>
+            <Lede
+              className={cn(
+                "mt-8 max-w-2xl text-lg md:text-xl",
+                LEDE_COLOR[tone],
+              )}
+            >
+              {lede}
+            </Lede>
+          </Reveal>
         )}
-        {children && <div className="mt-12 md:mt-16">{children}</div>}
-        <div className="mt-12">
-          <AskAffordance
-            tone={tone === "midnight" ? "inverse" : "default"}
-            question={askQuestion}
-            label={askLabel}
-          />
-        </div>
+
+        {children && (
+          <Reveal delayMs={220}>
+            <div className="mt-16 md:mt-20">{children}</div>
+          </Reveal>
+        )}
+
+        <Reveal delayMs={300}>
+          <div className="mt-16">
+            <AskAffordance
+              tone={tone === "midnight" ? "inverse" : "default"}
+              question={askQuestion}
+              label={askLabel}
+            />
+          </div>
+        </Reveal>
       </Container>
     </section>
   );
