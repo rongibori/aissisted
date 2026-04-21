@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import websocket from "@fastify/websocket";
 import { config } from "./config.js";
 import { registerJwt } from "./middleware/auth.js";
 import { registerAuditLog } from "./middleware/audit.js";
@@ -11,6 +12,7 @@ import { biomarkerRoutes } from "./routes/biomarkers.js";
 import { protocolRoutes } from "./routes/protocol.js";
 import { chatRoutes } from "./routes/chat.js";
 import { jeffreyRoutes } from "./routes/jeffrey.js";
+import { jeffreyRealtimeRoutes } from "./routes/jeffrey-realtime.js";
 import { integrationsRoutes } from "./routes/integrations.js";
 import { adherenceRoutes } from "./routes/adherence.js";
 import { healthStateRoutes } from "./routes/health-state.js";
@@ -51,6 +53,15 @@ await app.register(rateLimit, {
 await registerJwt(app);
 await registerAuditLog(app);
 
+// WebSocket support for Jeffrey Realtime proxy. Must register before routes
+// that declare `{ websocket: true }`.
+await app.register(websocket, {
+  options: {
+    // 1 MiB per frame is ample for JSON events; audio should be small chunks.
+    maxPayload: 1 * 1024 * 1024,
+  },
+});
+
 // ─── Health ──────────────────────────────────────────────
 app.get("/health", async (_request, reply) => {
   let dbStatus = "ok";
@@ -76,6 +87,7 @@ await app.register(biomarkerRoutes);
 await app.register(protocolRoutes);
 await app.register(chatRoutes);
 await app.register(jeffreyRoutes);
+await app.register(jeffreyRealtimeRoutes);
 await app.register(integrationsRoutes);
 await app.register(adherenceRoutes);
 await app.register(healthStateRoutes);
