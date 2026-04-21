@@ -30,15 +30,11 @@ export const config = {
   /** Parsed ALLOWED_ORIGINS entries for CORS. Empty list means none were explicitly configured; index.ts then falls back to the hard-coded production allowlist (["https://aissisted.com"]) unless isDev, which permits any origin. */
   allowedOrigins: parseAllowedOrigins(),
 
-  // Jeffrey brain (canonical = OpenAI via @aissisted/jeffrey).
+  // Jeffrey brain — canonical OpenAI via @aissisted/jeffrey. All surfaces
+  // (intent, protocol synthesis, health chat, investor/onboarding/brand)
+  // route through this one key. The legacy Anthropic rollback was retired
+  // once OpenAI-canonical soaked; no second provider remains.
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
-
-  // Anthropic — retained ONLY for the rollback code path in
-  // services/jeffrey.service.ts (JEFFREY_BRAIN=anthropic). The intent parser
-  // has been migrated to OpenAI (services/intent.ts) so Haiku is no longer
-  // in the hot path. Safe to delete once the rollback path is retired —
-  // no other consumer reads this key.
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
 
   // Jeffrey voice (ElevenLabs streaming TTS). Optional in dev; when unset the
   // /v1/jeffrey/voice/tts endpoint responds 503.

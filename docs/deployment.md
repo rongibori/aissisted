@@ -66,7 +66,6 @@ Two platforms: **Vercel** for the Next.js apps (they're HTTP-only), **a WS-capab
 
 | Var | Unlocks |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Legacy chat path + Haiku intent parser |
 | `ELEVENLABS_API_KEY` + `ELEVENLABS_JEFFREY_VOICE_ID` | ElevenLabs streaming TTS |
 | `WHOOP_CLIENT_ID` + `WHOOP_CLIENT_SECRET` | WHOOP integration |
 | `FHIR_BASE_URL` + `FHIR_CLIENT_ID` | Epic / FHIR integration |

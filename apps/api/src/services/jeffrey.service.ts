@@ -3,15 +3,15 @@
  *
  * Surface: "health". Provider: OpenAI via @aissisted/jeffrey. Persona:
  * the canonical British Jeffrey (system prompt + voice guard shared with
- * investor / onboarding / brand surfaces). Data path and intent routing are
- * preserved from the production Anthropic implementation.
+ * investor / onboarding / brand surfaces). Data path and intent routing
+ * preserved from the original Anthropic implementation.
  *
- * Rollback posture: if OPENAI_API_KEY is unset OR JEFFREY_BRAIN=anthropic is
- * set, we fall back to the Anthropic path. The rollback route is used only
- * during transition — the default (one canonical brain) is OpenAI.
+ * Degradation: if OPENAI_API_KEY is unset OR the canonical session throws,
+ * the chat falls back to buildFallbackReply (provider-agnostic copy). The
+ * legacy Anthropic rollback was retired once the OpenAI brain soaked on
+ * canonical — there is no second provider in this code path anymore.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import {
   createJeffreySession,
   noopMemoryAdapter,
@@ -33,34 +33,6 @@ import { getLatestHealthState } from "./analysis.service.js";
 import { logSupplement, getAdherenceScore } from "./adherence.service.js";
 import { getBiomarkerTrends, type BiomarkerTrendRecord } from "./trends.service.js";
 import { dbMemoryAdapter } from "./jeffrey-memory.adapter.js";
-
-// ─── Transition rollback flag ────────────────────────────────────────────
-// Default brain is the canonical OpenAI Jeffrey. Flipping JEFFREY_BRAIN to
-// "anthropic" reverts to the legacy Claude code path. Remove once the
-// migration has soaked for a full release cycle.
-const USE_CANONICAL =
-  (process.env.JEFFREY_BRAIN ?? "openai").toLowerCase() !== "anthropic" &&
-  config.openaiApiKey.length > 0;
-
-// ─── Legacy Anthropic client (retained for rollback) ─────────────────────
-const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
-
-// Legacy system prompt — kept only for the Anthropic fallback path.
-const LEGACY_JEFFREY_SYSTEM = `You are Jeffrey, the AI health concierge for Aissisted. You are warm, clear, and evidence-based.
-
-Your role:
-- Help users understand their health data and supplement protocols
-- Answer questions about biomarkers, supplements, and wellness
-- Generate or explain supplement stacks when asked
-- Ask clarifying questions when more context would improve your recommendation
-- Never diagnose medical conditions or replace a physician
-- Always cite the physiological rationale for recommendations
-
-Tone: Knowledgeable, encouraging, specific. Not preachy or generic.
-
-If the user asks to generate a protocol, tell them you're running the analysis and that the results will appear in their dashboard.
-If they ask about a specific supplement, explain the mechanism, evidence, and timing.
-If they ask about a biomarker, explain the reference range, what it indicates, and what affects it.`;
 
 export interface JeffreyChatResult {
   reply: string;
@@ -188,27 +160,19 @@ export async function chat(
   const history = await getConversationHistory(conversation.id, 12);
   const priorHistory = dropTrailingUserEcho(history, message);
 
-  // 7. Generate reply — canonical path, or Anthropic fallback for rollback.
-  //    contextInjection feeds ALL intents that produced one (protocol,
-  //    supplement logging, adherence, health state) — not just protocol.
+  // 7. Generate reply — canonical OpenAI path, with a graceful fallback if
+  //    the key is unset (dev, degraded boot). contextInjection feeds ALL
+  //    intents that produced one (protocol, supplement logging, adherence,
+  //    health state) — not just protocol.
   const hasContextInjection = contextInjection.trim().length > 0;
   let reply: string;
 
-  if (USE_CANONICAL) {
+  if (config.openaiApiKey) {
     reply = await askCanonicalHealth({
       userId,
       message,
       userContext,
       contextInjection: hasContextInjection ? contextInjection : "",
-      history: priorHistory,
-      intentType: intent.type,
-    });
-  } else if (config.anthropicApiKey) {
-    reply = await askLegacyAnthropic({
-      message,
-      userContext,
-      contextInjection,
-      hasContextInjection,
       history: priorHistory,
       intentType: intent.type,
     });
@@ -220,7 +184,7 @@ export async function chat(
   await addMessage(conversation.id, "assistant", reply, undefined, {
     protocolTriggered,
     intentType: intent.type,
-    brain: USE_CANONICAL ? "openai" : config.anthropicApiKey ? "anthropic" : "fallback",
+    brain: config.openaiApiKey ? "openai" : "fallback",
   });
 
   return {
@@ -272,74 +236,10 @@ async function askCanonicalHealth(args: CanonicalArgs): Promise<string> {
     const out = await session.ask(finalMessage);
     return out.text || "I couldn't compose a reply just now. Please try again.";
   } catch (err) {
-    // Soft-fail: if OpenAI errors, fall back to the legacy path if available
-    // rather than 500'ing the caller. Logged for observability.
+    // Soft-fail: surface the provider-agnostic fallback so the caller never
+    // gets a 500 for a transient OpenAI hiccup. Logged for observability.
     // eslint-disable-next-line no-console
-    console.warn("[jeffrey] canonical path failed, attempting fallback", err);
-    if (config.anthropicApiKey) {
-      return askLegacyAnthropic({
-        message: args.message,
-        userContext: args.userContext,
-        contextInjection: args.contextInjection,
-        hasContextInjection: args.contextInjection.trim().length > 0,
-        history: args.history,
-        intentType: args.intentType,
-      });
-    }
-    return buildFallbackReply(args.intentType);
-  }
-}
-
-// ─── Legacy path: Anthropic (preserved for rollback) ─────────────────────
-
-interface LegacyArgs {
-  message: string;
-  userContext: string;
-  contextInjection: string;
-  hasContextInjection: boolean;
-  history: Array<{ role: string; content: string }>;
-  intentType: string;
-}
-
-async function askLegacyAnthropic(args: LegacyArgs): Promise<string> {
-  // History already has the current user turn dropped upstream. Append the
-  // current turn explicitly so we control whether contextInjection is
-  // attached (and so it runs for every intent that produced one, not just
-  // protocol generation).
-  const claudeMessages: Anthropic.MessageParam[] = args.history
-    .filter((m) => m.role !== "system")
-    .map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
-
-  const currentUserContent = args.hasContextInjection
-    ? `${args.message}${args.contextInjection}`
-    : args.message;
-  claudeMessages.push({ role: "user", content: currentUserContent });
-
-  try {
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: [
-        {
-          type: "text",
-          text: LEGACY_JEFFREY_SYSTEM,
-          cache_control: { type: "ephemeral" },
-        },
-        {
-          type: "text",
-          text: "\n\nUser context:\n" + args.userContext,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: claudeMessages,
-    });
-    return response.content[0].type === "text"
-      ? response.content[0].text
-      : "I couldn't process that — please try again.";
-  } catch {
+    console.warn("[jeffrey] canonical path failed, using fallback", err);
     return buildFallbackReply(args.intentType);
   }
 }
@@ -473,10 +373,10 @@ function buildUserContext(
 }
 
 function buildFallbackReply(intentType: string): string {
-  // Provider-agnostic copy — this function is used whenever the active
-  // brain fails (canonical OpenAI *or* legacy Anthropic), so we don't name
-  // a specific env var here. Observability + alerting surface the real
-  // cause for operators.
+  // Provider-agnostic copy — used whenever the canonical OpenAI brain is
+  // unavailable (key unset OR a transient session error). Naming a specific
+  // env var here would invert the abstraction; observability surfaces the
+  // real cause for operators.
   const responses: Record<string, string> = {
     greeting:
       "Hello. I'm Jeffrey. The AI layer is briefly unavailable — please try again in a moment.",
