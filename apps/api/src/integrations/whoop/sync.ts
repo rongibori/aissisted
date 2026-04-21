@@ -1,6 +1,6 @@
 import { getLatestRecovery, getLatestSleep } from "./client.js";
 import { recoveryToSignals, sleepToSignals } from "./normalizer.js";
-import { persistRawBiomarkers } from "../../services/biomarker.service.js";
+import { persistRawBiomarkers, type BiomarkerEntry } from "../../services/biomarker.service.js";
 import { maybeReanalyze } from "../../services/analysis.service.js";
 
 export async function syncWhoopForUser(userId: string): Promise<number> {

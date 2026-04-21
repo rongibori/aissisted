@@ -272,8 +272,8 @@ function detectSignals(
 
     const improved =
       (newerStatus === "optimal" && olderStatus !== "optimal") ||
-      (newerStatus === "high" && delta < 0 && newerStatus !== "optimal") ||
-      (newerStatus === "low" && delta > 0 && newerStatus !== "optimal");
+      (newerStatus === "high" && delta < 0 && olderStatus !== "optimal") ||
+      (newerStatus === "low" && delta > 0 && olderStatus !== "optimal");
 
     if (worsened) {
       signals.push({

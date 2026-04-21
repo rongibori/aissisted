@@ -91,6 +91,19 @@ export async function getBiomarkers(
  * Bulk-insert biomarker entries, silently skipping constraint violations
  * (e.g. duplicate data from repeated integration syncs).
  */
+export type BiomarkerEntry = {
+  name: string;
+  value: number;
+  unit: string;
+  source: string;
+  measuredAt: string;
+  referenceRangeLow?: number;
+  referenceRangeHigh?: number;
+  labPanelName?: string;
+  abnormalFlag?: string;
+  confidence?: number;
+};
+
 export async function persistRawBiomarkers(
   userId: string,
   entries: Array<{

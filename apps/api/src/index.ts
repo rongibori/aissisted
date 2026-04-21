@@ -14,8 +14,7 @@ import { integrationsRoutes } from "./routes/integrations.js";
 import { adherenceRoutes } from "./routes/adherence.js";
 import { healthStateRoutes } from "./routes/health-state.js";
 import { startScheduler } from "./scheduler.js";
-import { db, schema } from "@aissisted/db";
-import { migrate } from "drizzle-orm/libsql/migrator";
+import { db, schema, sql, migrate } from "@aissisted/db";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -54,7 +53,7 @@ await registerAuditLog(app);
 app.get("/health", async (_request, reply) => {
   let dbStatus = "ok";
   try {
-    await db.run({ sql: "SELECT 1", args: [] });
+    await db.run(sql`SELECT 1`);
   } catch {
     dbStatus = "error";
   }

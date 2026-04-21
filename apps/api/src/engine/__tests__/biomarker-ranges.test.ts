@@ -16,6 +16,8 @@ describe("getRangeStatus", () => {
       expect(getRangeStatus("vitamin_d_ng_ml", 110).status).toBe("high");
     });
 
+    it("returns isCritical=true when critically low", () => {
+      expect(getRangeStatus("vitamin_d_ng_ml", 5).isCritical).toBe(true);
     });
 
     it("returns isCritical=true when critically high", () => {
