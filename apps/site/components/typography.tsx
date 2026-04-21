@@ -1,4 +1,4 @@
-import type { ElementType, ReactNode } from "react";
+import type { CSSProperties, ElementType, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -18,19 +18,28 @@ import { cn } from "@/lib/cn";
  *
  * Every role is a component here so we never hand-wire font-family/weight
  * at the call site. That keeps the palette of choices narrow and stops drift.
+ *
+ * Pass-through DOM props supported: `id`, `style`. These are common and harmless;
+ * any layout-grade transition or aria-labelledby anchor benefits from them.
  */
 
 type Props = {
   as?: ElementType;
   className?: string;
   children: ReactNode;
+  /** Optional inline style — used for CSS transitions / vars. */
+  style?: CSSProperties;
+  /** Optional DOM id — useful when a heading is the aria-labelledby target. */
+  id?: string;
 };
 
 // ─── Headings ─────────────────────────────────────────────────────────────
 
-export function H1({ as: As = "h1", className, children }: Props) {
+export function H1({ as: As = "h1", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-display font-bold",
         "text-4xl md:text-5xl lg:text-6xl",
@@ -44,9 +53,11 @@ export function H1({ as: As = "h1", className, children }: Props) {
   );
 }
 
-export function H2({ as: As = "h2", className, children }: Props) {
+export function H2({ as: As = "h2", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-display font-bold",
         "text-3xl md:text-4xl lg:text-5xl",
@@ -60,9 +71,11 @@ export function H2({ as: As = "h2", className, children }: Props) {
   );
 }
 
-export function H3({ as: As = "h3", className, children }: Props) {
+export function H3({ as: As = "h3", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-display font-semibold",
         "text-2xl md:text-3xl lg:text-4xl",
@@ -76,9 +89,11 @@ export function H3({ as: As = "h3", className, children }: Props) {
   );
 }
 
-export function H4({ as: As = "h4", className, children }: Props) {
+export function H4({ as: As = "h4", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-display font-semibold",
         "text-xl md:text-2xl lg:text-3xl",
@@ -94,9 +109,11 @@ export function H4({ as: As = "h4", className, children }: Props) {
 
 // ─── Body ─────────────────────────────────────────────────────────────────
 
-export function Body({ as: As = "p", className, children }: Props) {
+export function Body({ as: As = "p", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-body font-normal",
         "text-base md:text-lg",
@@ -109,9 +126,11 @@ export function Body({ as: As = "p", className, children }: Props) {
   );
 }
 
-export function Lede({ as: As = "p", className, children }: Props) {
+export function Lede({ as: As = "p", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-body font-normal",
         "text-lg md:text-xl",
@@ -126,9 +145,11 @@ export function Lede({ as: As = "p", className, children }: Props) {
 
 // ─── UI + Data ────────────────────────────────────────────────────────────
 
-export function UILabel({ as: As = "span", className, children }: Props) {
+export function UILabel({ as: As = "span", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-system font-medium",
         "text-xs uppercase tracking-[0.18em]",
@@ -141,9 +162,11 @@ export function UILabel({ as: As = "span", className, children }: Props) {
   );
 }
 
-export function DataValue({ as: As = "span", className, children }: Props) {
+export function DataValue({ as: As = "span", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-system font-semibold",
         "tabular-nums",
@@ -158,9 +181,11 @@ export function DataValue({ as: As = "span", className, children }: Props) {
 
 // ─── Emotional accent (rare — one per page max, never UI) ────────────────
 
-export function ValueProp({ as: As = "p", className, children }: Props) {
+export function ValueProp({ as: As = "p", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-accent font-normal",
         "text-2xl md:text-3xl",
@@ -175,9 +200,11 @@ export function ValueProp({ as: As = "p", className, children }: Props) {
 
 // ─── Jeffrey ──────────────────────────────────────────────────────────────
 
-export function JeffreyText({ as: As = "p", className, children }: Props) {
+export function JeffreyText({ as: As = "p", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-body font-normal",
         "text-base md:text-lg",
@@ -190,9 +217,11 @@ export function JeffreyText({ as: As = "p", className, children }: Props) {
   );
 }
 
-export function JeffreySystem({ as: As = "span", className, children }: Props) {
+export function JeffreySystem({ as: As = "span", className, children, style, id }: Props) {
   return (
     <As
+      id={id}
+      style={style}
       className={cn(
         "font-system font-normal",
         "text-xs tracking-[0.08em]",
