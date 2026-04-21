@@ -22,6 +22,7 @@ import {
   bytesToBase64,
   getApiWsUrl,
   int16LEToFloat32,
+  readAuthToken,
   requestRealtimeTicket,
 } from "../jeffrey-realtime";
 
@@ -124,6 +125,7 @@ export function useJeffreyRealtime(
   const playbackClockRef = useRef<number>(0);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const currentAssistantTurnRef = useRef<string | null>(null);
+  const currentUserTurnRef = useRef<string | null>(null);
   const teardownRef = useRef<(() => void) | null>(null);
 
   /* ----------------------------------------------------------------------
@@ -309,6 +311,7 @@ export function useJeffreyRealtime(
     teardownRef.current?.();
     teardownRef.current = null;
     currentAssistantTurnRef.current = null;
+    currentUserTurnRef.current = null;
     setIsAssistantSpeaking(false);
     setState((prev) => (prev === "error" ? prev : "closed"));
   }, []);
@@ -339,11 +342,10 @@ export function useJeffreyRealtime(
     setState("connecting");
 
     /* ---- Mic graph ---------------------------------------------------- */
-    // Track partially-acquired resources so we can unwind cleanly on failure.
-    let audioCtx: AudioContext | null = null;
-    let micStream: MediaStream | null = null;
-    let workletNode: AudioWorkletNode | null = null;
-    let micSource: MediaStreamAudioSourceNode | null = null;
+    let audioCtx: AudioContext;
+    let micStream: MediaStream;
+    let workletNode: AudioWorkletNode;
+    let micSource: MediaStreamAudioSourceNode;
     try {
       audioCtx = new AudioContext({ sampleRate: 24000 });
       await audioCtx.audioWorklet.addModule(workletPath);
@@ -364,82 +366,23 @@ export function useJeffreyRealtime(
       silentSink.gain.value = 0;
       workletNode.connect(silentSink).connect(audioCtx.destination);
     } catch (err) {
-      // Partial setup — release any resources we did acquire before bailing.
-      try { workletNode?.disconnect(); } catch { /* noop */ }
-      try { micSource?.disconnect(); } catch { /* noop */ }
-      if (micStream) {
-        for (const track of micStream.getTracks()) {
-          try { track.stop(); } catch { /* noop */ }
-        }
-      }
-      if (audioCtx) {
-        try { await audioCtx.close(); } catch { /* noop */ }
-      }
       setError(err instanceof Error ? err.message : "Microphone setup failed");
       setState("error");
       return;
     }
 
-    // After a successful try-block, these are all non-null. Narrow for TS.
-    if (!audioCtx || !micStream || !workletNode || !micSource) {
-      setError("Microphone setup failed");
-      setState("error");
-      return;
-    }
-    const audioCtxNN = audioCtx;
-    const micStreamNN = micStream;
-    const workletNodeNN = workletNode;
-    const micSourceNN = micSource;
-
-    audioCtxRef.current = audioCtxNN;
-    micStreamRef.current = micStreamNN;
-    workletNodeRef.current = workletNodeNN;
-    micSourceRef.current = micSourceNN;
+    audioCtxRef.current = audioCtx;
+    micStreamRef.current = micStream;
+    workletNodeRef.current = workletNode;
+    micSourceRef.current = micSource;
     playbackClockRef.current = 0;
 
     /* ---- WebSocket ---------------------------------------------------- */
-    // Use the apiUrl override (if any) as the WS origin so the ticket and
-    // socket land on the same host. Fall back to getApiWsUrl() otherwise.
-    const wsBaseUrl = (() => {
-      if (!apiUrl) return getApiWsUrl();
-      try {
-        const u = new URL(apiUrl);
-        if (u.protocol === "http:") u.protocol = "ws:";
-        else if (u.protocol === "https:") u.protocol = "wss:";
-        return u.toString().replace(/\/$/, "");
-      } catch {
-        return getApiWsUrl();
-      }
-    })();
-    const wsUrl = `${wsBaseUrl}/v1/jeffrey/realtime?ticket=${encodeURIComponent(
+    const wsUrl = `${getApiWsUrl()}/v1/jeffrey/realtime?ticket=${encodeURIComponent(
       ticket,
     )}&surface=${encodeURIComponent(surface)}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
-
-    /* ---- Teardown closure (hoisted so socket handlers can call it) --- */
-    // Idempotent: if the refs have already been cleared, this is a no-op.
-    const teardown = () => {
-      if (!audioCtxRef.current && !wsRef.current) return;
-      setState((prev) => (prev === "closed" || prev === "error" ? prev : "closing"));
-      try { workletNodeNN.port.onmessage = null; } catch { /* noop */ }
-      try { workletNodeNN.disconnect(); } catch { /* noop */ }
-      try { micSourceNN.disconnect(); } catch { /* noop */ }
-      for (const track of micStreamNN.getTracks()) {
-        try { track.stop(); } catch { /* noop */ }
-      }
-      cancelAllPlayback();
-      try { audioCtxNN.close(); } catch { /* noop */ }
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        try { ws.close(1000, "client stop"); } catch { /* noop */ }
-      }
-      wsRef.current = null;
-      audioCtxRef.current = null;
-      workletNodeRef.current = null;
-      micStreamRef.current = null;
-      micSourceRef.current = null;
-    };
-    teardownRef.current = teardown;
 
     ws.onopen = () => {
       setState("ready");
@@ -456,28 +399,20 @@ export function useJeffreyRealtime(
     };
 
     ws.onerror = () => {
-      // Socket failure — tear down mic graph so we don't leak an active
-      // AudioContext / hot microphone after the connection dies.
-      teardown();
       setError("Realtime socket error");
       setState("error");
     };
 
     ws.onclose = (ev) => {
-      // 1000 = normal client-initiated close. Our own stop()/teardown calls
-      // produce this code; in that case state is already closing/closed so
-      // don't override it or double-teardown.
-      if (ev.code === 1000) {
-        setState((prev) => (prev === "error" ? prev : "closed"));
-        return;
+      // Don't override an in-flight error state.
+      setState((prev) => (prev === "error" ? prev : "closed"));
+      if (ev.code >= 4000 && ev.code < 5000) {
+        setError(ev.reason || `Socket closed (${ev.code})`);
       }
-      teardown();
-      setError(ev.reason || `Socket closed (${ev.code})`);
-      setState("error");
     };
 
     /* ---- Mic → WS bridge --------------------------------------------- */
-    workletNodeNN.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
+    workletNode.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       if (ws.readyState !== WebSocket.OPEN) return;
       const base64 = bytesToBase64(event.data);
       ws.send(
@@ -486,6 +421,46 @@ export function useJeffreyRealtime(
       setState((prev) =>
         prev === "ready" || prev === "speaking" ? "listening" : prev,
       );
+    };
+
+    /* ---- Teardown closure ------------------------------------------- */
+    teardownRef.current = () => {
+      setState("closing");
+      try {
+        workletNode.port.onmessage = null;
+      } catch {
+        /* noop */
+      }
+      try {
+        workletNode.disconnect();
+      } catch {
+        /* noop */
+      }
+      try {
+        micSource.disconnect();
+      } catch {
+        /* noop */
+      }
+      for (const track of micStream.getTracks()) track.stop();
+      cancelAllPlayback();
+      try {
+        audioCtx.close();
+      } catch {
+        /* noop */
+      }
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        try {
+          ws.close(1000, "client stop");
+        } catch {
+          /* noop */
+        }
+      }
+
+      wsRef.current = null;
+      audioCtxRef.current = null;
+      workletNodeRef.current = null;
+      micStreamRef.current = null;
+      micSourceRef.current = null;
     };
   }, [
     apiUrl,
