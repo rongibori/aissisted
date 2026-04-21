@@ -1,11 +1,33 @@
 import "dotenv/config";
 
+/**
+ * Parse ALLOWED_ORIGINS into a clean string[] for CORS.
+ *
+ * Accepts a comma-separated list of origins. Whitespace is trimmed. Empty
+ * entries are dropped. Example:
+ *
+ *   ALLOWED_ORIGINS="https://aissisted.com,https://app.aissisted.com"
+ *
+ * In dev (NODE_ENV !== "production") we fall back to "any origin" to keep
+ * localhost iteration frictionless.
+ */
+function parseAllowedOrigins(): string[] {
+  const raw = process.env.ALLOWED_ORIGINS ?? "";
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 export const config = {
   port: parseInt(process.env.PORT ?? "4000", 10),
   host: process.env.API_HOST ?? "0.0.0.0",
   jwtSecret: process.env.JWT_SECRET ?? "change-me-in-production",
   nodeEnv: process.env.NODE_ENV ?? "development",
   isDev: (process.env.NODE_ENV ?? "development") === "development",
+
+  /** Origins allowed to call the API in production. Empty list = any. */
+  allowedOrigins: parseAllowedOrigins(),
 
   // Jeffrey brain (canonical = OpenAI via @aissisted/jeffrey).
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",

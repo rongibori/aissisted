@@ -29,8 +29,16 @@ const app = Fastify({
 });
 
 // ─── Plugins ────────────────────────────────────────────
+// CORS — dev is permissive; prod uses ALLOWED_ORIGINS (comma-separated).
+// Hard fallback to the canonical domain so a misconfigured deploy still works
+// for the marketing site without opening everything up.
+const corsOrigins = config.isDev
+  ? true
+  : config.allowedOrigins.length > 0
+    ? config.allowedOrigins
+    : ["https://aissisted.com"];
 await app.register(cors, {
-  origin: config.isDev ? true : ["https://aissisted.com"],
+  origin: corsOrigins,
   credentials: true,
 });
 
