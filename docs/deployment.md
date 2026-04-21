@@ -219,3 +219,19 @@ Every deploy creates a new immutable build on each platform. Rollback is one cli
 - **Rotate `JWT_SECRET` on any suspected leak** — all existing sessions and realtime tickets invalidate immediately. Users have to log in again. That's the feature.
 - **Realtime ticket TTL is 30s** (`apps/api/src/routes/jeffrey-realtime.ts`). Short-lived by design. Do not extend without reviewing the threat model.
 - **CORS in prod is an allowlist, not a wildcard.** Every new frontend origin must be added explicitly.
+- **Access logs redact the `ticket` query param.** The Fastify request serializer in `apps/api/src/index.ts` rewrites `?ticket=<JWT>` to `?ticket=REDACTED` before logging. If you fork the logger config, preserve that rule.
+
+---
+
+## 11. Before live users — voice/PHI checklist
+
+The voice modality (`/chat` → Voice button, `/jeffrey-live` demo) routes audio transcripts through OpenAI Realtime. That is a newer OpenAI surface — treat these as blocking items before letting real users talk to Jeffrey about health.
+
+- [ ] **OpenAI BAA scope.** Confirm in writing that your BAA covers the Realtime product (not just the Chat Completions / Responses APIs). If it doesn't, either (a) delay the voice path until covered, or (b) gate voice behind a pre-session banner clarifying non-PHI use only, and audit the system prompt so Jeffrey redirects PHI-adjacent volunteered content back to typed chat.
+- [ ] **Audit retention.** OpenAI Realtime does not persist audio server-side under normal zero-retention arrangements — verify yours is active. Your own side: transcripts are React-state-only and never hit the Aissisted database (by design, see PR #48).
+- [ ] **Rotate `JWT_SECRET` once** before first real user. The dev-fallback secret should never see production traffic.
+- [ ] **Set `TOKEN_ENCRYPTION_KEY`** (AES-256-GCM base64, from `openssl rand -base64 32`). Required for OAuth2 token encryption at rest.
+- [ ] **Confirm `ALLOWED_ORIGINS`** is exactly the set of hostnames you expect — no trailing commas, no stale preview URLs.
+- [ ] **Render log retention policy.** Render's default access logs include request URLs. The serializer above strips tickets, but if you add another token-in-URL pattern, extend the redaction.
+- [ ] **Kill switch.** Decide in advance: if voice costs or abuse spike, how do you disable it in < 5 minutes? (Simplest: remove the `/v1/jeffrey/realtime*` routes or flip an env flag. Pick one and document.)
+- [ ] **Medical disclaimer.** Voice panel already shows "Not medical advice." Verify it's visible on every entry point.

@@ -25,6 +25,23 @@ import { fileURLToPath } from "url";
 const app = Fastify({
   logger: {
     level: config.isDev ? "info" : "warn",
+    // Redact short-lived auth tokens that ride in query strings (e.g. the
+    // Jeffrey Realtime `ticket=<JWT>` on the WS upgrade URL). A log-read
+    // compromise would otherwise yield usable tickets for their TTL.
+    serializers: {
+      req(req: { method?: string; url?: string; id?: string; hostname?: string }) {
+        const url =
+          typeof req.url === "string"
+            ? req.url.replace(/([?&])ticket=[^&]+/g, "$1ticket=REDACTED")
+            : req.url;
+        return {
+          method: req.method,
+          url,
+          hostname: req.hostname,
+          id: req.id,
+        };
+      },
+    },
   },
 });
 
