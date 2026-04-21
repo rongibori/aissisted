@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import Anthropic from "@anthropic-ai/sdk";
+import { getOpenAIClient } from "@aissisted/jeffrey";
 import { db, schema, eq } from "@aissisted/db";
 import { config } from "../config.js";
 import { getLatestBiomarkers } from "./biomarker.service.js";
@@ -19,7 +19,12 @@ import {
 } from "../engine/interactions.js";
 import { gte, and } from "@aissisted/db";
 
-const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+// Protocol synthesis runs on the canonical OpenAI brain. gpt-4o because this
+// is user-facing copy (the summary appears on the dashboard) and worth the
+// marginally higher token cost for a better narrative.
+const PROTOCOL_SYNTHESIS_MODEL = "gpt-4o";
+
+const PROTOCOL_SYSTEM_PROMPT = `You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any additional warnings or cautions specific to this user's profile (beyond those already listed). Respond in JSON: { "summary": "...", "warnings": ["..."] }`;
 
 export async function generateProtocol(userId: string) {
   // 1. Gather all signals
@@ -117,23 +122,27 @@ export async function generateProtocol(userId: string) {
       .flatMap((i) => [i.supplement, i.interactsWith])
   );
 
-  // 5. Synthesize with Claude
+  // 5. Synthesize with the canonical OpenAI brain.
   let summary = "";
   let warnings: string[] = [...interactionWarnings, ...allergyWarnings];
 
-  if (config.anthropicApiKey) {
+  if (config.openaiApiKey) {
     try {
-      const message = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+      const openai = getOpenAIClient({
+        OPENAI_API_KEY: config.openaiApiKey,
+        OPENAI_JEFFREY_MODEL: PROTOCOL_SYNTHESIS_MODEL,
+        OPENAI_JEFFREY_REALTIME_MODEL: "gpt-4o-realtime-preview",
+        ELEVENLABS_MODEL: "eleven_flash_v2_5",
+        JEFFREY_DEFAULT_TEMPERATURE: 0.4,
+        JEFFREY_DEFAULT_MAX_TOKENS: 800,
+      });
+      const completion = await openai.chat.completions.create({
+        model: PROTOCOL_SYNTHESIS_MODEL,
         max_tokens: 1024,
-        system: [
-          {
-            type: "text",
-            text: "You are Aissisted's protocol synthesis engine. Given a user's health data and a set of ranked supplement recommendations, write a concise, personalized protocol summary (3-4 sentences). Focus on the highest-impact interventions and explain the physiological rationale in plain language. Also identify any additional warnings or cautions specific to this user's profile (beyond those already listed). Respond in JSON: { \"summary\": \"...\", \"warnings\": [\"...\"] }",
-            cache_control: { type: "ephemeral" },
-          },
-        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
         messages: [
+          { role: "system", content: PROTOCOL_SYSTEM_PROMPT },
           {
             role: "user",
             content: JSON.stringify({ ...signalsSummary, interactionWarnings }),
@@ -141,14 +150,17 @@ export async function generateProtocol(userId: string) {
         ],
       });
 
-      const raw =
-        message.content[0].type === "text" ? message.content[0].text : "";
-      const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+      const raw = completion.choices[0]?.message?.content ?? "{}";
+      const parsed = JSON.parse(raw) as {
+        summary?: string;
+        warnings?: string[];
+      };
       summary = parsed.summary ?? "";
-      // Merge interaction warnings with any additional Claude warnings (deduplicated)
-      const claudeWarnings: string[] = parsed.warnings ?? [];
+      // Merge interaction warnings with any additional model-emitted warnings
+      // (deduplicated).
+      const modelWarnings: string[] = parsed.warnings ?? [];
       const allWarnings = [...interactionWarnings];
-      for (const w of claudeWarnings) {
+      for (const w of modelWarnings) {
         if (!allWarnings.includes(w)) allWarnings.push(w);
       }
       warnings = allWarnings;
@@ -209,7 +221,7 @@ export async function generateProtocol(userId: string) {
   writeAuditLog(userId, "protocol.generated", "protocols", protocolId, {
     recommendationCount: topRecs.length,
     warningCount: warnings.length,
-    hasClaude: !!config.anthropicApiKey,
+    synthesisBrain: config.openaiApiKey ? "openai" : "fallback",
   }).catch(() => {});
 
   return getProtocol(protocolId);
