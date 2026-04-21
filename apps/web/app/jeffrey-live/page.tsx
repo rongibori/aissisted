@@ -11,7 +11,7 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/auth-context";
+import { AuthProvider, useAuth } from "../../lib/auth-context";
 import { useJeffreyRealtime } from "../../lib/hooks/use-jeffrey-realtime";
 import { Button, Card, Badge, Spinner } from "../../components/ui";
 
@@ -27,7 +27,7 @@ const STATE_LABEL: Record<string, string> = {
   error: "Error",
 };
 
-export default function JeffreyLivePage() {
+function JeffreyLivePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const {
@@ -132,5 +132,13 @@ export default function JeffreyLivePage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function JeffreyLivePageWrapper() {
+  return (
+    <AuthProvider>
+      <JeffreyLivePage />
+    </AuthProvider>
   );
 }
