@@ -1,6 +1,7 @@
 import { cn } from "@/lib/cn";
 import { MetricCard } from "@/components/metric-card";
 import { Body, UILabel } from "@/components/typography";
+import { KineticNumber } from "./kinetic-number";
 
 /**
  * ProjectionsGrid — illustrative, not a pro forma.
@@ -9,6 +10,9 @@ import { Body, UILabel } from "@/components/typography";
  * "illustrative" so we never promise a number on the marketing surface.
  * The true model lives in the data room. This grid exists to give Jeffrey
  * a surface to reason over when asked — not to pitch a number.
+ *
+ * v2: numbers count up on first view via KineticNumber for a luxury-tech
+ * cue that "this is live, this is data" — without claiming forecasted truth.
  */
 
 type Row = {
@@ -25,57 +29,54 @@ const ROWS: Row[] = [
     label: "Year 1 · active members",
     value: "5–8",
     unit: "k",
-    context:
-      "Paid, protocol-active. Illustrative. Waitlist depth informs range.",
+    context: "Paid, protocol-active. Range governed by waitlist depth.",
   },
   {
     id: "arpu",
     label: "Year 1 · blended ARPU",
     value: "$2.4",
     unit: "k",
-    context:
-      "Supplement subscription + diagnostics pass-through. Illustrative.",
+    context: "Subscription + diagnostics pass-through. Illustrative.",
   },
   {
     id: "gm",
     label: "Steady-state gross margin",
     value: "62–68",
     unit: "%",
-    context:
-      "Formulation + fulfillment at scale. Excludes diagnostics pass-through.",
+    context: "Formulation + fulfillment at scale. Excludes pass-through.",
   },
   {
     id: "payback",
     label: "CAC payback",
     value: "< 9",
     unit: "mo",
-    context:
-      "Targeted. Assumes concierge-led onboarding and referred-in members.",
+    context: "Concierge-led onboarding. Referred-in members.",
   },
   {
     id: "retention",
     label: "12-month retention",
     value: "> 70",
     unit: "%",
-    context:
-      "Target. Personalization + adherence loop drive the compounding.",
+    context: "Personalization + adherence loop. The compounding edge.",
   },
   {
     id: "y3-arr",
     label: "Year 3 · ARR (illustrative)",
     value: "$60–90",
     unit: "M",
-    context:
-      "Scenario frame. Real model and drivers live in the data room.",
+    context: "Scenario frame. Drivers and cohorts live in the data room.",
   },
 ];
 
 export function ProjectionsGrid({ className }: { className?: string }) {
   return (
-    <div className={cn("flex flex-col gap-8", className)}>
-      <UILabel className="text-white/55">
-        Illustrative — not a forecast · see data room for the model
-      </UILabel>
+    <div className={cn("flex flex-col gap-10", className)}>
+      <div className="flex items-center gap-3">
+        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-data" />
+        <UILabel className="text-data">
+          Illustrative — not a forecast · model in the data room
+        </UILabel>
+      </div>
       <ul
         className={cn(
           "grid gap-5",
@@ -87,7 +88,7 @@ export function ProjectionsGrid({ className }: { className?: string }) {
             <MetricCard
               tone="inverse"
               label={r.label}
-              value={r.value}
+              value={<KineticNumber value={r.value} />}
               unit={r.unit}
               context={r.context}
             />
@@ -95,9 +96,9 @@ export function ProjectionsGrid({ className }: { className?: string }) {
         ))}
       </ul>
       <Body className="text-white/65 text-sm max-w-2xl">
-        Projections are placeholders for narrative framing on this page. The
-        underlying unit economics, cohort modeling, and scenarios are available
-        in the data room on request.
+        Public-surface projections are framed for narrative. The cohort model,
+        unit economics, and sensitivity ranges live in the data room — sent
+        after a short review.
       </Body>
     </div>
   );

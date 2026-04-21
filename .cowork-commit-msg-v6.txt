@@ -1,0 +1,135 @@
+feat(investor-room): v6 — scoring + email + admin pipeline + allocation urgency + calendar + copy tighten
+
+Upgrades v5 from a cinematic capture surface into a full conversion
+system. Every lead is scored hot/warm/cold, fires two transactional
+emails (investor confirmation + founder notification), and lands in a
+hidden admin pipeline dashboard. Adds allocation-urgency logic,
+direct calendar booking, and a billionaire-grade founder video frame.
+
+Investor scoring (hot / warm / cold)
+- New apps/site/lib/investor-scoring.ts — deterministic, explainable
+  scoreLead() with signal weights: check size (strongest), intent,
+  firm-present, note length (≥40, ≥200). Thresholds are intentionally
+  high so "hot" must be earned.
+- Score is pushed to HubSpot custom properties (aissisted_score,
+  aissisted_score_label, aissisted_score_points) and Airtable columns
+  (Score, Score Points) on every capture.
+
+Transactional email fan-out (Resend)
+- New apps/site/lib/email.ts — sendInvestorConfirmation() and
+  sendFounderNotification(). Plain-text only (investor inboxes strip
+  HTML heavily). British-elite brand voice, no exclamation marks, no
+  over-explanation.
+- Investor confirmation is intent-specific (six copy variants) and
+  signed from Ron.
+- Founder notification carries the score bucket in the subject line
+  ([HOT] / [WARM] / [cold]) with the full lead context and score
+  reasoning in the body. Reply-to is set to the investor's email.
+- Env-gated: RESEND_API_KEY + INVESTOR_FROM_EMAIL +
+  FOUNDER_NOTIFY_EMAIL. If unset, the emails are logged as skipped
+  and the endpoint still returns 202.
+
+Allocation urgency (honest scarcity)
+- New GET /api/investor/allocation-status — reads
+  INVESTOR_COHORT_SEATS_TOTAL and INVESTOR_COHORT_SEATS_FILLED from
+  env, returns remaining seats and a state flag: open / nearly-full /
+  closed / unconfigured.
+- New AllocationUrgency component — surfaces a subtle seats-remaining
+  chip directly above the HardCTA band. Tone scales with urgency
+  (aqua dot for open, brand-red pulse for nearly-full, hairline for
+  closed).
+- If env is unset, renders nothing. NO fabricated scarcity.
+
+Calendar booking integration
+- New FounderCalendar component — reads
+  NEXT_PUBLIC_FOUNDER_CALENDAR_URL and surfaces a secondary
+  "book-direct" CTA inside the capture modal for founder-call /
+  founder-session / allocation intents.
+- Also surfaces as the primary CTA on the FounderVideo placeholder
+  when the video is still in production — converting a "watch" beat
+  into a "book" beat while the video is pending.
+- Opens in new tab, honest "no cookies set on aissisted.com" note.
+
+Hidden admin pipeline dashboard
+- New /_/pipeline — server component, token-gated via
+  ADMIN_PIPELINE_TOKEN. Underscore-prefix + metadata:{robots:{
+  index:false, follow:false }} keeps it out of sitemaps and bots.
+- Seeds the token via ?token=... once, then sets an httpOnly +
+  secure + lax cookie so the URL stays clean.
+- Renders: Hot / Warm / Cold / Total summary bar, plus the latest
+  100 Airtable leads sorted by Received At desc, with score chips,
+  mailto links, and formatted timestamps.
+- If ADMIN_PIPELINE_TOKEN is unset, the whole surface 404s.
+- Readonly. Reads Airtable only. Never writes.
+- New GET /api/investor/admin/leads — token-validated Airtable
+  proxy that powers the dashboard.
+
+Billionaire-grade FounderVideo v2
+- Cinematic letterbox frame: 1px ring on black canvas, corner ticks
+  (cinema framing marks), oversized drop shadow, radial vignette
+  behind the whole section, and a "TC · 00:00 → 01:30 · one take"
+  timecode strip below the frame.
+- Placeholder upgraded: aqua glow pool, horizontal scan line,
+  heartbeat dot with glow, "filed privately" caption.
+- Primary book-a-call CTA appears on the left rail when CAL_URL is
+  set but VIDEO_URL is not — the surface pivots from "watch" to
+  "book" until the video lands.
+
+Copy tighten (world-class investor level)
+- HardCTA tiers: "Request allocation." → "Take your seat." · "Book a
+  founder call." → "Thirty minutes. On camera." · "Join the
+  strategic waitlist." → "Hold a seat for later."
+- INTENT_COPY modal copy rewritten across all six intents. Shorter
+  verbs, tighter framing, "the round is kept small on purpose",
+  "working session — not a pitch", "every reply comes from the
+  founder".
+- Chapter 08 heading: "The next step is a conversation. Not a term
+  sheet." → "This isn't a pitch. It's an invitation."
+- Three-ways-in subhead: "Confirmation hits your inbox inside a
+  minute. The real reply lands inside a business day."
+
+Lead route hardening
+- /api/investor/lead now scores every lead, logs the score + reasons
+  in the authoritative server log, fans out in parallel to HubSpot
+  + Airtable + Resend (investor) + Resend (founder), and logs each
+  channel that skipped with a structured reason.
+- Best-effort throughout — a missing env var never throws, never
+  blocks the 202, never breaks the UX.
+
+Brand discipline
+- No fabricated metrics. AllocationUrgency is honest-or-silent.
+  FounderVideo ships a designed placeholder, not a broken player.
+- No emoji. No "AI-powered". Aqua within the 8% accent budget.
+- All motion respects prefers-reduced-motion.
+
+Data isolation
+- Investor console + every CTA endpoint use surface:"investor" with
+  noopMemoryAdapter. Admin dashboard reads Airtable only — never
+  writes, never aggregates PHI.
+
+Verification
+- pnpm -C apps/site typecheck → green (after .next clean)
+- pnpm -C apps/site build     → green
+  /investor-room: 26.0 kB · First Load 128 kB
+  (+1.3 kB vs v5 from scoring, email, calendar, urgency)
+- /api/investor/lead, /api/investor/live-metrics,
+  /api/investor/allocation-status, /api/investor/admin/leads all
+  register as dynamic routes.
+
+Env vars needed in Vercel for full v6 behavior:
+- RESEND_API_KEY                   (sensitive)
+- INVESTOR_FROM_EMAIL              (e.g. "Ron <ron@aissisted.com>")
+- FOUNDER_NOTIFY_EMAIL             (comma-separated list OK)
+- FOUNDER_REPLY_TO_EMAIL           (optional)
+- FOUNDER_EMAIL_SIGNATURE          (optional; plain text, \n-separated)
+- INVESTOR_COHORT_SEATS_TOTAL      (number)
+- INVESTOR_COHORT_SEATS_FILLED     (number)
+- INVESTOR_COHORT_NEARLY_PCT       (optional; default 70)
+- NEXT_PUBLIC_FOUNDER_CALENDAR_URL (optional; controls calendar surface)
+- NEXT_PUBLIC_FOUNDER_CALENDAR_LABEL (optional; defaults to
+  "Book time with the founder")
+- ADMIN_PIPELINE_TOKEN             (sensitive; gates /_/pipeline)
+
+Stacked PR pattern: feat/investor-room-v6 sits on feat/investor-room-v5.
+PR #44 targets feat/investor-room-v5 and auto-retargets on each merge
+step (v5 → v4 → v3 → v2 → v1 → main).
