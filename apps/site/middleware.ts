@@ -11,15 +11,33 @@ import type { NextRequest } from "next/server";
  *
  * This scaffold is a placeholder — it only inspects the cookie's presence.
  * Do NOT treat this as a security boundary until Milestone 7 replaces it.
+ *
+ * Preview bypass:
+ *   · NEXT_PUBLIC_INVESTOR_ROOM_OPEN=1  · open the gate (Vercel preview review)
+ *   · VERCEL_ENV=preview                 · automatically open on preview builds
+ *
+ * The production deploy (VERCEL_ENV=production) never matches either bypass
+ * unless NEXT_PUBLIC_INVESTOR_ROOM_OPEN is explicitly set.
  */
 
 const SESSION_COOKIE = "aissisted_site_session";
+
+function isPreviewOpen(): boolean {
+  if (process.env.NEXT_PUBLIC_INVESTOR_ROOM_OPEN === "1") return true;
+  if (process.env.VERCEL_ENV === "preview") return true;
+  return false;
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Guard gated surfaces only.
   if (!pathname.startsWith("/investor-room")) {
+    return NextResponse.next();
+  }
+
+  // Preview / explicit-open bypass for Ron's review cycle.
+  if (isPreviewOpen()) {
     return NextResponse.next();
   }
 
