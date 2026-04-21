@@ -8,8 +8,9 @@ import "dotenv/config";
  *
  *   ALLOWED_ORIGINS="https://aissisted.com,https://app.aissisted.com"
  *
- * In dev (NODE_ENV !== "production") we fall back to "any origin" to keep
- * localhost iteration frictionless.
+ * Returns an empty array when ALLOWED_ORIGINS is unset or blank. Any
+ * environment-specific permissive CORS behavior is handled outside this
+ * parser (see index.ts, which enables any-origin only when isDev).
  */
 function parseAllowedOrigins(): string[] {
   const raw = process.env.ALLOWED_ORIGINS ?? "";
@@ -26,7 +27,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isDev: (process.env.NODE_ENV ?? "development") === "development",
 
-  /** Origins allowed to call the API in production. Empty list = any. */
+  /** Parsed ALLOWED_ORIGINS entries for CORS. Empty list means none were explicitly configured; index.ts then falls back to the hard-coded production allowlist (["https://aissisted.com"]) unless isDev, which permits any origin. */
   allowedOrigins: parseAllowedOrigins(),
 
   // Jeffrey brain (canonical = OpenAI via @aissisted/jeffrey).
