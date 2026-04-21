@@ -25,12 +25,37 @@ import { fileURLToPath } from "url";
 const app = Fastify({
   logger: {
     level: config.isDev ? "info" : "warn",
+    // Redact short-lived auth tokens that ride in query strings (e.g. the
+    // Jeffrey Realtime `ticket=<JWT>` on the WS upgrade URL). A log-read
+    // compromise would otherwise yield usable tickets for their TTL.
+    serializers: {
+      req(req: { method?: string; url?: string; id?: string; hostname?: string }) {
+        const url =
+          typeof req.url === "string"
+            ? req.url.replace(/([?&])ticket=[^&]+/g, "$1ticket=REDACTED")
+            : req.url;
+        return {
+          method: req.method,
+          url,
+          hostname: req.hostname,
+          id: req.id,
+        };
+      },
+    },
   },
 });
 
 // ─── Plugins ────────────────────────────────────────────
+// CORS — dev is permissive; prod uses ALLOWED_ORIGINS (comma-separated).
+// Hard fallback to the canonical domain so a misconfigured deploy still works
+// for the marketing site without opening everything up.
+const corsOrigins = config.isDev
+  ? true
+  : config.allowedOrigins.length > 0
+    ? config.allowedOrigins
+    : ["https://aissisted.com"];
 await app.register(cors, {
-  origin: config.isDev ? true : ["https://aissisted.com"],
+  origin: corsOrigins,
   credentials: true,
 });
 
