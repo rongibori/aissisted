@@ -125,7 +125,7 @@ function SupplementRow({
   const skipped = log && log.skipped;
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-surface-2 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
       {/* Status indicator */}
       <div
         className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-medium ${

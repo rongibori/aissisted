@@ -64,7 +64,7 @@ function TagInput({
       )}
       <div className="flex gap-2">
         <input
-          className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-ink placeholder-muted text-sm focus:outline-none focus:ring-2 focus:ring-signal"
+          className="flex-1 bg-surface-2 border border-line rounded-lg px-3 py-2 text-ink placeholder-soft text-sm focus:outline-none focus:ring-2 focus:ring-signal"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={placeholder}
@@ -160,9 +160,9 @@ function DangerZone({ router }: { router: ReturnType<typeof useRouter> }) {
             </Button>
             <Button
               type="submit"
+              variant="danger"
               size="sm"
               loading={deleting}
-              className="bg-danger hover:bg-danger/80 border-danger"
             >
               Delete forever
             </Button>

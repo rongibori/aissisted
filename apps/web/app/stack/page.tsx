@@ -31,14 +31,6 @@ interface ProtocolSummary {
   createdAt: string;
 }
 
-const DOMAIN_COLORS: Record<string, string> = {
-  sleep: "text-signal bg-surface-2",
-  inflammation: "text-danger bg-danger-soft",
-  hormones: "text-warn bg-warn-soft",
-  energy: "text-ok bg-ok-soft",
-  cognition: "text-signal bg-surface-2",
-};
-
 function StackPage() {
   const { user, loading } = useAuth();
   const router = useRouter();

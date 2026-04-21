@@ -24,7 +24,7 @@ const WELCOME: Message = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hi! I'm Jeffrey, your Aissisted health concierge. I can help you understand your biomarkers, build a personalized supplement protocol, and answer health questions. What would you like to explore today?",
+    "I'm Jeffrey, your concierge. I read your biomarkers, labs, and daily signals — then build a protocol that's yours alone. Where should we start?",
 };
 
 function formatRelativeTime(iso: string): string {
@@ -210,8 +210,8 @@ function ChatPage() {
                 <button
                   key={conv.id}
                   onClick={() => openConversation(conv.id)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-surface-2 ${
-                    conv.id === conversationId ? "bg-surface-2" : ""
+                  className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-line ${
+                    conv.id === conversationId ? "bg-line-strong" : ""
                   }`}
                 >
                   <p className={`text-xs font-medium truncate ${
@@ -247,7 +247,7 @@ function ChatPage() {
             </div>
             <button
               onClick={newConversation}
-              className="text-xs text-muted hover:text-ink transition-colors px-2 py-1 rounded border border-line hover:border-muted shrink-0"
+              className="text-xs text-muted hover:text-ink transition-colors px-2 py-1 rounded border border-line hover:border-line-strong shrink-0"
             >
               + New
             </button>
@@ -309,7 +309,7 @@ function ChatPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask Jeffrey anything about your health…"
                 rows={1}
-                className="flex-1 bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-muted resize-none focus:outline-none focus:ring-2 focus:ring-signal focus:border-transparent"
+                className="flex-1 bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-soft resize-none focus:outline-none focus:ring-2 focus:ring-signal focus:border-transparent"
                 style={{ maxHeight: "120px" }}
               />
               <Button
