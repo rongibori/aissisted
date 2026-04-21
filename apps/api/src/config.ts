@@ -33,9 +33,11 @@ export const config = {
   // Jeffrey brain (canonical = OpenAI via @aissisted/jeffrey).
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
 
-  // Anthropic — retained for safe rollback of legacy jeffrey.service path and
-  // for the intent parser (Haiku) until that is migrated too. Do not remove
-  // without coordinating with services/intent.ts.
+  // Anthropic — retained ONLY for the rollback code path in
+  // services/jeffrey.service.ts (JEFFREY_BRAIN=anthropic). The intent parser
+  // has been migrated to OpenAI (services/intent.ts) so Haiku is no longer
+  // in the hot path. Safe to delete once the rollback path is retired —
+  // no other consumer reads this key.
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
 
   // Jeffrey voice (ElevenLabs streaming TTS). Optional in dev; when unset the
