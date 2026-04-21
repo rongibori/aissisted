@@ -6,6 +6,7 @@ import { AuthProvider } from "../../lib/auth-context";
 import { Nav } from "../../components/nav";
 import { chat as chatApi } from "../../lib/api";
 import { Button, Spinner } from "../../components/ui";
+import { JeffreyVoicePanel } from "../../components/jeffrey-voice-panel";
 
 interface Message {
   id: string;
@@ -49,6 +50,7 @@ function ChatPage() {
   const [conversations, setConversations] = useState<ConversationMeta[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -246,6 +248,14 @@ function ChatPage() {
               <p className="text-sm font-medium text-ink">Jeffrey</p>
             </div>
             <button
+              onClick={() => setVoiceOpen(true)}
+              className="text-xs text-ink bg-signal/10 hover:bg-signal/20 transition-colors px-2.5 py-1 rounded border border-signal/30 shrink-0 flex items-center gap-1.5"
+              title="Talk to Jeffrey"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+              Voice
+            </button>
+            <button
               onClick={newConversation}
               className="text-xs text-muted hover:text-ink transition-colors px-2 py-1 rounded border border-line hover:border-line-strong shrink-0"
             >
@@ -326,6 +336,9 @@ function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* Voice modality — ephemeral session, no backend persistence */}
+      <JeffreyVoicePanel open={voiceOpen} onClose={() => setVoiceOpen(false)} />
     </>
   );
 }
