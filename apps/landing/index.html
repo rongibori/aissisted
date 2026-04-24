@@ -14,16 +14,12 @@
 <meta property="og:title" content="aissisted — Your Body. Understood."/>
 <meta property="og:description" content="A living system of nutrition, refined daily by your biology, your behavior, and intelligent science. Built from your data. Made only for you."/>
 <meta property="og:url" content="https://aissisted.me/"/>
-<meta property="og:image" content="https://aissisted.me/og-image.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="aissisted — Your Body. Understood."/>
 <meta name="twitter:description" content="A living system of nutrition, refined daily by your biology, your behavior, and intelligent science."/>
-<meta name="twitter:image" content="https://aissisted.me/og-image.png"/>
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png"/>
-<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -652,14 +648,25 @@
   if(!form) return;
   form.addEventListener("submit", function(e){
     e.preventDefault();
-    var email = form.querySelector('input[type="email"]').value.trim();
-    if(!email){ status.textContent = "Enter an email to reserve."; return; }
+    var input = form.querySelector('input[type="email"]');
+    var email = input.value.trim();
+    // Real validation — browser's native email check
+    if(!email || !input.checkValidity() || input.validity.typeMismatch){
+      input.setAttribute("aria-invalid", "true");
+      status.textContent = "Enter a valid email to reserve.";
+      input.focus();
+      return;
+    }
+    input.removeAttribute("aria-invalid");
     status.textContent = "Reserving…";
 
     if(FORM_GUID === "REPLACE_WITH_HUBSPOT_FORM_GUID"){
-      // Failsafe — form not yet wired. Don't lose the signup.
-      console.warn("[aissisted] HubSpot form GUID not set. Signup not delivered.");
-      status.textContent = "You're on the list."; // Optimistic UI; backend pending
+      // Failsafe guard — GUID not configured. Disable the form rather than fake success.
+      console.warn("[aissisted] HubSpot form GUID not set. Waitlist disabled.");
+      status.textContent = "Email signup is not available right now. Please check back soon.";
+      input.disabled = true;
+      form.querySelector('button[type="submit"]').disabled = true;
+      form.setAttribute("aria-disabled", "true");
       return;
     }
 
