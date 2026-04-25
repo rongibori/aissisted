@@ -4,4 +4,4 @@ Disallow: /privacy
 Disallow: /terms
 Disallow: /contact
 
-Sitemap: https://aissisted.me/sitemap.xml
+Sitemap: https://www.aissisted.me/sitemap.xml
