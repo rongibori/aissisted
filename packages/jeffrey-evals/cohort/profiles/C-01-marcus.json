@@ -1,0 +1,157 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-01",
+  "meta": {
+    "persona": "Marcus Tan",
+    "description": "42yo founder, time-starved, values brevity. Healthy baseline, normal labs, WHOOP-only wearable. Represents the modal user for the 'Time-Starved Achiever' archetype. Used as the baseline for happy-path evals.",
+    "primaryStressTest": "Baseline correctness — Jeffrey must be tight, on-brand, no over-explanation.",
+    "riskFlags": ["adherence-drift-week-3"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-01",
+    "displayName": "Marcus",
+    "sex": "M",
+    "dob": "1983-08-14",
+    "heightCm": 178,
+    "weightKg": 76,
+    "createdAt": "2026-01-15T10:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["energy", "focus"],
+    "demographics": {
+      "ethnicity": "East Asian",
+      "occupation": "Founder/CEO"
+    },
+    "conditions": [],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": [
+      "Sleeps ~6.5h on weekdays, ~7.5h weekends",
+      "Travels internationally 1-2x per month",
+      "Light alcohol use (2-3 drinks per week)",
+      "Cardio 3x/week (running)",
+      "No strength training currently"
+    ]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c01-001",
+      "drawnAt": "2026-01-20T08:00:00Z",
+      "source": "labcorp",
+      "biomarkers": [
+        { "metric": "vitamin_d_25oh", "value": 32, "unit": "ng/mL", "refRange": [30, 100], "status": "normal-low" },
+        { "metric": "ferritin", "value": 145, "unit": "ng/mL", "refRange": [30, 400], "status": "normal" },
+        { "metric": "tsh", "value": 1.8, "unit": "mIU/L", "refRange": [0.4, 4.5], "status": "normal" },
+        { "metric": "vitamin_b12", "value": 480, "unit": "pg/mL", "refRange": [200, 1100], "status": "normal" },
+        { "metric": "magnesium_rbc", "value": 5.4, "unit": "mg/dL", "refRange": [4.2, 6.8], "status": "normal" },
+        { "metric": "omega3_index", "value": 5.2, "unit": "%", "refRange": [8, 12], "status": "low" },
+        { "metric": "hsCRP", "value": 0.6, "unit": "mg/L", "refRange": [0, 1], "status": "normal" },
+        { "metric": "ldl_c", "value": 102, "unit": "mg/dL", "refRange": [0, 100], "status": "borderline" },
+        { "metric": "hdl_c", "value": 52, "unit": "mg/dL", "refRange": [40, 100], "status": "normal" },
+        { "metric": "hba1c", "value": 5.3, "unit": "%", "refRange": [0, 5.7], "status": "normal" }
+      ]
+    }
+  ],
+  "wearables": [
+    {
+      "provider": "whoop",
+      "connectedAt": "2026-01-16T00:00:00Z",
+      "summary": "90 days of synthesized WHOOP data. Avg HRV 58ms (range 45-72). Avg recovery 62%. Avg sleep 6h 30m weekdays. Notable: HRV declined 8% during weeks 6-8 (work travel period), recovered week 9.",
+      "dailyDataRef": "wearables/c-01-whoop-90d.json"
+    }
+  ],
+  "adherence": {
+    "summary": "First 14 days: 92% adherence. Week 3: dropped to 71% (travel). Week 4: recovered to 88%. Last 7 days: 85%.",
+    "logRef": "adherence/c-01-30d.json"
+  },
+  "currentProtocol": {
+    "version": 4,
+    "activatedAt": "2026-04-01T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "vit-d3-2000",
+        "name": "Vitamin D3",
+        "doseAmount": 2000,
+        "doseUnit": "IU",
+        "timing": "am",
+        "rationale": "Baseline 32 ng/mL → low-normal. Target 40-60 ng/mL for energy and immune support.",
+        "confidence": 0.85
+      },
+      {
+        "ingredientId": "omega3-2g",
+        "name": "Omega-3 (EPA+DHA)",
+        "doseAmount": 2000,
+        "doseUnit": "mg",
+        "timing": "with_meal",
+        "rationale": "Omega-3 index 5.2% (low). Target ≥8%. Supports cognitive performance — aligned with focus goal.",
+        "confidence": 0.9
+      },
+      {
+        "ingredientId": "mag-glycinate-200",
+        "name": "Magnesium glycinate",
+        "doseAmount": 200,
+        "doseUnit": "mg",
+        "timing": "pm",
+        "rationale": "Sleep duration <7h on weekdays. Glycinate form for evening dosing without GI effect.",
+        "confidence": 0.7
+      },
+      {
+        "ingredientId": "b-complex-active",
+        "name": "Methylated B-complex",
+        "doseAmount": 1,
+        "doseUnit": "capsule",
+        "timing": "am",
+        "rationale": "Energy goal + travel cadence + alcohol use. B12 normal but supportive.",
+        "confidence": 0.6
+      }
+    ]
+  },
+  "priorConversations": [
+    {
+      "id": "conv-c01-001",
+      "occurredAt": "2026-04-15T07:30:00Z",
+      "channel": "voice",
+      "summary": "Marcus mentioned he prefers evening dosing for anything that's not strictly morning-required because he often skips morning routines when traveling. Confirmed magnesium PM is fine. Asked about taking omega-3 at night — Jeffrey explained either is fine but with-meal preferred.",
+      "extractedFacts": [
+        { "kind": "preference", "content": "Prefers PM dosing when possible due to travel disruption of AM routine", "confidence": 0.95 }
+      ]
+    },
+    {
+      "id": "conv-c01-002",
+      "occurredAt": "2026-04-22T19:00:00Z",
+      "channel": "text",
+      "summary": "Marcus reported feeling more focused since starting omega-3 4 weeks ago. Asked when he'd see lab confirmation. Jeffrey explained ~3 month timeline for omega-3 index to shift meaningfully.",
+      "extractedFacts": [
+        { "kind": "event", "content": "User reports subjective focus improvement on omega-3 protocol", "confidence": 0.8 }
+      ]
+    }
+  ],
+  "memorySeed": [
+    {
+      "kind": "preference",
+      "content": "Prefers concise responses. Skip caveats unless safety-critical.",
+      "source": "onboarding",
+      "createdAt": "2026-01-15T10:15:00Z"
+    },
+    {
+      "kind": "preference",
+      "content": "Prefers PM dosing when travel disrupts AM routine",
+      "source": "jeffrey",
+      "createdAt": "2026-04-15T07:35:00Z"
+    },
+    {
+      "kind": "fact",
+      "content": "Travels internationally 1-2x per month",
+      "source": "onboarding",
+      "createdAt": "2026-01-15T10:18:00Z"
+    },
+    {
+      "kind": "event",
+      "content": "Reported subjective focus improvement on omega-3 protocol week 4",
+      "source": "jeffrey",
+      "createdAt": "2026-04-22T19:05:00Z"
+    }
+  ]
+}

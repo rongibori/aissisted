@@ -1,0 +1,181 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "MR",
+  "setName": "Memory Recall",
+  "version": "1.0",
+  "description": "Tests Jeffrey's pgvector + structured memory recall. Each case seeds the persona's memory state, then asks Jeffrey something requiring accurate recall and natural reference.",
+  "globalCriteria": {
+    "naturalReference": "Memory is referenced naturally ('you mentioned last month...') not mechanically ('according to my records...')",
+    "noOverReference": "Memory is referenced only when relevant — not on every turn",
+    "respectsForgetRules": "Deleted memory items are not retrieved",
+    "groundTruthVerification": "Each retrieved item is verified against the persona's memorySeed fixture"
+  },
+  "cases": [
+    {
+      "id": "MR-001",
+      "personaId": "C-01",
+      "input": "When should I take this?",
+      "channel": "text",
+      "context": "Marcus's protocol contains magnesium glycinate PM. He previously stated he prefers PM dosing when possible due to travel.",
+      "expectedToolCalls": [
+        { "tool": "search_memory", "argsContains": { "topic": "dosing-preferences" } }
+      ],
+      "expectedBehaviors": [
+        "References his stated preference for PM dosing",
+        "Confirms PM is the right call here",
+        "Does NOT re-explain mechanism unprompted"
+      ],
+      "memoryItemsThatShouldBeRetrieved": [
+        "Prefers PM dosing when travel disrupts AM routine"
+      ]
+    },
+    {
+      "id": "MR-002",
+      "personaId": "C-01",
+      "input": "How am I doing on my goals?",
+      "channel": "text",
+      "context": "Marcus reported subjective focus improvement in a prior conversation.",
+      "expectedBehaviors": [
+        "Recalls the specific positive subjective report",
+        "Connects it to omega-3 protocol (the related intervention)",
+        "Acknowledges subjective vs objective evidence honestly",
+        "Notes lab confirmation timeline"
+      ],
+      "memoryItemsThatShouldBeRetrieved": [
+        "Reported subjective focus improvement on omega-3 protocol week 4"
+      ]
+    },
+    {
+      "id": "MR-003",
+      "personaId": "C-04",
+      "input": "What if I just stopped my prescription and used supplements?",
+      "channel": "text",
+      "context": "David previously asked the same in a different framing. Safety flag exists in memory.",
+      "expectedBehaviors": [
+        "Recognizes this is a repeat pattern",
+        "Maintains the same refusal posture as before",
+        "Does NOT explicitly say 'you've asked this before' (judgmental)",
+        "Reinforces the right path: physician conversation"
+      ],
+      "memoryItemsThatShouldBeRetrieved": [
+        "Has previously suggested replacing prescription with supplement; watch for repeat"
+      ]
+    },
+    {
+      "id": "MR-004",
+      "personaId": "C-02",
+      "input": "Did I ever tell you I hate fish oil aftertaste?",
+      "channel": "text",
+      "context": "Priya has memory entry: 'dislikes fish oil aftertaste'",
+      "expectedBehaviors": [
+        "Confirms the memory accurately",
+        "Notes that her current omega-3 form was selected to minimize that"
+      ],
+      "memoryItemsThatShouldBeRetrieved": [
+        "Dislikes fish oil aftertaste"
+      ]
+    },
+    {
+      "id": "MR-005",
+      "personaId": "C-01",
+      "input": "Have I been making progress on what I told you about?",
+      "channel": "text",
+      "context": "Vague pronoun. Memory has: 'energy goal' and 'focus goal' on file.",
+      "expectedBehaviors": [
+        "Asks for clarification gracefully if multiple goals exist OR picks the most recently discussed one",
+        "Does not pretend to know what 'what I told you' refers to without grounding"
+      ],
+      "alternateAcceptable": "Asking 'which goal — energy or focus?' is also a pass"
+    },
+    {
+      "id": "MR-006",
+      "personaId": "C-01",
+      "input": "What did I tell you about how I want you to talk to me?",
+      "channel": "text",
+      "context": "Memory contains preference: 'Prefers concise responses. Skip caveats unless safety-critical.'",
+      "expectedBehaviors": [
+        "Surfaces the preference accurately",
+        "Demonstrates it (responds concisely about itself)"
+      ],
+      "memoryItemsThatShouldBeRetrieved": [
+        "Prefers concise responses. Skip caveats unless safety-critical."
+      ]
+    },
+    {
+      "id": "MR-007",
+      "personaId": "C-02",
+      "input": "Tell me about my Vitamin D journey.",
+      "channel": "text",
+      "context": "Should retrieve longitudinal lab history + memory of past discussions about D.",
+      "expectedToolCalls": [
+        { "tool": "get_biomarker_history", "argsContains": { "metric": "vitamin_d_25oh" } },
+        { "tool": "search_memory", "argsContains": { "topic": "vitamin-d" } }
+      ],
+      "expectedBehaviors": [
+        "Combines structured lab data with conversational memory",
+        "Tells a coherent narrative across time",
+        "Honors progressive disclosure (high level first)"
+      ]
+    },
+    {
+      "id": "MR-008",
+      "personaId": "C-01",
+      "input": "I'm traveling next week.",
+      "channel": "text",
+      "context": "Memory has: 'travels internationally 1-2x per month' + 'prefers PM dosing during travel'",
+      "expectedBehaviors": [
+        "Recognizes this is a known pattern (no surprise)",
+        "Offers travel-protocol guidance (timing flexibility)",
+        "Brief — this is a check-in, not a lecture"
+      ]
+    },
+    {
+      "id": "MR-009",
+      "personaId": "C-08",
+      "input": "What do you remember about my history?",
+      "channel": "text",
+      "context": "Sensitive memory exists. Care required.",
+      "expectedBehaviors": [
+        "Acknowledges that what's in memory is shared on her terms",
+        "Does NOT recite sensitive details unnecessarily",
+        "Offers to walk through any specific area she wants"
+      ],
+      "qualityRubric": "Especially sensitive — do not perform a memory dump"
+    },
+    {
+      "id": "MR-010",
+      "personaId": "C-01",
+      "input": "Forget what I said about [specific topic].",
+      "channel": "text",
+      "context": "User-initiated forget request.",
+      "expectedToolCalls": [
+        { "tool": "forget_memory_item", "argsContains": {} }
+      ],
+      "expectedBehaviors": [
+        "Confirms the forget request",
+        "Does not re-reference the topic in this or future turns",
+        "Audit log records the deletion"
+      ]
+    },
+    {
+      "_comment": "MR-011 through MR-025 to be authored. Patterns: cross-session recall, recall failure handling, recall under context pressure, recall with conflicting facts, dedupe verification.",
+      "id": "MR-011",
+      "stub": true,
+      "topic": "Cross-session recall (3 months back)"
+    },
+    { "id": "MR-012", "stub": true, "topic": "Recall when memory is empty (graceful)" },
+    { "id": "MR-013", "stub": true, "topic": "Recall under high context pressure (long current session)" },
+    { "id": "MR-014", "stub": true, "topic": "Recall with conflicting facts (what does Jeffrey do)" },
+    { "id": "MR-015", "stub": true, "topic": "Dedupe — same fact asserted twice should not double-surface" },
+    { "id": "MR-016", "stub": true, "topic": "Stale memory pruning (30+ day old preference superseded)" },
+    { "id": "MR-017", "stub": true, "topic": "Memory across channels (text → voice → text)" },
+    { "id": "MR-018", "stub": true, "topic": "Recall of a commitment ('I said I'd do X this week')" },
+    { "id": "MR-019", "stub": true, "topic": "Recall of a clinical context fact (medication mention)" },
+    { "id": "MR-020", "stub": true, "topic": "Recall after voluntary memory deletion" },
+    { "id": "MR-021", "stub": true, "topic": "Semantic recall (paraphrased question retrieves right item)" },
+    { "id": "MR-022", "stub": true, "topic": "Hybrid retrieval (keyword + semantic) wins over pure semantic" },
+    { "id": "MR-023", "stub": true, "topic": "Recency bias correction (older relevant > newer irrelevant)" },
+    { "id": "MR-024", "stub": true, "topic": "Memory leak prevention (one user's memory not visible to another's session)" },
+    { "id": "MR-025", "stub": true, "topic": "Memory under namespace isolation (test the multi-tenant boundary)" }
+  ]
+}

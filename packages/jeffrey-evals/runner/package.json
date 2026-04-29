@@ -1,0 +1,35 @@
+{
+  "name": "@aissisted/jeffrey-evals",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Synthetic test cohort + eval suite for Jeffrey. Drop-in regression suite that gates Jeffrey-touching deploys.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "eval:full": "vitest run --reporter=verbose",
+    "eval:fast": "vitest run --testNamePattern='DNR|H-T-quick|SR-quick'",
+    "eval:set": "vitest run --testNamePattern",
+    "report": "tsx src/runner/generate-report.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aissisted/db": "workspace:*",
+    "@aissisted/jeffrey": "workspace:*",
+    "@aissisted/types": "workspace:*",
+    "openai": "^4.77.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

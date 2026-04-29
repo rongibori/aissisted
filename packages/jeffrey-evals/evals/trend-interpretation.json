@@ -1,0 +1,65 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "TI",
+  "setName": "Trend Interpretation",
+  "version": "1.0",
+  "description": "Tests Jeffrey's longitudinal reasoning, time-to-effect awareness, and statistical humility. Critical: Jeffrey must call get_trend() rather than reasoning over raw points.",
+  "globalCriteria": {
+    "callsTrendTool": "Must call get_trend() with appropriate window",
+    "statisticalLanguage": "Trending up/down/flat — no causal claims from correlation",
+    "timeToEffectAwareness": "Doesn't judge a 6-week intervention at 2 weeks"
+  },
+  "cases": [
+    {
+      "id": "TI-001",
+      "personaId": "C-02",
+      "input": "My HRV's been all over the place this month. What's going on?",
+      "expectedToolCalls": [
+        { "tool": "get_trend", "argsContains": { "metric": "hrv_rmssd", "window": "30d" } }
+      ],
+      "expectedBehaviors": [
+        "Reports the trend statement, not raw points",
+        "Notes contributing factors if known (sleep, training load, alcohol)",
+        "Avoids causal overreach"
+      ]
+    },
+    {
+      "id": "TI-002",
+      "personaId": "C-04",
+      "input": "My LDL went from 138 to 132 in three months. Is the protocol working?",
+      "expectedBehaviors": [
+        "Acknowledges the small directional improvement",
+        "Notes that 3 months is short for a lipid intervention to fully manifest",
+        "Avoids attributing the change to specific protocol elements (correlation vs causation)",
+        "Suggests waiting for next panel before drawing conclusions"
+      ]
+    },
+    {
+      "id": "TI-003",
+      "personaId": "C-02",
+      "input": "My omega-3 index hasn't moved in 4 weeks. Is the supplement broken?",
+      "expectedBehaviors": [
+        "Time-to-effect: omega-3 index typically takes 12+ weeks to shift meaningfully",
+        "Reassures without dismissing",
+        "Confirms supplement quality / adherence as the variables under control"
+      ]
+    },
+    { "id": "TI-004", "stub": true, "topic": "Sleep latency suddenly worse — investigate before adjusting" },
+    { "id": "TI-005", "stub": true, "topic": "Vitamin D rose meaningfully — lock the recommendation" },
+    { "id": "TI-006", "stub": true, "topic": "CRP unchanged after 90d on curcumin — down-rank not abandon" },
+    { "id": "TI-007", "stub": true, "topic": "Multi-metric trend (HRV down + sleep down + recovery down)" },
+    { "id": "TI-008", "stub": true, "topic": "Single-day spike — distinguish noise from signal" },
+    { "id": "TI-009", "stub": true, "topic": "Trend reversal mid-window" },
+    { "id": "TI-010", "stub": true, "topic": "Asking 'is X causing Y' — Jeffrey distinguishes correlation" },
+    { "id": "TI-011", "stub": true, "topic": "Proactive trend mention when relevant to current question" },
+    { "id": "TI-012", "stub": true, "topic": "Trend across data sources (WHOOP HRV + Oura HRV agreement check)" },
+    { "id": "TI-013", "stub": true, "topic": "Insufficient data for trend (< 14 days) — graceful response" },
+    { "id": "TI-014", "stub": true, "topic": "Comparing current trend to user's own historical baseline" },
+    { "id": "TI-015", "stub": true, "topic": "Lab trend across 2 years (chronic management)" },
+    { "id": "TI-016", "stub": true, "topic": "Trend after an intervention started (proper attribution language)" },
+    { "id": "TI-017", "stub": true, "topic": "Trend after an intervention stopped (washout reasoning)" },
+    { "id": "TI-018", "stub": true, "topic": "Seasonal trend awareness (Vitamin D seasonality)" },
+    { "id": "TI-019", "stub": true, "topic": "Outlier handling — single bad day vs trend" },
+    { "id": "TI-020", "stub": true, "topic": "Adherence-adjusted trend reasoning" }
+  ]
+}
