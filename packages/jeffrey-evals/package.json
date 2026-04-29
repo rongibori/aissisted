@@ -4,15 +4,12 @@
   "version": "0.1.0",
   "description": "Synthetic test cohort + eval suite for Jeffrey. Drop-in regression suite that gates Jeffrey-touching deploys.",
   "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:full": "vitest run --reporter=verbose",
     "eval:fast": "vitest run --testNamePattern='DNR|H-T-quick|SR-quick'",
-    "eval:set": "vitest run --testNamePattern",
-    "report": "tsx src/runner/generate-report.ts",
+    "report": "tsx src/report.ts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
