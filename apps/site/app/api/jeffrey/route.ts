@@ -108,8 +108,8 @@ export async function POST(req: Request) {
     const result = await session.ask(message);
     return NextResponse.json({
       surface,
-      reply: result.text,
-      model: result.model,
+      reply: result.reply.text,
+      model: result.reply.model,
     });
   } catch (err) {
     const e = err as Error;

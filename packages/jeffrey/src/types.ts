@@ -63,6 +63,31 @@ export interface JeffreyAskOptions {
   temperature?: number;
   /** Abort signal for long-running calls. */
   signal?: AbortSignal;
+  /** Attach the raw OpenAI completion object to the result for debugging. */
+  captureRaw?: boolean;
+}
+
+export interface TurnTiming {
+  /** Wall-clock time for the entire ask() call body. */
+  totalMs: number;
+  /** Time spent inside openai.chat.completions.create() only. */
+  llmMs: number;
+}
+
+export interface TurnCost {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  /** Derived USD cost. null when model string is unrecognized. */
+  usd: number | null;
+}
+
+export interface CapturedTurnResult {
+  reply: JeffreyReply;
+  timing: TurnTiming;
+  cost: TurnCost;
+  /** Unmodified OpenAI completion object. Only present when captureRaw: true. */
+  raw?: unknown;
 }
 
 export interface JeffreyReply {

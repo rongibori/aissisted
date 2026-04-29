@@ -234,7 +234,7 @@ async function askCanonicalHealth(args: CanonicalArgs): Promise<string> {
 
   try {
     const out = await session.ask(finalMessage);
-    return out.text || "I couldn't compose a reply just now. Please try again.";
+    return out.reply.text || "I couldn't compose a reply just now. Please try again.";
   } catch (err) {
     // Soft-fail: surface the provider-agnostic fallback so the caller never
     // gets a 500 for a transient OpenAI hiccup. Logged for observability.
@@ -451,5 +451,5 @@ export async function askSurface(args: AskSurfaceArgs): Promise<string> {
   });
 
   const out = await session.ask(args.message);
-  return out.text;
+  return out.reply.text;
 }
