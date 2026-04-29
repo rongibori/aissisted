@@ -1,86 +1,112 @@
 /**
  * @aissisted/jeffrey-evals — Setup
  *
- * Spins up an isolated test environment for a run.
- * Default: in-memory SQLite via Drizzle (matches .env.example dev default).
- * Production-like: Postgres testcontainer with pgvector extension.
+ * Provides an in-process, fixture-backed test environment for B1 evals.
  *
- * Switch via EVAL_DB env var: 'sqlite' (default) | 'postgres'
+ * B1 scope: persona state is held in memory — no DB or migrations required.
+ * makeEvalMemoryAdapter() returns a LongTermMemoryAdapter that reads directly
+ * from the seeded persona fixture, giving Jeffrey authentic user context
+ * (profile, connected sources, memory entries) without any I/O.
+ *
+ * This is sufficient to test response_text, tokens, cost, and latency.
+ *
+ * B2: swap the in-memory store for real DB seeding via @aissisted/db once the
+ * DB integration pattern is ratified (users, health_profiles, biomarkers,
+ * protocols, conversations tables).
  */
 
 import type { SyntheticPersona } from './types.js';
+import type {
+  JeffreyUserProfile,
+  LongTermMemoryAdapter,
+  LongTermMemoryEntry,
+} from '@aissisted/jeffrey';
 
-// TODO(integration): import the actual Drizzle client and migration runner from
-// the @aissisted/db workspace package. Pseudocode below shows shape only.
-
-interface TestEnv {
-  dbUrl: string;
-  cleanup: () => Promise<void>;
-}
-
-let env: TestEnv | null = null;
+// In-process store: userId → persona. Cleared on setup / teardown.
+const personaStore = new Map<string, SyntheticPersona>();
 
 export async function setupTestEnv(): Promise<void> {
-  const mode = process.env.EVAL_DB ?? 'sqlite';
-  if (mode === 'sqlite') {
-    env = await setupSqlite();
-  } else if (mode === 'postgres') {
-    env = await setupPostgres();
-  } else {
-    throw new Error(`Unknown EVAL_DB mode: ${mode}`);
-  }
-  await runMigrations(env.dbUrl);
+  personaStore.clear();
 }
 
 export async function teardownTestEnv(): Promise<void> {
-  if (env) {
-    await env.cleanup();
-    env = null;
-  }
+  personaStore.clear();
 }
 
+/**
+ * Seed a persona into the in-process store. Idempotent — re-seeding the same
+ * userId overwrites the previous fixture.
+ */
 export async function seedPersona(persona: SyntheticPersona): Promise<void> {
-  // TODO(integration):
-  // 1. Insert user row from persona.user
-  // 2. Insert health_profile from persona.healthProfile
-  // 3. Insert lab_panels and biomarker rows from persona.labHistory
-  // 4. Insert wearable_connections + synthesized daily data
-  // 5. Insert adherence_log rows
-  // 6. Insert protocol + protocol_ingredients (current + history)
-  // 7. Insert prior conversations + transcripts
-  // 8. Insert memory items + generate embeddings via OpenAI text-embedding-3-small
-  // 9. Insert into pgvector index (when EVAL_DB=postgres)
-  void persona;
+  personaStore.set(persona.user.userId, persona);
 }
 
 export async function clearPersona(personaUserId: string): Promise<void> {
-  // TODO(integration): cascade-delete all rows for this user across all tables.
-  void personaUserId;
+  personaStore.delete(personaUserId);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internals
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function setupSqlite(): Promise<TestEnv> {
-  // TODO(integration): use better-sqlite3 in-memory or a temp file
-  const dbUrl = `file::memory:?cache=shared`;
+/**
+ * Returns a LongTermMemoryAdapter backed by the seeded persona fixture.
+ *
+ * Pass the returned adapter to createJeffreySession({ memoryAdapter }) so
+ * Jeffrey receives this persona's profile and memory entries as context.
+ * The persona must have been seeded via seedPersona() first.
+ */
+export function makeEvalMemoryAdapter(persona: SyntheticPersona): LongTermMemoryAdapter {
+  const userId = persona.user.userId;
   return {
-    dbUrl,
-    cleanup: async () => {
-      /* in-memory cleans up automatically */
+    async getProfile(): Promise<JeffreyUserProfile | null> {
+      const stored = personaStore.get(userId);
+      if (!stored) return null;
+      return buildProfile(stored);
+    },
+
+    async listEntries(): Promise<LongTermMemoryEntry[]> {
+      const stored = personaStore.get(userId);
+      if (!stored) return [];
+      return stored.memorySeed.map((seed, i) => ({
+        userId,
+        key: `${seed.kind}-${i}`,
+        summary: seed.content,
+        updatedAt: seed.createdAt,
+      }));
+    },
+
+    async upsertEntry(): Promise<void> {
+      // Writes are intentionally noop in the eval environment.
+    },
+
+    async deleteEntry(): Promise<void> {
+      // Deletes are intentionally noop in the eval environment.
     },
   };
 }
 
-async function setupPostgres(): Promise<TestEnv> {
-  // TODO(integration): boot a testcontainers Postgres with pgvector
-  // Returns connection URL + cleanup that stops the container
-  throw new Error('Postgres test container not yet implemented — see README');
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Internal helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function runMigrations(dbUrl: string): Promise<void> {
-  // TODO(integration): import drizzle migrate runner from @aissisted/db
-  // For pgvector: ensure CREATE EXTENSION IF NOT EXISTS vector ran first.
-  void dbUrl;
+function buildProfile(persona: SyntheticPersona): JeffreyUserProfile {
+  const connectedSources: JeffreyUserProfile['connectedSources'] = [];
+  for (const w of persona.wearables) {
+    if (w.provider === 'whoop') connectedSources.push('whoop');
+    else if (w.provider === 'oura') connectedSources.push('oura');
+    else if (w.provider === 'apple_health') connectedSources.push('apple-health');
+  }
+
+  const summaryBits: string[] = [];
+  if (persona.healthProfile.goals.length) {
+    summaryBits.push(`Goals: ${persona.healthProfile.goals.join(', ')}`);
+  }
+  const conditions = persona.healthProfile.conditions.map((c) => c.label);
+  if (conditions.length) summaryBits.push(`Conditions: ${conditions.join(', ')}`);
+  const meds = persona.healthProfile.medications.map((m) => m.name);
+  if (meds.length) summaryBits.push(`Medications: ${meds.join(', ')}`);
+
+  return {
+    userId: persona.user.userId,
+    displayName: persona.user.displayName,
+    connectedSources,
+    memorySummary: summaryBits.length ? summaryBits.join(' · ') : undefined,
+  };
 }
