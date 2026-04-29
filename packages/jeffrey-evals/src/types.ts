@@ -220,6 +220,8 @@ export interface CapturedResponse {
   toolCalls: { tool: string; args: Record<string, unknown> }[];
   auditEntriesWritten: { type: string; payload: Record<string, unknown> }[];
   memoryWritesAttempted: { kind: MemoryKind; content: string }[];
+  /** Populated by execute.ts; consumed by score.ts to fill CaseResult.metrics. */
+  turnMetrics?: CaseMetrics;
 }
 
 export interface RunReport {

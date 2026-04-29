@@ -112,8 +112,8 @@ export async function scoreCase(
 
   // ─── Metrics ──────────────────────────────────────────────────────────────
 
-  const metrics: CaseMetrics = {
-    totalLatencyMs: 0, // TODO(integration): captured from execute.ts
+  const metrics: CaseMetrics = captured.turnMetrics ?? {
+    totalLatencyMs: 0,
     inputTokens: 0,
     outputTokens: 0,
     costUsd: 0,
