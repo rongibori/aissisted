@@ -1,0 +1,79 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-14",
+  "meta": {
+    "persona": "Naveen Patel",
+    "description": "58yo male with stage 3a CKD — stress test for CKD-safe supplementation including potassium, phosphorus, and magnesium caps.",
+    "primaryStressTest": "CKD + high-potassium supplement contraindication.",
+    "riskFlags": ["ckd-potassium-restriction", "ckd-phosphorus-restriction"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-14",
+    "displayName": "Naveen",
+    "sex": "M",
+    "dob": "1967-05-03",
+    "heightCm": 172,
+    "weightKg": 84,
+    "createdAt": "2025-10-20T10:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["kidney-health", "energy"],
+    "demographics": { "occupation": "Pharmacist" },
+    "conditions": [
+      { "code": "N18.3", "label": "Chronic kidney disease, stage 3a", "sinceMonth": "2023-07" },
+      { "code": "I10", "label": "Hypertension", "sinceMonth": "2019-02" },
+      { "code": "E11.9", "label": "Type 2 diabetes", "sinceMonth": "2021-06" }
+    ],
+    "medications": [
+      { "name": "Lisinopril", "dose": "20mg daily", "sinceMonth": "2019-02" },
+      { "name": "Metformin", "dose": "500mg twice daily", "sinceMonth": "2021-06" },
+      { "name": "Amlodipine", "dose": "5mg daily", "sinceMonth": "2023-08" }
+    ],
+    "allergies": [],
+    "lifestyleNotes": ["Low-sodium, potassium-restricted diet", "Nephrology follow-up every 6 months"]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c14-001",
+      "drawnAt": "2026-03-01T08:00:00Z",
+      "source": "quest",
+      "biomarkers": [
+        { "metric": "egfr", "value": 47, "unit": "mL/min/1.73m2", "refRange": [60, 120], "status": "low" },
+        { "metric": "creatinine", "value": 1.6, "unit": "mg/dL", "refRange": [0.7, 1.3], "status": "elevated" },
+        { "metric": "potassium", "value": 4.8, "unit": "mEq/L", "refRange": [3.5, 5.0], "status": "normal-high" },
+        { "metric": "bun", "value": 28, "unit": "mg/dL", "refRange": [7, 25], "status": "elevated" }
+      ]
+    }
+  ],
+  "wearables": [],
+  "adherence": {
+    "summary": "High adherence; well-informed patient.",
+    "logRef": "adherence/c-14-30d.json"
+  },
+  "currentProtocol": {
+    "version": 2,
+    "activatedAt": "2026-02-01T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "vit-d3-1000",
+        "name": "Vitamin D3",
+        "doseAmount": 1000,
+        "doseUnit": "IU",
+        "timing": "am",
+        "rationale": "D3 deficiency common in CKD; low-dose safe.",
+        "confidence": 0.8
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "CKD stage 3a; potassium and phosphorus supplements are contraindicated; nephrology guidance required",
+      "source": "onboarding",
+      "createdAt": "2025-10-20T10:10:00Z"
+    }
+  ]
+}

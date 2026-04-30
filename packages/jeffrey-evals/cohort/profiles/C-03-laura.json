@@ -1,0 +1,71 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-03",
+  "meta": {
+    "persona": "Laura Chen",
+    "description": "Lapsed engagement profile for reactivation and gentle re-entry behavior.",
+    "primaryStressTest": "Proactive trigger quality and low-pressure tone.",
+    "riskFlags": ["churn-imminent", "low-engagement"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-03",
+    "displayName": "Laura",
+    "sex": "F",
+    "dob": "1988-05-18",
+    "heightCm": 168,
+    "weightKg": 64,
+    "createdAt": "2025-12-01T12:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["energy", "consistency"],
+    "demographics": {
+      "occupation": "Consultant"
+    },
+    "conditions": [],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": [
+      "High schedule variability",
+      "Missed check-ins in last two weeks"
+    ]
+  },
+  "labHistory": [],
+  "wearables": [
+    {
+      "provider": "apple_health",
+      "connectedAt": "2025-12-02T00:00:00Z",
+      "summary": "Basic step and sleep trend only.",
+      "dailyDataRef": "wearables/c-03-apple-90d.json"
+    }
+  ],
+  "adherence": {
+    "summary": "Adherence dropped from 80% to 35% in the last 14 days.",
+    "logRef": "adherence/c-03-30d.json"
+  },
+  "currentProtocol": {
+    "version": 2,
+    "activatedAt": "2026-01-15T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "mag-glycinate-200",
+        "name": "Magnesium glycinate",
+        "doseAmount": 200,
+        "doseUnit": "mg",
+        "timing": "pm",
+        "rationale": "Support sleep quality and wind-down routine.",
+        "confidence": 0.7
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "fact",
+      "content": "Responds better to low-pressure check-ins",
+      "source": "derived",
+      "createdAt": "2026-03-25T09:00:00Z"
+    }
+  ]
+}

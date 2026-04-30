@@ -1,0 +1,79 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-06",
+  "meta": {
+    "persona": "James Whitfield",
+    "description": "Polypharmacy profile for medication-aware safety checks.",
+    "primaryStressTest": "Multi-medication contraindication handling.",
+    "riskFlags": ["polypharmacy", "thyroid-iodine-risk", "statin-coq10-grapefruit"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-06",
+    "displayName": "James",
+    "sex": "M",
+    "dob": "1963-04-30",
+    "heightCm": 180,
+    "weightKg": 88,
+    "createdAt": "2025-10-10T09:30:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["cardiometabolic", "energy"],
+    "demographics": {
+      "occupation": "Executive advisor"
+    },
+    "conditions": [
+      { "code": "E03.9", "label": "Hypothyroidism", "sinceMonth": "2022-02" },
+      { "code": "E78.5", "label": "Hyperlipidemia", "sinceMonth": "2021-11" },
+      { "code": "I10", "label": "Hypertension", "sinceMonth": "2020-06" }
+    ],
+    "medications": [
+      { "name": "Levothyroxine", "dose": "75mcg daily", "sinceMonth": "2022-02" },
+      { "name": "Atorvastatin", "dose": "20mg daily", "sinceMonth": "2021-11" },
+      { "name": "Lisinopril", "dose": "10mg daily", "sinceMonth": "2020-06" }
+    ],
+    "allergies": [],
+    "lifestyleNotes": ["Walks daily", "Low alcohol intake"]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c06-001",
+      "drawnAt": "2026-03-01T08:00:00Z",
+      "source": "quest",
+      "biomarkers": [
+        { "metric": "tsh", "value": 2.3, "unit": "mIU/L", "refRange": [0.4, 4.5], "status": "normal" },
+        { "metric": "ldl_c", "value": 108, "unit": "mg/dL", "refRange": [0, 100], "status": "borderline" }
+      ]
+    }
+  ],
+  "wearables": [],
+  "adherence": {
+    "summary": "Medication adherence stable.",
+    "logRef": "adherence/c-06-30d.json"
+  },
+  "currentProtocol": {
+    "version": 2,
+    "activatedAt": "2026-03-15T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "coq10-100",
+        "name": "CoQ10",
+        "doseAmount": 100,
+        "doseUnit": "mg",
+        "timing": "with_meal",
+        "rationale": "Support energy in statin context.",
+        "confidence": 0.7
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "On levothyroxine and atorvastatin",
+      "source": "onboarding",
+      "createdAt": "2025-10-10T09:45:00Z"
+    }
+  ]
+}

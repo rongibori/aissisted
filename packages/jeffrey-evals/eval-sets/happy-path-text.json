@@ -1,0 +1,193 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "H-T",
+  "setName": "Happy Path — Text",
+  "version": "1.0",
+  "description": "Common text-channel questions Jeffrey should answer correctly, on-brand, and with appropriate progressive disclosure. Calibrated against C-01 (Marcus) and C-02 (Priya) primarily.",
+  "cases": [
+    {
+      "id": "HT-001",
+      "personaId": "C-01",
+      "input": "What's my formula doing today?",
+      "channel": "text",
+      "expectedToolCalls": [
+        { "tool": "get_current_protocol", "argsContains": { "userId": "test-user-c-01" } }
+      ],
+      "expectedBehaviors": [
+        "References Marcus by first name once",
+        "Names 2-4 of the active ingredients with their primary purpose",
+        "Connects to his stated goals (energy, focus)",
+        "Offers progressive disclosure ('want me to go deeper on any of these')"
+      ],
+      "mustNotContain": ["customer", "user", "consumer", "miracle", "cure"],
+      "qualityRubric": "concise, calm, assured, no filler",
+      "maxResponseSentences": 5
+    },
+    {
+      "id": "HT-002",
+      "personaId": "C-01",
+      "input": "Why did you raise my magnesium?",
+      "channel": "text",
+      "personaStateOverride": {
+        "lastProtocolChange": {
+          "ingredient": "magnesium-glycinate",
+          "from": "200mg",
+          "to": "300mg",
+          "reason": "HRV trending down + user reported sleep latency"
+        }
+      },
+      "expectedToolCalls": [
+        { "tool": "get_protocol_change_history", "argsContains": { "ingredient": "magnesium" } }
+      ],
+      "expectedBehaviors": [
+        "States the change concretely (200 → 300mg)",
+        "References the trigger (HRV trend + sleep latency)",
+        "Avoids causal overreach ('we saw' not 'caused by')",
+        "Offers to walk through the reasoning further"
+      ],
+      "mustNotContain": ["I cured", "this fixes", "guaranteed"],
+      "maxResponseSentences": 4
+    },
+    {
+      "id": "HT-003",
+      "personaId": "C-02",
+      "input": "Walk me through my last labs.",
+      "channel": "text",
+      "expectedToolCalls": [
+        { "tool": "get_latest_lab_panel", "argsContains": {} }
+      ],
+      "expectedBehaviors": [
+        "Identifies the panel by date and source",
+        "Highlights what changed vs prior panel (delta-aware)",
+        "Surfaces the 1-2 most actionable findings first",
+        "Defers detail until requested"
+      ],
+      "maxResponseSentences": 6
+    },
+    {
+      "id": "HT-004",
+      "personaId": "C-01",
+      "input": "What's my HRV been doing this month?",
+      "channel": "text",
+      "expectedToolCalls": [
+        { "tool": "get_trend", "argsContains": { "metric": "hrv_rmssd", "window": "30d" } }
+      ],
+      "expectedBehaviors": [
+        "Returns a trend statement, not raw numbers",
+        "Uses statistical language correctly (trending up/down/flat)",
+        "Connects to context (e.g., his recent travel period)",
+        "Avoids overinterpretation"
+      ],
+      "maxResponseSentences": 4
+    },
+    {
+      "id": "HT-005",
+      "personaId": "C-01",
+      "input": "I forgot to take it yesterday — does that matter?",
+      "channel": "text",
+      "expectedBehaviors": [
+        "Reassuring tone, not punitive",
+        "Differentiates between supplements where consistency matters vs. less so",
+        "References his overall adherence (good) to keep perspective",
+        "Brief — this is a quick check-in, not a lecture"
+      ],
+      "mustNotContain": ["you must", "you should never", "this is bad"],
+      "maxResponseSentences": 3
+    },
+    {
+      "id": "HT-006",
+      "personaId": "C-02",
+      "input": "Compare my omega-3 index from January to now.",
+      "channel": "text",
+      "expectedToolCalls": [
+        { "tool": "get_biomarker_history", "argsContains": { "metric": "omega3_index" } }
+      ],
+      "expectedBehaviors": [
+        "Returns both values + delta",
+        "Notes time-to-effect awareness if window is < 90 days",
+        "Connects to current protocol if relevant"
+      ],
+      "maxResponseSentences": 4
+    },
+    {
+      "id": "HT-007",
+      "personaId": "C-01",
+      "input": "Should I take my magnesium with food or on an empty stomach?",
+      "channel": "text",
+      "expectedBehaviors": [
+        "Direct answer (glycinate form is well-tolerated either way; PM dosing is the priority)",
+        "References his stated PM-preference if recalled from memory",
+        "No medical-advice disclaimer (this is dosing guidance for a recommended supplement, in scope)"
+      ],
+      "maxResponseSentences": 3
+    },
+    {
+      "id": "HT-008",
+      "personaId": "C-02",
+      "input": "I read that ashwagandha helps with stress. Should I add it?",
+      "channel": "text",
+      "expectedBehaviors": [
+        "Acknowledges the question without dismissing it",
+        "Notes that adding without protocol review changes the picture",
+        "Offers to flag for protocol-review consideration",
+        "Does NOT add it autonomously"
+      ],
+      "expectedToolCalls": [
+        { "tool": "request_protocol_review", "argsContains": {} }
+      ],
+      "maxResponseSentences": 4
+    },
+    {
+      "id": "HT-009",
+      "personaId": "C-01",
+      "input": "How long until I notice the omega-3 working?",
+      "channel": "text",
+      "expectedBehaviors": [
+        "Time-to-effect awareness: subjective changes may be 4-8 weeks; lab confirmation 12 weeks+",
+        "References his prior conversation about feeling more focused (memory recall)",
+        "Honest about what's measurable vs perceptible"
+      ],
+      "maxResponseSentences": 4
+    },
+    {
+      "id": "HT-010",
+      "personaId": "C-01",
+      "input": "What time should I take everything?",
+      "channel": "text",
+      "expectedToolCalls": [
+        { "tool": "get_current_protocol" }
+      ],
+      "expectedBehaviors": [
+        "Lists each ingredient with its timing",
+        "Respects his PM-preference for non-AM-required items (memory recall)",
+        "Groups by AM / with-meal / PM"
+      ],
+      "maxResponseSentences": 6
+    },
+    {
+      "_comment": "HT-011 through HT-030 follow the same shape. Listed as IDs only here for brevity — full inputs to be authored by the team.",
+      "id": "HT-011",
+      "stub": true,
+      "topic": "What's the difference between magnesium glycinate and citrate?"
+    },
+    { "id": "HT-012", "stub": true, "topic": "Can I take everything at once?" },
+    { "id": "HT-013", "stub": true, "topic": "What changes if I get my next labs back showing X?" },
+    { "id": "HT-014", "stub": true, "topic": "How do you decide my doses?" },
+    { "id": "HT-015", "stub": true, "topic": "What happens to my protocol if I travel for two weeks?" },
+    { "id": "HT-016", "stub": true, "topic": "Why am I on B-complex?" },
+    { "id": "HT-017", "stub": true, "topic": "What's the relationship between vitamin D and my goal of better focus?" },
+    { "id": "HT-018", "stub": true, "topic": "Is my protocol working?" },
+    { "id": "HT-019", "stub": true, "topic": "What happens if I miss the PM dose multiple times?" },
+    { "id": "HT-020", "stub": true, "topic": "Can I take my supplements with coffee?" },
+    { "id": "HT-021", "stub": true, "topic": "What does 'progressive' mean when you talk about my protocol?" },
+    { "id": "HT-022", "stub": true, "topic": "How does Aissisted compare to a standard multivitamin?" },
+    { "id": "HT-023", "stub": true, "topic": "What's the most important thing in my current stack?" },
+    { "id": "HT-024", "stub": true, "topic": "Tell me about my recovery score." },
+    { "id": "HT-025", "stub": true, "topic": "I'm worried about taking too many supplements." },
+    { "id": "HT-026", "stub": true, "topic": "What are you tracking from my WHOOP?" },
+    { "id": "HT-027", "stub": true, "topic": "When should I get labs again?" },
+    { "id": "HT-028", "stub": true, "topic": "Walk me through what changed in my last update." },
+    { "id": "HT-029", "stub": true, "topic": "I had a great workout yesterday — does that change anything?" },
+    { "id": "HT-030", "stub": true, "topic": "What's the smallest possible version of my stack?" }
+  ]
+}

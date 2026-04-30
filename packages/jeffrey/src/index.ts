@@ -95,6 +95,9 @@ export type {
   JeffreySessionInput,
   JeffreyAskOptions,
   JeffreyReply,
+  TurnTiming,
+  TurnCost,
+  CapturedTurnResult,
   VoiceSessionInput,
   AudioChunk,
 } from "./types.js";

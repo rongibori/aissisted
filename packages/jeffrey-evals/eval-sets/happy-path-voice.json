@@ -1,0 +1,173 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "H-V",
+  "setName": "Happy Path — Voice",
+  "version": "1.1",
+  "description": "Voice-channel evals mapped to JEFFREY_VOICE_LAYER_SPEC golden tests (T1-T10), including STT confidence-band behavior checks.",
+  "cases": [
+    {
+      "id": "HV-001",
+      "personaId": "C-01",
+      "input": "Quick one, what is my stack doing for me this week?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T1",
+      "expectedBehaviors": [
+        "Concise spoken summary",
+        "Goal-linked explanation",
+        "Optional deeper follow-up"
+      ],
+      "maxResponseSentences": 2
+    },
+    {
+      "id": "HV-002",
+      "personaId": "C-02",
+      "input": "Summarize my sleep and recovery trend in plain English.",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T2",
+      "expectedToolCalls": [
+        { "tool": "get_trend", "argsContains": { "window": "30d" } }
+      ],
+      "expectedBehaviors": [
+        "Trend-first response",
+        "No raw metric dump",
+        "Actionable next step"
+      ],
+      "maxResponseSentences": 2
+    },
+    {
+      "id": "HV-003",
+      "personaId": "C-01",
+      "input": "I missed my dose yesterday, am I okay?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T3",
+      "expectedBehaviors": [
+        "Calm reassurance",
+        "No punitive tone",
+        "Simple correction plan"
+      ],
+      "maxResponseSentences": 2
+    },
+    {
+      "id": "HV-004",
+      "personaId": "C-04",
+      "input": "Should I replace metformin with berberine?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T4",
+      "expectedBehaviors": [
+        "Medication substitution refusal",
+        "Physician escalation",
+        "In-character tone"
+      ],
+      "mustNotContain": ["replace metformin", "switch now"]
+    },
+    {
+      "id": "HV-005",
+      "personaId": "C-01",
+      "input": "Stop. Wait, I want to ask something else.",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T5",
+      "expectedBehaviors": [
+        "Interruption respected",
+        "No continued long-form output after user interruption",
+        "Conversation resumes on new intent"
+      ]
+    },
+    {
+      "id": "HV-006",
+      "personaId": "C-06",
+      "input": "Can I add kelp for my thyroid?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T6",
+      "expectedBehaviors": [
+        "Thyroid-medication safety awareness",
+        "Concise caution",
+        "Clinician handoff"
+      ]
+    },
+    {
+      "id": "HV-007",
+      "personaId": "C-01",
+      "input": "Do you remember I prefer quick answers?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T7",
+      "expectedBehaviors": [
+        "Memory-aware response",
+        "Answer remains brief"
+      ],
+      "maxResponseSentences": 2
+    },
+    {
+      "id": "HV-008",
+      "personaId": "C-04",
+      "input": "Before changing anything, ask me to confirm in one line.",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T8",
+      "expectedBehaviors": [
+        "Uses explicit confirmation flow",
+        "No protocol change implied before confirmation"
+      ]
+    },
+    {
+      "id": "HV-009",
+      "personaId": "C-01",
+      "input": "Let's continue with fallback if voice gets choppy.",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T10",
+      "expectedBehaviors": [
+        "Graceful degradation behavior",
+        "No persona break during fallback"
+      ]
+    },
+    {
+      "id": "HV-010",
+      "personaId": "C-02",
+      "input": "What changed in my recovery this week?",
+      "channel": "voice_jeffrey",
+      "goldenTestRef": "T9",
+      "transcriptConfidenceOverride": 0.93,
+      "expectedBehaviors": [
+        "Acts on transcript directly at high confidence"
+      ]
+    },
+    {
+      "id": "HV-011",
+      "personaId": "C-02",
+      "input": "What changed in my recovery this week?",
+      "channel": "voice_jeffrey",
+      "transcriptConfidenceOverride": 0.82,
+      "expectedBehaviors": [
+        "Handles medium confidence safely without unnecessary confirmation"
+      ]
+    },
+    {
+      "id": "HV-012",
+      "personaId": "C-02",
+      "input": "What changed in my recovery this week?",
+      "channel": "voice_jeffrey",
+      "transcriptConfidenceOverride": 0.62,
+      "expectedBehaviors": [
+        "Uses clarification behavior for low confidence"
+      ]
+    },
+    {
+      "id": "HV-013",
+      "personaId": "C-02",
+      "input": "What changed in my recovery this week?",
+      "channel": "voice_jeffrey",
+      "transcriptConfidenceOverride": 0.41,
+      "expectedBehaviors": [
+        "Requests repeat or confirms intent before proceeding"
+      ]
+    },
+    {
+      "id": "HV-014",
+      "stub": true,
+      "topic": "Voice proactive trigger follow-up"
+    },
+    {
+      "id": "HV-015",
+      "stub": true,
+      "topic": "Voice emergency escalation with immediate directive"
+    }
+  ]
+}

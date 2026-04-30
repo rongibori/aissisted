@@ -26,3 +26,6 @@ infra/**/.bootstrap-output.env
 
 # Next.js auto-generated type file — regenerated on every build, not source
 apps/*/next-env.d.ts
+
+# Cowork coordination layer (local-only; managed by Cowork session)
+/jeffrey/

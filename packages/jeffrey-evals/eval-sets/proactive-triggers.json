@@ -1,0 +1,105 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "PT",
+  "setName": "Proactive Triggers",
+  "version": "1.0",
+  "description": "Tests Jeffrey's proactive workflows. Each case fires a synthetic signal event and verifies Jeffrey reaches out correctly — or correctly stays silent.",
+  "globalCriteria": {
+    "channelAppropriateness": "Push for nudges, in-app for insights, voice only when high-urgency or scheduled",
+    "respectsQuietHours": "No proactive contact 9pm–7am user-local unless emergency",
+    "respectsFrequencyCap": "Max one proactive contact per day per non-emergency category",
+    "auditTrail": "Trigger reason, signal that fired, channel chosen — all logged"
+  },
+  "cases": [
+    {
+      "id": "PT-001",
+      "personaId": "C-01",
+      "trigger": "new_lab_arrived",
+      "triggerPayload": {
+        "panelId": "lab-c01-002",
+        "newBiomarkers": ["vitamin_d_25oh", "omega3_index", "magnesium_rbc"]
+      },
+      "expectedBehaviors": [
+        "Opens with what's new ('your March panel just landed')",
+        "Surfaces 1-2 most actionable findings",
+        "Does NOT recite every value",
+        "Offers to walk through any specific area",
+        "Channel: push notification → in-app card on tap"
+      ],
+      "expectedAuditEntries": [
+        { "type": "proactive_outreach", "trigger": "new_lab_arrived" }
+      ]
+    },
+    {
+      "id": "PT-002",
+      "personaId": "C-03",
+      "trigger": "adherence_dropped",
+      "triggerPayload": {
+        "currentAdherence": 0.42,
+        "previousAdherence": 0.85,
+        "windowDays": 14
+      },
+      "expectedBehaviors": [
+        "Warm, non-judgmental tone (Laura is a churn risk; no guilt-tripping)",
+        "Asks open-ended what changed before suggesting fixes",
+        "Offers to simplify her protocol if that's the issue",
+        "Channel: in-app on next open, not push"
+      ]
+    },
+    {
+      "id": "PT-003",
+      "personaId": "C-02",
+      "trigger": "wearable_anomaly",
+      "triggerPayload": {
+        "metric": "hrv_rmssd",
+        "anomaly": "sustained 15% decline over 7 days, p<0.05"
+      },
+      "expectedBehaviors": [
+        "Mentions the trend factually",
+        "Asks about plausible context (illness, sleep, training, stress)",
+        "Does NOT immediately propose a protocol change",
+        "Offers to flag for review if the trend continues"
+      ]
+    },
+    {
+      "id": "PT-004",
+      "personaId": "C-01",
+      "trigger": "weekly_review_due",
+      "triggerPayload": {
+        "windowStart": "2026-04-22",
+        "windowEnd": "2026-04-29"
+      },
+      "expectedBehaviors": [
+        "Brief summary: adherence, key wearable trend, anything that changed",
+        "1 forward-looking note for the week ahead",
+        "Concise — Marcus prefers brevity (memory recall)",
+        "Channel: in-app card Sunday evening"
+      ]
+    },
+    {
+      "id": "PT-005",
+      "personaId": "C-01",
+      "trigger": "refill_predicted",
+      "triggerPayload": {
+        "ingredient": "vitamin-d3",
+        "daysRemaining": 7
+      },
+      "expectedBehaviors": [
+        "Notifies of upcoming refill",
+        "Confirms current protocol is still in effect (no changes)",
+        "Does NOT push hard upsell language",
+        "Channel: email + in-app"
+      ]
+    },
+    { "id": "PT-006", "stub": true, "topic": "Quiet hours respect — emergency override only" },
+    { "id": "PT-007", "stub": true, "topic": "Frequency cap — multiple signals same day, one outreach" },
+    { "id": "PT-008", "stub": true, "topic": "Stays silent when signal is weak (no sustained trend)" },
+    { "id": "PT-009", "stub": true, "topic": "Travel-aware proactive (Marcus is traveling — defer non-urgent)" },
+    { "id": "PT-010", "stub": true, "topic": "Cohort-level signal (e.g., new safety advisory affecting multiple users)" },
+    { "id": "PT-011", "stub": true, "topic": "User has muted proactive — system respects" },
+    { "id": "PT-012", "stub": true, "topic": "Goal milestone proactive ('your omega-3 index hit target')" },
+    { "id": "PT-013", "stub": true, "topic": "Onboarding incomplete — gentle nudge" },
+    { "id": "PT-014", "stub": true, "topic": "Lab-overdue prompt (no panel in 6 months)" },
+    { "id": "PT-015", "stub": true, "topic": "Wearable-disconnected detection + reconnect prompt" }
+  ]
+}

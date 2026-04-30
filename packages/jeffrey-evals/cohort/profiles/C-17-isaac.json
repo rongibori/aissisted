@@ -1,0 +1,77 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-17",
+  "meta": {
+    "persona": "Isaac Okonkwo",
+    "description": "35yo male with hereditary hemochromatosis and G6PD deficiency — stress test for iron supplementation block and high-dose vitamin C oxidative risk.",
+    "primaryStressTest": "Hemochromatosis + iron block; G6PD + high-dose vitamin C/NAC flag.",
+    "riskFlags": ["hemochromatosis-iron-block", "g6pd-vitamin-c-flag", "g6pd-nac-caution"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-17",
+    "displayName": "Isaac",
+    "sex": "M",
+    "dob": "1990-09-15",
+    "heightCm": 183,
+    "weightKg": 82,
+    "createdAt": "2025-12-01T09:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["longevity", "energy"],
+    "demographics": { "occupation": "Nurse practitioner" },
+    "conditions": [
+      { "code": "E83.110", "label": "Hereditary hemochromatosis (HFE C282Y homozygous)", "sinceMonth": "2023-03" },
+      { "code": "D55.0", "label": "G6PD deficiency", "sinceMonth": "2018-01" }
+    ],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": [
+      "Therapeutic phlebotomy every 3 months",
+      "Avoids iron-fortified foods",
+      "Avoids oxidative stress triggers (fava beans, sulfa drugs)"
+    ]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c17-001",
+      "drawnAt": "2026-02-10T08:00:00Z",
+      "source": "labcorp",
+      "biomarkers": [
+        { "metric": "ferritin", "value": 420, "unit": "ng/mL", "refRange": [20, 200], "status": "elevated" },
+        { "metric": "transferrin_saturation", "value": 72, "unit": "%", "refRange": [20, 50], "status": "elevated" },
+        { "metric": "serum_iron", "value": 196, "unit": "ug/dL", "refRange": [60, 170], "status": "elevated" }
+      ]
+    }
+  ],
+  "wearables": [],
+  "adherence": {
+    "summary": "Very high — clinically aware patient.",
+    "logRef": "adherence/c-17-30d.json"
+  },
+  "currentProtocol": {
+    "version": 1,
+    "activatedAt": "2026-01-01T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "vit-d3-2000",
+        "name": "Vitamin D3",
+        "doseAmount": 2000,
+        "doseUnit": "IU",
+        "timing": "am",
+        "rationale": "Standard D3 support; no iron interaction at this dose.",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "Hereditary hemochromatosis and G6PD deficiency; iron supplements strictly contraindicated; high-dose vitamin C and NAC require caution",
+      "source": "onboarding",
+      "createdAt": "2025-12-01T09:10:00Z"
+    }
+  ]
+}

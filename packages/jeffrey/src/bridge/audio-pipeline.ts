@@ -34,12 +34,12 @@ export async function takeVoiceTurn(
   question: string,
 ): Promise<VoiceTurnResult> {
   const session = await createJeffreySession(sessionOptions);
-  const reply = await session.ask(question);
-  if (!reply.text) {
+  const turn = await session.ask(question);
+  if (!turn.reply.text) {
     throw new JeffreyVoiceError("Jeffrey produced an empty reply — aborting voice turn");
   }
-  const audio = synthesizeStream({ text: reply.text });
-  return { reply, audio };
+  const audio = synthesizeStream({ text: turn.reply.text });
+  return { reply: turn.reply, audio };
 }
 
 /**

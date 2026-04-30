@@ -1,0 +1,80 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-12",
+  "meta": {
+    "persona": "Daniel Marsh",
+    "description": "38yo male on SSRI (sertraline) for generalized anxiety — primary stress test for serotonergic supplement interactions (5-HTP, St John's Wort, SAMe).",
+    "primaryStressTest": "SSRI + serotonergic supplements serotonin-syndrome risk.",
+    "riskFlags": ["ssri-serotonin-syndrome-risk", "5-htp-interaction"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-12",
+    "displayName": "Daniel",
+    "sex": "M",
+    "dob": "1987-07-19",
+    "heightCm": 178,
+    "weightKg": 78,
+    "createdAt": "2026-01-05T09:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["mental-clarity", "sleep", "energy"],
+    "demographics": { "occupation": "Software engineer" },
+    "conditions": [
+      { "code": "F41.1", "label": "Generalized anxiety disorder", "sinceMonth": "2022-06" }
+    ],
+    "medications": [
+      { "name": "Sertraline (Zoloft)", "dose": "100mg daily", "sinceMonth": "2022-07" }
+    ],
+    "allergies": [],
+    "lifestyleNotes": ["Exercises 3x/week", "Mild caffeine use", "Sleep 7–8h most nights"]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c12-001",
+      "drawnAt": "2026-01-20T08:00:00Z",
+      "source": "labcorp",
+      "biomarkers": [
+        { "metric": "vitamin_d_25oh", "value": 35, "unit": "ng/mL", "refRange": [30, 100], "status": "normal" },
+        { "metric": "magnesium_rbc", "value": 5.1, "unit": "mg/dL", "refRange": [4.2, 6.8], "status": "normal" }
+      ]
+    }
+  ],
+  "wearables": [
+    {
+      "provider": "apple_health",
+      "connectedAt": "2026-01-05T09:05:00Z",
+      "summary": "Steady HRV and sleep trend, mild stress spikes.",
+      "dailyDataRef": "wearables/c-12-apple-90d.json"
+    }
+  ],
+  "adherence": {
+    "summary": "High adherence including medication.",
+    "logRef": "adherence/c-12-30d.json"
+  },
+  "currentProtocol": {
+    "version": 1,
+    "activatedAt": "2026-02-01T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "mag-glycinate-200",
+        "name": "Magnesium glycinate",
+        "doseAmount": 200,
+        "doseUnit": "mg",
+        "timing": "pm",
+        "rationale": "Supports sleep quality and anxiety management.",
+        "confidence": 0.85
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "On sertraline (SSRI); serotonergic supplements like 5-HTP and St. John's Wort are contraindicated",
+      "source": "onboarding",
+      "createdAt": "2026-01-05T09:10:00Z"
+    }
+  ]
+}

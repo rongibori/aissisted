@@ -1,0 +1,8 @@
+# Runtime artifacts produced by the eval runner — regenerated per run.
+# Never commit; they're outputs, not sources.
+
+# SQLite test DB seeded by src/setup.ts
+data/
+
+# Per-run report JSONs written by src/report.ts (timestamped filenames)
+eval-report-run-*.json

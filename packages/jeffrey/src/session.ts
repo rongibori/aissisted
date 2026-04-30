@@ -33,17 +33,42 @@ import { onboardingSurface } from "./onboarding.js";
 import { healthSurface, escalateIfPatternMatches } from "./health-tools.js";
 import { competitiveSurface } from "./competitive.js";
 import type {
+  CapturedTurnResult,
   JeffreyAskOptions,
   JeffreyReply,
   JeffreySessionInput,
   JeffreySurface,
   JeffreyUserProfile,
+  TurnCost,
 } from "./types.js";
 import { systemPrompt } from "./prompts/index.js";
 
 interface SurfaceDefaults {
   temperature: number;
   maxTokens: number;
+}
+
+// OpenAI list pricing as of 2026-04-29; review quarterly.
+const OPENAI_PRICING: Record<string, { promptPer1M: number; completionPer1M: number }> = {
+  "gpt-4o":              { promptPer1M: 2.50,  completionPer1M: 10.00 },
+  "gpt-4o-mini":         { promptPer1M: 0.15,  completionPer1M: 0.60  },
+  "gpt-4-turbo":         { promptPer1M: 10.00, completionPer1M: 30.00 },
+  "gpt-4-turbo-preview": { promptPer1M: 10.00, completionPer1M: 30.00 },
+};
+
+function deriveCost(model: string, usage: JeffreyReply["usage"]): TurnCost {
+  const promptTokens = usage?.promptTokens ?? 0;
+  const completionTokens = usage?.completionTokens ?? 0;
+  const pricing = OPENAI_PRICING[model];
+  let usd: number | null;
+  if (pricing) {
+    usd = (promptTokens * pricing.promptPer1M + completionTokens * pricing.completionPer1M) / 1_000_000;
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`[jeffrey] unknown model for cost derivation: ${model}`);
+    usd = null;
+  }
+  return { model, promptTokens, completionTokens, usd };
 }
 
 const SURFACE_DEFAULTS: Record<JeffreySurface, SurfaceDefaults> = {
@@ -58,7 +83,7 @@ const SURFACE_DEFAULTS: Record<JeffreySurface, SurfaceDefaults> = {
 export interface JeffreySession {
   readonly surface: JeffreySurface;
   readonly userId?: string;
-  ask(question: string, options?: JeffreyAskOptions): Promise<JeffreyReply>;
+  ask(question: string, options?: JeffreyAskOptions): Promise<CapturedTurnResult>;
   memory: SessionMemory;
 }
 
@@ -103,7 +128,9 @@ export async function createJeffreySession(
   const ask = async (
     question: string,
     options: JeffreyAskOptions = {},
-  ): Promise<JeffreyReply> => {
+  ): Promise<CapturedTurnResult> => {
+    const turnStart = performance.now();
+
     // Pre-flight scope checks.
     if (input.surface === "health") {
       const escalate = escalateIfPatternMatches(question);
@@ -128,6 +155,7 @@ export async function createJeffreySession(
     const maxTokens = options.maxTokens ?? defaults.maxTokens;
 
     let completion;
+    const llmStart = performance.now();
     try {
       completion = await openai.chat.completions.create(
         {
@@ -149,6 +177,7 @@ export async function createJeffreySession(
         { cause: err },
       );
     }
+    const llmMs = performance.now() - llmStart;
 
     const choice = completion.choices[0];
     const text = choice?.message?.content?.trim() ?? "";
@@ -161,7 +190,7 @@ export async function createJeffreySession(
 
     memory.push({ role: "assistant", content: text });
 
-    return {
+    const reply: JeffreyReply = {
       text,
       model: completion.model,
       createdAt: new Date().toISOString(),
@@ -172,6 +201,15 @@ export async function createJeffreySession(
             totalTokens: completion.usage.total_tokens,
           }
         : undefined,
+    };
+
+    const totalMs = performance.now() - turnStart;
+
+    return {
+      reply,
+      timing: { totalMs, llmMs },
+      cost: deriveCost(completion.model, reply.usage),
+      ...(options.captureRaw ? { raw: completion } : {}),
     };
   };
 

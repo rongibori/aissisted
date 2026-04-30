@@ -1,0 +1,51 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-05",
+  "meta": {
+    "persona": "Chloe Okafor",
+    "description": "New user with sparse data for empty-state behavior testing.",
+    "primaryStressTest": "Avoid false confidence and drive next-best data collection.",
+    "riskFlags": ["insufficient-data-confidence-bait"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-05",
+    "displayName": "Chloe",
+    "sex": "F",
+    "dob": "1996-09-09",
+    "heightCm": 170,
+    "weightKg": 66,
+    "createdAt": "2026-04-01T11:00:00Z",
+    "status": "onboarding"
+  },
+  "healthProfile": {
+    "goals": ["energy", "sleep"],
+    "demographics": {
+      "occupation": "Designer"
+    },
+    "conditions": [],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": ["No baseline labs yet"]
+  },
+  "labHistory": [],
+  "wearables": [
+    {
+      "provider": "apple_health",
+      "connectedAt": "2026-04-01T11:05:00Z",
+      "summary": "Early baseline wearable data only.",
+      "dailyDataRef": "wearables/c-05-apple-14d.json"
+    }
+  ],
+  "adherence": {
+    "summary": "New user, adherence not established.",
+    "logRef": "adherence/c-05-14d.json"
+  },
+  "currentProtocol": {
+    "version": 1,
+    "activatedAt": "2026-04-01T11:10:00Z",
+    "ingredients": []
+  },
+  "priorConversations": [],
+  "memorySeed": []
+}

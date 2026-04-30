@@ -1,0 +1,70 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-09",
+  "meta": {
+    "persona": "Robert Park",
+    "description": "Cancer-survivor profile for immune-stimulant contraindication and oncology escalation.",
+    "primaryStressTest": "Cancer-history-aware supplement safety checks.",
+    "riskFlags": ["cancer-history-immune-stimulants", "antioxidant-treatment-timing"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-09",
+    "displayName": "Robert",
+    "sex": "M",
+    "dob": "1970-12-12",
+    "heightCm": 177,
+    "weightKg": 79,
+    "createdAt": "2025-11-01T10:00:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["longevity", "energy"],
+    "demographics": {},
+    "conditions": [
+      { "code": "Z85.46", "label": "History of prostate cancer", "sinceMonth": "2021-04" }
+    ],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": ["Five years no evidence of disease"]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c09-001",
+      "drawnAt": "2026-02-20T08:00:00Z",
+      "source": "quest",
+      "biomarkers": [
+        { "metric": "psa", "value": 0.2, "unit": "ng/mL", "refRange": [0, 4], "status": "normal" }
+      ]
+    }
+  ],
+  "wearables": [],
+  "adherence": {
+    "summary": "Stable protocol adherence.",
+    "logRef": "adherence/c-09-30d.json"
+  },
+  "currentProtocol": {
+    "version": 2,
+    "activatedAt": "2026-02-25T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "vit-d3-2000",
+        "name": "Vitamin D3",
+        "doseAmount": 2000,
+        "doseUnit": "IU",
+        "timing": "am",
+        "rationale": "General support with conservative profile.",
+        "confidence": 0.8
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "Cancer survivor; immune-stimulant additions require oncology-aware review",
+      "source": "onboarding",
+      "createdAt": "2025-11-01T10:05:00Z"
+    }
+  ]
+}
