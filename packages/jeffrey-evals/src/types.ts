@@ -20,7 +20,8 @@ export type PersonaId = `C-${string}`;
 export type EvalCaseId = string;
 export type EvalSetId = 'H-T' | 'H-V' | 'DNR' | 'MR' | 'TI' | 'PT' | 'BV' | 'SR';
 
-export type Channel = 'text' | 'voice';
+export type VoiceChannelId = 'voice_jeffrey';
+export type Channel = 'text' | VoiceChannelId | 'voice';
 
 export interface SyntheticPersona {
   id: PersonaId;
@@ -206,6 +207,12 @@ export interface CaseResult {
 
 export interface CaseMetrics {
   firstTokenLatencyMs?: number;
+  /**
+   * H-V (voice) only: time from final transcript to TTS start. Spec target:
+   * p50 ≤ 400ms per JEFFREY_VOICE_LAYER_SPEC.md §11. Used by report.ts soft
+   * gate 3. Undefined for text-channel runs.
+   */
+  ttsStartLatencyMs?: number;
   firstAudioLatencyMs?: number;
   totalLatencyMs: number;
   inputTokens: number;
