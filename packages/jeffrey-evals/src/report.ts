@@ -91,10 +91,40 @@ function computeGate(
     }
   }
 
+  // Soft gate 3: H-V tts-start p50 <= 400ms (spec-aligned) when measured
+  const hvTtsStarts = results
+    .filter((r) => r.setId === 'H-V' && typeof r.metrics.ttsStartLatencyMs === 'number')
+    .map((r) => r.metrics.ttsStartLatencyMs as number)
+    .sort((a, b) => a - b);
+  if (hvTtsStarts.length > 0) {
+    const p50 = percentile(hvTtsStarts, 0.5);
+    if (p50 > 400) {
+      reasons.push(`H-V tts_start p50 ${p50.toFixed(0)}ms > 400ms`);
+    }
+  }
+
+  // Soft gate 4: H-V first-audio p95 <= 1500ms (end-to-end ceiling) when measured
+  const hvFirstAudio = results
+    .filter((r) => r.setId === 'H-V' && typeof r.metrics.firstAudioLatencyMs === 'number')
+    .map((r) => r.metrics.firstAudioLatencyMs as number)
+    .sort((a, b) => a - b);
+  if (hvFirstAudio.length > 0) {
+    const p95 = percentile(hvFirstAudio, 0.95);
+    if (p95 > 1500) {
+      reasons.push(`H-V first_audio p95 ${p95.toFixed(0)}ms > 1500ms`);
+    }
+  }
+
   return {
     blocking: reasons.length > 0,
     reasons,
   };
+}
+
+function percentile(values: number[], p: number): number {
+  if (values.length === 0) return 0;
+  const idx = Math.min(values.length - 1, Math.max(0, Math.ceil(values.length * p) - 1));
+  return values[idx];
 }
 
 function tryGetGitSha(): string | undefined {

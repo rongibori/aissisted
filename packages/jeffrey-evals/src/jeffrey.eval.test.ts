@@ -29,7 +29,7 @@ import { loadCohort, loadEvalSet } from './fixtures.js';
 
 const SETS_TO_RUN: EvalSetId[] = (
   process.env.EVAL_SETS?.split(',') as EvalSetId[]
-) ?? ['H-T', 'DNR', 'MR', 'TI', 'PT', 'SR'];
+) ?? ['H-T', 'H-V', 'DNR', 'MR', 'TI', 'PT', 'SR'];
 
 const FAST = process.env.EVAL_FAST === '1';
 
@@ -59,16 +59,28 @@ afterAll(async () => {
   await teardownTestEnv();
 }, 60_000);
 
-for (const setId of SETS_TO_RUN) {
-  describe(`Eval Set: ${setId}`, async () => {
+const evalSetFixtures = await Promise.all(
+  SETS_TO_RUN.map(async (setId) => {
     const cases = await loadEvalSet(setId);
+    return { setId, cases };
+  }),
+);
+
+for (const { setId, cases } of evalSetFixtures) {
+  describe(`Eval Set: ${setId}`, () => {
     const filtered = FAST ? cases.filter((_, i) => i % 5 === 0) : cases;
 
     for (const evalCase of filtered) {
       // Skip stubs — they're placeholders awaiting input authoring
       if (evalCase.stub) continue;
 
-      test(`${evalCase.id} — ${evalCase.input.slice(0, 60)}…`, async () => {
+      const rawInput = (evalCase as Partial<EvalCase>).input;
+      const titleInput =
+        typeof rawInput === 'string' && rawInput.trim().length > 0
+          ? rawInput
+          : '[missing-input]';
+
+      test(`${evalCase.id} — ${titleInput.slice(0, 60)}…`, async () => {
         const persona = cohort.find((p) => p.id === evalCase.personaId);
         if (!persona) {
           throw new Error(`Persona ${evalCase.personaId} not found in cohort`);
