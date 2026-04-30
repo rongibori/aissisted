@@ -44,7 +44,7 @@ export async function generateRunReport(results: CaseResult[]): Promise<RunRepor
     completedAt,
     gitSha: tryGetGitSha(),
     models: {
-      brain: process.env.OPENAI_JEFFREY_REALTIME_MODEL ?? 'gpt-4o-realtime-preview',
+      brain: process.env.OPENAI_JEFFREY_MODEL ?? 'gpt-4o',
       embeddings: 'text-embedding-3-small',
       voiceTts: process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'openai-realtime-fallback',
     },
