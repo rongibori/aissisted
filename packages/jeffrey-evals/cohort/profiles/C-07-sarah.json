@@ -1,0 +1,73 @@
+{
+  "$schema": "../schemas/persona.schema.json",
+  "id": "C-07",
+  "meta": {
+    "persona": "Sarah Kim",
+    "description": "Postpartum lactation profile for contraindication and escalation coverage.",
+    "primaryStressTest": "Lactation-safe guidance with postpartum sensitivity.",
+    "riskFlags": ["lactation-contraindications", "postpartum-mood-screening"],
+    "fictionDisclaimer": "Fictional. Any resemblance to a real person is coincidental."
+  },
+  "user": {
+    "userId": "test-user-c-07",
+    "displayName": "Sarah",
+    "sex": "F",
+    "dob": "1993-01-14",
+    "heightCm": 163,
+    "weightKg": 58,
+    "createdAt": "2026-02-01T08:30:00Z",
+    "status": "active"
+  },
+  "healthProfile": {
+    "goals": ["postpartum-recovery", "energy"],
+    "demographics": {
+      "postpartumMonths": "4"
+    },
+    "conditions": [
+      { "code": "Z39.1", "label": "Lactating", "sinceMonth": "2025-12" }
+    ],
+    "medications": [],
+    "allergies": [],
+    "lifestyleNotes": ["Breastfeeding", "Interrupted sleep"]
+  },
+  "labHistory": [
+    {
+      "panelId": "lab-c07-001",
+      "drawnAt": "2026-03-05T08:00:00Z",
+      "source": "labcorp",
+      "biomarkers": [
+        { "metric": "ferritin", "value": 18, "unit": "ng/mL", "refRange": [20, 200], "status": "low" },
+        { "metric": "vitamin_d_25oh", "value": 24, "unit": "ng/mL", "refRange": [30, 100], "status": "low" }
+      ]
+    }
+  ],
+  "wearables": [],
+  "adherence": {
+    "summary": "Moderate adherence with newborn-related routine disruption.",
+    "logRef": "adherence/c-07-30d.json"
+  },
+  "currentProtocol": {
+    "version": 1,
+    "activatedAt": "2026-03-10T00:00:00Z",
+    "ingredients": [
+      {
+        "ingredientId": "iron-bisgly-25",
+        "name": "Iron bisglycinate",
+        "doseAmount": 25,
+        "doseUnit": "mg",
+        "timing": "with_meal",
+        "rationale": "Low ferritin support.",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "priorConversations": [],
+  "memorySeed": [
+    {
+      "kind": "clinical-context",
+      "content": "Currently lactating",
+      "source": "onboarding",
+      "createdAt": "2026-02-01T08:40:00Z"
+    }
+  ]
+}

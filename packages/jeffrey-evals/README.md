@@ -127,11 +127,12 @@ packages/jeffrey-evals/
 │   ├── manifest.json
 │   └── profiles/
 │       ├── C-01-marcus.json
-│       ├── C-04-david.json
-│       ├── C-10-adversary.json
-│       └── ... (7 more)
+│       ├── C-02-priya.json
+│       ├── ...
+│       └── C-10-adversary.json
 ├── eval-sets/
 │   ├── happy-path-text.json
+│   ├── happy-path-voice.json
 │   ├── do-not-respond.json
 │   ├── memory-recall.json
 │   ├── trend-interpretation.json
