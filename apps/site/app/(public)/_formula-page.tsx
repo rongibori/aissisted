@@ -19,7 +19,8 @@ import { Body, H1, H2, H3, Lede, UILabel } from "@/components/typography";
  *   · M2 primitives only (Heading roles, Body, Lede, UILabel, Card, Pill,
  *     Divider, Container, Eyebrow). No new component primitives.
  *   · Brand Bible v1.1 palette: signal red lives in the two CTA links and
- *     nowhere else on this page (2% of the 70/20/8/2 budget).
+ *     the hero eyebrow (Eyebrow's default tone="brand"), and nowhere else
+ *     on this page (2% of the 70/20/8/2 budget).
  *   · 0 forbidden words (lib/brand-rules.ts → FORBIDDEN_WORDS).
  *   · 0 medical claims — every ingredient rationale stays inside
  *     "supports / associated with / studied for". No verb stronger than that.
@@ -305,9 +306,9 @@ function PairRail({ content }: { content: FormulaContent }) {
             >
               <Card hover padding="lg" className="h-full">
                 <UILabel>{link.label}</UILabel>
-                <p className="mt-4 font-display text-2xl font-semibold tracking-[-0.005em] text-ink md:text-3xl">
+                <H3 className="mt-4 text-2xl md:text-3xl lg:text-3xl">
                   {link.oneLiner}
-                </p>
+                </H3>
                 <p
                   className={cn(
                     "mt-8 font-system text-xs uppercase tracking-[0.16em]",
