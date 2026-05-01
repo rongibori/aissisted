@@ -4,19 +4,24 @@ import { Container } from "@/components/container";
 
 /**
  * Nav — sticky top bar. Plex Mono for system affordance (navigation is UI,
- * not prose). Minimal set: wordmark, three links, one primary CTA.
+ * not prose). Wordmark, content links, primary CTA.
  *
  * Brand discipline:
  *   · Wordmark is text-only — no logomark pixel art in this scaffold. Design
  *     pass in M13 may promote to an SVG once the mark is locked.
  *   · One brand-red element max (the CTA).
  *   · 56px height — the quiet frame. Premium reads as restraint.
+ *
+ * Nav set (M3 Phase 1, post-arbitration):
+ *   How it works · Pricing · Science · (CTA) Request access
+ *   Formula pages (/morning, /day, /night) reach via the homepage cards
+ *   and the /pricing surface, not the top bar — keeps the bar lean.
  */
 
 const PRIMARY_LINKS = [
   { href: "/how-it-works", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/science", label: "Science" },
-  { href: "/pricing", label: "Formulas" },
 ] as const;
 
 export function Nav() {
@@ -32,13 +37,13 @@ export function Nav() {
         <nav className="flex h-14 items-center justify-between">
           <Link
             href="/"
-            aria-label="Aissisted — home"
+            aria-label="aissisted — home"
             className={cn(
               "font-display text-base font-bold tracking-[-0.01em]",
               "text-ink hover:opacity-80 transition-opacity"
             )}
           >
-            Aissisted
+            aissisted
           </Link>
 
           <div className="flex items-center gap-8">
