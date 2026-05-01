@@ -30,6 +30,20 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  // M3 Phase 1 retirements (CEO arbitration, 2026-04-30):
+  //   /for-you  → /morning   (the closest landing for the same intent)
+  //   /longevity → /          (longevity sits inside Investor Room scope only)
+  //   /contact  → /#waitlist  (contact replaced by footer email + waitlist CTA)
+  // 301 (permanent) preserves any inbound link equity and signals to crawlers
+  // that the routes are gone for good. Source paths must NOT have a trailing
+  // slash; Next normalizes them.
+  async redirects() {
+    return [
+      { source: "/for-you", destination: "/morning", permanent: true },
+      { source: "/longevity", destination: "/", permanent: true },
+      { source: "/contact", destination: "/#waitlist", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
