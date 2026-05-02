@@ -56,9 +56,11 @@ export function JeffreyIntroSurface({
           </PreLabel>
         </div>
 
-        {/* 40px gap → avatar + label block. */}
+        {/* 40px gap → avatar + label block.
+            Avatar runs in `speaking` state to match the "· speaking"
+            label — rapid waveform signals Jeffrey is introducing himself. */}
         <div className="stagger-base stagger-jeffrey-avatar mt-10 flex items-center gap-4">
-          <JeffreyAvatar size="lg" />
+          <JeffreyAvatar size="lg" state="speaking" />
           <div className="flex flex-col leading-tight">
             <span className="font-system text-[13px] font-medium uppercase tracking-[0.18em] text-ink">
               JEFFREY

@@ -1,0 +1,136 @@
+/*
+ * JeffreyAvatar — voice-pattern bar animations.
+ *
+ * 5 bars animate Y-scale with phased delays to read as a voice waveform.
+ * State classes (.jeffrey-state-*) drive animation-duration + amplitude
+ * via the --ja-amp custom property. Color shift on error swaps the bar
+ * fill from aqua to brand-red.
+ *
+ * Co-located with JeffreyAvatar.tsx — imported once at the top of that
+ * file; keyframes are global (namespaced with `jeffrey-`) so the import
+ * is idempotent across surfaces.
+ *
+ * Per design spec §3.1 (Avatar) — voice presence indicator.
+ */
+
+/* ── Wave keyframes — symmetric center-tallest pattern ─────────────── */
+
+@keyframes jeffrey-wave-1 {
+  0%, 100% { transform: scaleY(0.20); }
+  50%      { transform: scaleY(var(--ja-amp, 0.50)); }
+}
+
+@keyframes jeffrey-wave-2 {
+  0%, 100% { transform: scaleY(0.30); }
+  50%      { transform: scaleY(calc(var(--ja-amp, 0.50) * 1.55)); }
+}
+
+@keyframes jeffrey-wave-3 {
+  0%, 100% { transform: scaleY(0.40); }
+  50%      { transform: scaleY(calc(var(--ja-amp, 0.50) * 1.95)); }
+}
+
+@keyframes jeffrey-wave-4 {
+  0%, 100% { transform: scaleY(0.30); }
+  50%      { transform: scaleY(calc(var(--ja-amp, 0.50) * 1.55)); }
+}
+
+@keyframes jeffrey-wave-5 {
+  0%, 100% { transform: scaleY(0.20); }
+  50%      { transform: scaleY(var(--ja-amp, 0.50)); }
+}
+
+/* ── Thinking — all bars in sync, no wave offset ───────────────────── */
+
+@keyframes jeffrey-think-pulse {
+  0%, 100% { transform: scaleY(0.30); }
+  50%      { transform: scaleY(calc(var(--ja-amp, 0.45) * 1.45)); }
+}
+
+/* ── Reduced-motion fallback — single soft opacity breathe ─────────── */
+
+@keyframes jeffrey-reduced-breathe {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1.00; }
+}
+
+/* ── Bar base ──────────────────────────────────────────────────────── */
+
+.jeffrey-bar {
+  display: block;
+  background-color: var(--brand-aqua);
+  border-radius: 1px;
+  transform-origin: center center;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); /* ease-in-out */
+  will-change: transform;
+}
+
+/* Per-bar wave name + phase offset.
+   Negative delays start the animation mid-cycle so the wave reads
+   immediately on first paint instead of building up. */
+.jeffrey-bar-1 { animation-name: jeffrey-wave-1; animation-delay:    0ms; }
+.jeffrey-bar-2 { animation-name: jeffrey-wave-2; animation-delay: -120ms; }
+.jeffrey-bar-3 { animation-name: jeffrey-wave-3; animation-delay: -240ms; }
+.jeffrey-bar-4 { animation-name: jeffrey-wave-4; animation-delay: -180ms; }
+.jeffrey-bar-5 { animation-name: jeffrey-wave-5; animation-delay:  -60ms; }
+
+/* ── State machine ─────────────────────────────────────────────────── */
+
+/* Idle — ambient breathing, default */
+.jeffrey-state-idle {
+  --ja-amp: 0.50;
+}
+.jeffrey-state-idle .jeffrey-bar {
+  animation-duration: 2400ms;
+}
+
+/* Listening — capturing user voice */
+.jeffrey-state-listening {
+  --ja-amp: 0.85;
+}
+.jeffrey-state-listening .jeffrey-bar {
+  animation-duration: 1200ms;
+}
+
+/* Speaking — Jeffrey responding */
+.jeffrey-state-speaking {
+  --ja-amp: 1.00;
+}
+.jeffrey-state-speaking .jeffrey-bar {
+  animation-duration: 800ms;
+}
+
+/* Thinking — synchronized pulse, no wave. Override per-bar wave name + delay. */
+.jeffrey-state-thinking {
+  --ja-amp: 0.45;
+}
+.jeffrey-state-thinking .jeffrey-bar {
+  animation-name: jeffrey-think-pulse !important;
+  animation-duration: 2800ms;
+  animation-delay: 0ms !important;
+}
+
+/* Error — frozen, signal-red */
+.jeffrey-state-error .jeffrey-bar {
+  animation: none !important;
+  transform: scaleY(0.20);
+  background-color: var(--brand-red);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .jeffrey-bar {
+    animation-name: jeffrey-reduced-breathe !important;
+    animation-duration: 3000ms !important;
+    animation-delay: 0ms !important;
+    transform: scaleY(0.45) !important;
+  }
+
+  /* Error still freezes — no breathe overlay on a fault state */
+  .jeffrey-state-error .jeffrey-bar {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
