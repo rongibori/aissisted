@@ -8,7 +8,14 @@
  * (apps/web keeps Briston fallback until migration; apps/site ships IBM Plex).
  *
  * Color ratio (enforced by design review, not CSS):
- *   70% white · 20% graphite/black · 8% red · 2% aqua
+ *   70% white · 8% graphite · 4% soft graphite · 15% red · 2% aqua · 1% midnight
+ *
+ * v2.1 ratio shift (2026-05-02): Signal Red promoted from 8% accent to
+ * 15% structural color; Graphite + Soft Graphite trim to 12% combined.
+ * Red now reads as identity color, not just emphasis. Audit downstream:
+ * shipped surfaces designed under the prior 70/20/8/2 mix may need
+ * additional red beats (CTAs, dividers, identity moments) to reflect
+ * the new canon. See docs/design-system/aissisted-design-spec.md §2.1.
  *
  * Token usage in components:
  *   bg-surface / bg-surface-2  — backgrounds on the white-first interface

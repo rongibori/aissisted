@@ -22,7 +22,7 @@ The brand sounds like a clinical-aspirational research platform — Apple Health
 1. **Institutional, not consumer-tech** — clinical white surfaces, structural typography, pattern restraint
 2. **Cinematic pacing** — staggered reveals, breath between elements, time as a design material
 3. **Aqua is data, never decoration** — the only saturated color earns its place by representing the user's data
-4. **Signal red is emphasis, not danger** — bright matte red appears on max 2 elements per surface; the brand's hallmark word ("Understood.") is one of them
+4. **Signal red is identity, not just emphasis** — bright matte red is a structural color (15%), carrying CTAs, dividers, status accents, and the rally cry ("Understood."). It is never used to signal "danger" — the same red means "this is Aissisted."
 5. **Mobile is the canvas** — designed phone-first, every other surface adapts down
 
 ### 1.3 What we never do
@@ -47,15 +47,17 @@ Tokens live in `packages/brand/aissisted-tokens.json` (W3C DTCG format) AND `pac
 | Token | Hex | Ratio | Role |
 |---|---|---|---|
 | `white` | `#FFFFFF` | 70% | Default app background — clean institutional ground |
-| `graphite-800` | `#1C1C1E` | 20% | Primary text, primary CTA fill, dark Jeffrey card background |
-| `graphite-700` | `#2E2E2E` | — | Soft Graphite — secondary surfaces, button hover, elevation |
-| `signalRed-700` | `#EE2B37` | 8% | Bright matte red — emphasis only (max 2 elements per surface, destructive intent) |
-| `aqua-500` | `#00C2D1` | 2% | Data, intelligence, key metrics, Jeffrey "j" avatar |
-| `midnight-700` | `#0B1D3A` | — | Voice orb gradient outer edge, cinematic transitions only |
+| `graphite-800` | `#1C1C1E` | 8% | Primary text, primary CTA fill, dark Jeffrey card background |
+| `graphite-700` | `#2E2E2E` | 4% | Soft Graphite — secondary surfaces, button hover, elevation |
+| `signalRed-700` | `#EE2B37` | 15% | Bright matte red — identity color: CTAs, key labels, "Understood." moments, status accents, dividers, identity beats |
+| `aqua-500` | `#00C2D1` | 2% | Data, intelligence, key metrics, Jeffrey voice indicator |
+| `midnight-700` | `#0B1D3A` | 1% | Voice orb gradient outer edge, cinematic transitions only |
 
-**Rationale**: white-first interface mirrors clinical research platforms. Graphite as primary text (not pure black) reads as institutional rather than brutalist. Signal Red `#EE2B37` is bright + matte; emphatic but controlled. Aqua `#00C2D1` is the platform's data signature — every primary trend line, key metric value, and "your data" indicator is aqua. Midnight blue is reserved for cinematic moments (voice orb, transition surfaces) and not used in standard tile chrome.
+**Rationale**: white-first interface mirrors clinical research platforms. Graphite as primary text (not pure black) reads as institutional rather than brutalist. Signal Red `#EE2B37` is the brand's **identity color**, not a sparingly-used accent — it carries CTAs, the "Understood." rally cry, status emphasis, divider beats, and identity moments. Aqua `#00C2D1` is the platform's data signature — every primary trend line, key metric value, and "your data" indicator is aqua. Midnight blue is reserved for cinematic moments (voice orb, transition surfaces) and not used in standard tile chrome.
 
-**Color ratio (enforced via design review):** 70% white · 20% graphite/black · 8% red · 2% aqua. If a surface drifts outside this ratio, the design fails review.
+**Color ratio (enforced via design review):** 70% white · 8% graphite · 4% soft graphite · 15% red · 2% aqua · 1% midnight. If a surface drifts outside this ratio, the design fails review.
+
+**v2.1 canon shift (2026-05-02)** — Signal Red promoted from 8% accent → 15% structural color. The previous "max 2 red elements per surface" rule is retired. Red now reads as identity, not punctuation. Surfaces designed under the prior 70/20/8/2 mix should be audited for added red beats: CTAs that previously used Graphite Bold can shift to Signal Red; dividers and section markers can carry red where they previously stayed neutral; the rally-cry word ("Understood.") expands from a single moment to a recurring identity gesture across surfaces. Restraint is still active — 15% is *structural*, not *saturated*; the interface should feel like a confident medical brand, not a sportswear app.
 
 ### 2.2 Typography
 
