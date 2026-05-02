@@ -1,0 +1,47 @@
+/*
+ * Onboarding cover — entrance stagger.
+ * Per cowork-briefs/onboarding-cover.md §5 + design spec §2.4.
+ * Easing: cubic-bezier(0.22, 1, 0.36, 1) — soft deceleration, lands not bounces.
+ * Duration: 720ms hero entrance.
+ *
+ * Each .stagger-* class binds one animation + delay. Elements ship hidden
+ * (opacity:0) and animate to visible — initial paint shows nothing, then
+ * the choreography reveals piece by piece.
+ */
+
+@keyframes cover-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cover-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-base {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-duration: 720ms;
+}
+
+.stagger-wordmark   { animation-name: cover-fade-in; animation-delay: 0ms;    }
+.stagger-prelabel   { animation-name: cover-fade-in; animation-delay: 200ms;  }
+.stagger-headline-1 { animation-name: cover-fade-up; animation-delay: 320ms;  }
+.stagger-headline-2 { animation-name: cover-fade-up; animation-delay: 600ms;  }
+.stagger-accent     { animation-name: cover-fade-in; animation-delay: 900ms;  }
+.stagger-cta        { animation-name: cover-fade-in; animation-delay: 1100ms; }
+.stagger-footer     { animation-name: cover-fade-in; animation-delay: 1300ms; }
+
+/*
+ * Reduced-motion: collapse the choreography to a single 320ms cross-fade.
+ * No translate, no per-element delay.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-base {
+    animation-name: cover-fade-in !important;
+    animation-duration: 320ms !important;
+    animation-delay: 0ms !important;
+  }
+}
