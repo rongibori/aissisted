@@ -1,36 +1,82 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { CoverSurface } from "../../components/onboarding/CoverSurface";
+import { JeffreyIntroSurface } from "../../components/onboarding/JeffreyIntroSurface";
 import { PhoneFrame } from "../../components/patterns/PhoneFrame";
 import "./animations.css";
 
 /*
- * Onboarding — Surface 1 (Cover).
+ * Onboarding — Surfaces 1 (Cover) + 2 (Jeffrey introduction).
  *
- * Per cowork-briefs/onboarding-cover.md, this is the first surface of the
- * 9-surface flow. Subsequent surfaces (Jeffrey intro, Identity, Data, etc.)
- * land in subsequent briefs; the flow controller will move to a useReducer
- * hook in apps/web/app/onboarding/hooks/useOnboardingFlow.ts at that point.
+ * Per cowork-briefs/onboarding-cover.md and cowork-briefs/jeffrey-intro.md.
+ * Surfaces 3-9 land via subsequent briefs; the placeholder below renders
+ * for any future-step transition until those briefs ship.
  *
- * TODO(onboarding-flow): wire onAdvance to a flow-state reducer that swaps
- *   to Surface 2. Until then it's a no-op.
- * TODO(onboarding-auth): the cover surface is pre-authentication; auth gating
- *   should attach to the surfaces that capture identity (Surface 3+).
+ * State controller: minimal useState<OnboardingStep> machine. Captures
+ * voicePreference at the Jeffrey intro surface. Will migrate to a
+ * useReducer hook (apps/web/app/onboarding/hooks/useOnboardingFlow.ts)
+ * once Surface 3 (Identity + Goals) lands and we begin capturing real
+ * user data.
+ *
+ * TODO(onboarding-flow): replace OnboardingStep + voicePreference state
+ *   with a reducer once Surface 3 ships. The reducer will hold the
+ *   accumulating onboarding payload (identity, goals, connections,
+ *   labFile, baseline, protocol).
+ * TODO(onboarding-auth): cover + jeffrey-intro are pre-authentication;
+ *   auth gating attaches at Surface 3 (Identity capture).
  */
 
+type OnboardingStep = "cover" | "jeffrey-intro" | "identity-goals";
+type VoicePreference = "continue" | "skipped";
+
 export default function OnboardingPage() {
-  const handleAdvance = (): void => {
-    // Stub — see TODO(onboarding-flow) above.
+  const [step, setStep] = useState<OnboardingStep>("cover");
+  const [voicePreference, setVoicePreference] = useState<VoicePreference | null>(
+    null,
+  );
+
+  const handleAdvanceFromCover = (): void => {
+    setStep("jeffrey-intro");
+  };
+
+  const handleContinueFromJeffrey = (): void => {
+    if (voicePreference === null) setVoicePreference("continue");
+    setStep("identity-goals");
+  };
+
+  const handleSkipVoice = (): void => {
+    setVoicePreference("skipped");
+    setStep("identity-goals");
   };
 
   return (
     <PhoneFrame>
-      {/* CoverSurface handles its own StatusBar visibility internally
-          (hidden on mobile via md:flex hidden, visible at md+).
-          PhoneFrame already renders children twice (once per viewport
-          variant); duplicating here would render 4× in DOM. */}
-      <CoverSurface onAdvance={handleAdvance} showStatusBar />
+      {step === "cover" && (
+        <CoverSurface onAdvance={handleAdvanceFromCover} showStatusBar />
+      )}
+      {step === "jeffrey-intro" && (
+        <JeffreyIntroSurface
+          onAdvance={handleContinueFromJeffrey}
+          onSkipVoice={handleSkipVoice}
+          showStatusBar
+        />
+      )}
+      {step === "identity-goals" && (
+        <div className="flex h-full min-h-[100dvh] md:min-h-0 w-full items-center justify-center bg-surface px-8">
+          <div className="max-w-[280px] text-center">
+            <p className="font-system text-[11px] uppercase tracking-[0.18em] text-soft">
+              STEP 02 / 06 · IDENTITY
+            </p>
+            <p className="mt-4 font-display text-[20px] text-ink">
+              Surface 3 lands in the next brief.
+            </p>
+            <p className="mt-2 font-system text-[12px] text-soft">
+              Voice preference captured: {voicePreference ?? "—"}
+            </p>
+          </div>
+        </div>
+      )}
     </PhoneFrame>
   );
 }

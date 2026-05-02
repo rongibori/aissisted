@@ -35,11 +35,50 @@
 .stagger-footer     { animation-name: cover-fade-in; animation-delay: 1300ms; }
 
 /*
+ * ─── Surface 2 — Jeffrey intro ──────────────────────────────────────
+ * Stagger sequence (per cowork-briefs/jeffrey-intro.md §5):
+ *   pre-label  0ms     fade-in
+ *   avatar     200ms   fade-up + glow pulse (peaks 600ms, settles to subtle)
+ *   headline   500ms   fade-up
+ *   code       900ms   fade-in
+ *   controls   1200ms  fade-in
+ *
+ * The jeffrey-avatar-glow keyframe runs alongside cover-fade-up — two
+ * animations on one element, both forwards. The box-shadow keys are
+ * literal rgba — Tailwind's color-mix doesn't reach into @keyframes,
+ * and the aqua signal value (#00C2D1 / rgb(0, 194, 209)) is locked.
+ */
+
+@keyframes jeffrey-avatar-glow {
+  0%   { box-shadow: 0 0 0 rgba(0, 194, 209, 0); }
+  60%  { box-shadow: 0 0 24px rgba(0, 194, 209, 0.32); }
+  100% { box-shadow: 0 0 8px rgba(0, 194, 209, 0.16); }
+}
+
+.stagger-jeffrey-prelabel  { animation-name: cover-fade-in; animation-delay: 0ms;    }
+.stagger-jeffrey-avatar    {
+  animation-name: cover-fade-up, jeffrey-avatar-glow;
+  animation-delay: 200ms, 200ms;
+  animation-duration: 720ms, 1200ms;
+  animation-fill-mode: forwards, forwards;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-out;
+}
+.stagger-jeffrey-headline  { animation-name: cover-fade-up; animation-delay: 500ms;  }
+.stagger-jeffrey-code      { animation-name: cover-fade-in; animation-delay: 900ms;  }
+.stagger-jeffrey-controls  { animation-name: cover-fade-in; animation-delay: 1200ms; }
+
+/*
  * Reduced-motion: collapse the choreography to a single 320ms cross-fade.
- * No translate, no per-element delay.
+ * No translate, no per-element delay, no glow pulse.
  */
 @media (prefers-reduced-motion: reduce) {
   .stagger-base {
+    animation-name: cover-fade-in !important;
+    animation-duration: 320ms !important;
+    animation-delay: 0ms !important;
+  }
+  /* Override Surface 2's compound animation explicitly. */
+  .stagger-jeffrey-avatar {
     animation-name: cover-fade-in !important;
     animation-duration: 320ms !important;
     animation-delay: 0ms !important;
