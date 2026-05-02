@@ -15,10 +15,14 @@
 @import "@aissisted/brand/tokens.css";
 
 :root {
-  /* ── Typography stacks (per-app — NOT shared) ── */
-  --font-display: "Briston", "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-system: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-accent: "Baskerville", "Libre Baskerville", Georgia, serif;
+  /* ── Typography stacks (per-app — NOT shared) ──
+   * The *-loaded variables are emitted by next/font in app/layout.tsx.
+   * Briston is unlicensed; Inter Tight is the v0 display fallback (design spec §9).
+   * Source Code Pro is the legacy mono stack; IBM Plex Mono is the §2.2 target.
+   */
+  --font-display: var(--font-display-loaded), "Briston", "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-system: var(--font-system-loaded), "IBM Plex Mono", "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-accent: var(--font-accent-loaded), "Libre Baskerville", "Baskerville", Georgia, serif;
 }
 
 body {
