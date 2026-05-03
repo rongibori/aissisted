@@ -32,7 +32,7 @@ import { Body, H1, H2, H3, Lede, UILabel } from "@/components/typography";
  */
 
 export const metadata: Metadata = {
-  title: "Pricing — aissisted",
+  title: { absolute: "Pricing — aissisted" },
   description:
     "Free baseline. Personalized formula at $69. Two-formula stack at $99. Full Day at $149.",
 };
@@ -480,15 +480,17 @@ function ClosingCTA() {
             first protocol design. The formula ships when you're ready.
           </p>
         </div>
+      </Container>
 
-        <Container width="wide" className="mt-12 px-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill tone="ink">Free baseline</Pill>
-            <Pill tone="ink">Adaptive re-formulation</Pill>
-            <Pill tone="ink">Lab + wearable in</Pill>
-            <Pill tone="ink">Cancel anytime</Pill>
-          </div>
-        </Container>
+      {/* Quiet pill row — sibling Container, matches the Phase 2 closing
+          rhythm. Nesting Containers double-applies px and max-w on md+. */}
+      <Container width="wide" className="mt-12">
+        <div className="flex flex-wrap items-center gap-2">
+          <Pill tone="ink">Free baseline</Pill>
+          <Pill tone="ink">Adaptive re-formulation</Pill>
+          <Pill tone="ink">Lab + wearable in</Pill>
+          <Pill tone="ink">Cancel anytime</Pill>
+        </div>
       </Container>
     </section>
   );

@@ -40,7 +40,7 @@ import {
  */
 
 export const metadata: Metadata = {
-  title: "Jeffrey — aissisted",
+  title: { absolute: "Jeffrey — aissisted" },
   description:
     "Your concierge for the formula. He reads your data, reasons about your day, and surfaces what to do.",
 };
@@ -377,15 +377,17 @@ function ClosingCTA() {
             data. The formula ships when you're ready.
           </p>
         </div>
+      </Container>
 
-        <Container width="wide" className="mt-12 px-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill tone="ink">Voice-first</Pill>
-            <Pill tone="ink">On every dashboard</Pill>
-            <Pill tone="ink">Reads your data</Pill>
-            <Pill tone="ink">Private by design</Pill>
-          </div>
-        </Container>
+      {/* Quiet pill row — sibling Container, matches the Phase 2 closing
+          rhythm. Nesting Containers double-applies px and max-w on md+. */}
+      <Container width="wide" className="mt-12">
+        <div className="flex flex-wrap items-center gap-2">
+          <Pill tone="ink">Voice-first</Pill>
+          <Pill tone="ink">On every dashboard</Pill>
+          <Pill tone="ink">Reads your data</Pill>
+          <Pill tone="ink">Private by design</Pill>
+        </div>
       </Container>
     </section>
   );
