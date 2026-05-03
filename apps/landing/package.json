@@ -1,0 +1,14 @@
+{
+  "name": "@aissisted/landing",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Aissisted consumer landing — static HTML + Vercel serverless API for the prototype's Jeffrey voice/text endpoints.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
