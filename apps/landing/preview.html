@@ -1,0 +1,3145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aissisted — Local Prototype</title>
+
+<!-- Tailwind v4 (browser build — no setup) -->
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+<!-- Three.js (UMD, no module mode) — required for the lg-size brain visualization -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<style type="text/tailwindcss">
+@theme {
+  --color-surface:      #FFFFFF;
+  --color-surface-2:    #F7F7F8;
+  --color-surface-3:    #EFEFF1;
+  --color-line:         #E5E5EA;
+  --color-line-strong:  #D1D1D6;
+  --color-ink:          #1C1C1E;
+  --color-muted:        #2E2E2E;
+  --color-soft:         #6E6E73;
+  --color-brand:        #EE2B37;
+  --color-brand-hover:  #CA252F;
+  --color-data:         #0B1D3A;
+  --color-signal:       #00C2D1;
+  --color-ok:           #0F7A4C;
+  --color-ok-soft:      #E6F4ED;
+  --color-warn:         #B76B00;
+  --color-warn-soft:    #FBF1E2;
+}
+</style>
+
+<style>
+  :root {
+    /* Briston substitute — Fraunces is closest to the heavy serif display character */
+    --font-display: "Fraunces", "Briston", "DM Serif Display", Georgia, serif;
+    --font-system:  "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-accent:  "Libre Baskerville", Georgia, serif;
+    --font-body:    "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  html, body { background: #FFFFFF; color: #1C1C1E; font-family: var(--font-body); }
+  .font-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.025em; }
+  .font-system  { font-family: var(--font-system); }
+  .font-accent  { font-family: var(--font-accent); }
+  .rally-cry    { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; line-height: 0.95; }
+
+  /* Phone frame chrome */
+  .phone {
+    width: 380px; aspect-ratio: 9 / 19.5; border-radius: 44px;
+    background: #FFFFFF; position: relative; overflow: hidden;
+    border: 1px solid rgba(28,28,30,0.08);
+    box-shadow:
+      0 30px 70px -30px rgba(28,28,30,0.30),
+      0 0 0 1px rgba(28,28,30,0.04),
+      inset 0 0 0 6px rgba(28,28,30,0.04);
+  }
+  .phone-status {
+    height: 44px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; font-family: var(--font-system); font-size: 12px; font-weight: 600;
+    color: #1C1C1E;
+  }
+  .phone-screen {
+    position: absolute; top: 44px; left: 0; right: 0; bottom: 0;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Dock pinned over screen — only the screens that show dock get bottom padding */
+  .phone-screen.has-dock { bottom: 76px; }
+  /* Ensure each .screen fills the screen-container height when active */
+  .screen.active { min-height: 100%; }
+  .phone-screen::-webkit-scrollbar { width: 0; }
+  .phone-dock {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 76px;
+    border-top: 1px solid #E5E5EA; background: #FFFFFFEE; backdrop-filter: blur(20px);
+    display: flex; align-items: center; justify-content: space-around; padding: 0 24px;
+  }
+  .dock-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .dock-btn .glyph { width: 22px; height: 22px; border-radius: 6px; background: #D1D1D6; transition: background 200ms; }
+  .dock-btn .label { font-family: var(--font-system); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #6E6E73; }
+  .dock-btn.active .glyph { background: #1C1C1E; }
+  .dock-btn.active .label { color: #1C1C1E; }
+  .dock-btn:hover .label { color: #1C1C1E; }
+
+  /* Screen swap with fade */
+  .screen { display: none; opacity: 0; transition: opacity 240ms ease-out; }
+  .screen.active { display: block; opacity: 1; }
+
+  /* Stagger entrance */
+  .stagger > [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 500ms ease-out, transform 500ms ease-out; }
+  .stagger.show > [data-step="0"]  { opacity: 1; transform: none; transition-delay: 0ms; }
+  .stagger.show > [data-step="1"]  { opacity: 1; transform: none; transition-delay: 200ms; }
+  .stagger.show > [data-step="2"]  { opacity: 1; transform: none; transition-delay: 720ms; }
+  .stagger.show > [data-step="3"]  { opacity: 1; transform: none; transition-delay: 1100ms; }
+  .stagger.show > [data-step="4"]  { opacity: 1; transform: none; transition-delay: 1400ms; }
+  .stagger.show > [data-step="5"]  { opacity: 1; transform: none; transition-delay: 1700ms; }
+
+  /* Card */
+  .card { border: 1px solid #E5E5EA; border-radius: 18px; background: #FFFFFF; padding: 16px; }
+  .card-2 { border: 1px solid #E5E5EA; border-radius: 18px; background: #F7F7F8; padding: 16px; }
+
+  /* CTAs — Signal Red is now PRIMARY (15% ratio) */
+  .cta-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 50px; padding: 0 22px; border-radius: 12px;
+    background: #EE2B37; color: #FFFFFF;
+    font-family: var(--font-system); font-size: 12px; letter-spacing: 0.18em; font-weight: 600;
+    text-transform: uppercase; cursor: pointer; transition: background 180ms;
+  }
+  .cta-primary:hover { background: #CA252F; }
+  .cta-primary[disabled] { background: #D1D1D6; color: #FFFFFF; cursor: not-allowed; }
+  .cta-graphite {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 50px; padding: 0 22px; border-radius: 12px;
+    background: #1C1C1E; color: #FFFFFF;
+    font-family: var(--font-system); font-size: 12px; letter-spacing: 0.18em;
+    text-transform: uppercase; cursor: pointer; transition: background 180ms;
+  }
+  .cta-graphite:hover { background: #000000; }
+  .cta-brand { /* alias kept for back-compat — same as primary now */
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 50px; padding: 0 22px; border-radius: 12px;
+    background: #EE2B37; color: #FFFFFF;
+    font-family: var(--font-system); font-size: 12px; letter-spacing: 0.18em; font-weight: 600;
+    text-transform: uppercase; cursor: pointer; transition: background 180ms;
+  }
+  .cta-brand:hover { background: #CA252F; }
+  .cta-ghost {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-system); font-size: 11px; letter-spacing: 0.06em;
+    color: #1C1C1E; text-transform: uppercase;
+    border-bottom: 1px solid rgba(28,28,30,0.3); padding-bottom: 2px; cursor: pointer;
+    transition: border-color 180ms;
+  }
+  .cta-ghost:hover { border-color: #1C1C1E; }
+
+  /* Form input */
+  .input-line {
+    width: 100%; background: transparent; border: none; border-bottom: 1px solid #E5E5EA;
+    font-family: var(--font-body); font-size: 17px; padding: 12px 0; color: #1C1C1E;
+    transition: border-color 180ms;
+  }
+  .input-line:focus { outline: none; border-color: #1C1C1E; }
+  .input-line::placeholder { color: #6E6E73; font-style: italic; font-family: var(--font-accent); }
+
+  /* Selectable chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 999px; border: 1px solid #E5E5EA;
+    background: #FFFFFF; font-family: var(--font-system); font-size: 12px;
+    letter-spacing: 0.06em; cursor: pointer; transition: all 180ms;
+    color: #1C1C1E;
+  }
+  .chip:hover { border-color: #1C1C1E; }
+  .chip.selected { background: #1C1C1E; color: #FFFFFF; border-color: #1C1C1E; }
+
+  /* Source card */
+  .source-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px;
+    border: 1px solid #E5E5EA; border-radius: 14px; background: #FFFFFF;
+    cursor: pointer; transition: all 180ms;
+  }
+  .source-card:hover { border-color: #1C1C1E; transform: translateY(-1px); }
+  .source-card.connected { border-color: #1C1C1E; background: #1C1C1E; color: #FFFFFF; }
+  .source-card.connected .src-status { color: #FFFFFF; }
+  .source-card .src-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; }
+  .source-card .src-status { font-family: var(--font-system); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #6E6E73; }
+
+  /* Loading dots for Tuning */
+  .tuning-pulse { animation: pulse 1400ms ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.02); }
+  }
+  .progress-bar { position: relative; height: 2px; background: #E5E5EA; border-radius: 1px; overflow: hidden; }
+  .progress-fill { position: absolute; inset: 0; background: #1C1C1E; transform-origin: left; animation: fill 8s ease-out forwards; }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* ─────────────────────────────────────────────────────────────
+     NEURAL VOICE INDICATOR — sm/md = SVG mesh; lg = WebGL brain.
+     State machine: idle · listening · thinking · speaking · error
+     Spec: docs/specs/JEFFREY_NEURAL_INDICATOR_SPEC.md
+                docs/specs/JEFFREY_BRAIN_MOTION_SPEC.md
+  ───────────────────────────────────────────────────────────── */
+  .voice {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: var(--vi-size); height: var(--vi-size);
+    flex-shrink: 0;
+  }
+  /* Small/medium SVG indicator keeps a subtle aqua chrome circle so it reads
+     as a button. The large WebGL brain has NO chrome — the brain stands alone. */
+  .voice[data-size="sm"], .voice[data-size="md"] {
+    border-radius: 50%;
+    background: rgba(0, 194, 209, var(--vi-chrome, 0.10));
+    transition: background 320ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .voice[data-size="lg"] {
+    background: transparent;
+    border-radius: 0;
+  }
+  .voice > svg {
+    width: 100%; height: 100%;
+    overflow: visible;
+  }
+  .voice > canvas {
+    width: 100%; height: 100%;
+    display: block;
+  }
+  /* Sizes */
+  .voice[data-size="sm"] { --vi-size: 24px; }
+  .voice[data-size="md"] { --vi-size: 80px; }
+  .voice[data-size="lg"] { --vi-size: 240px; }
+
+  /* Chrome saturation per state. Activity itself is rendered via SVG nodes/signals. */
+  .voice[data-state="idle"]      { --vi-chrome: 0.10; }
+  .voice[data-state="listening"] { --vi-chrome: 0.16; }
+  .voice[data-state="thinking"]  { --vi-chrome: 0.22; }
+  .voice[data-state="speaking"]  { --vi-chrome: 0.20; }
+  .voice[data-state="error"]     { --vi-chrome: 0.10; background: rgba(238, 43, 55, 0.10); }
+
+  /* Reduced motion — neural engine pauses, nodes get a single 3s breathe */
+  @media (prefers-reduced-motion: reduce) {
+    .voice .neural-node-core { animation: neural-breathe 3s ease-in-out infinite; }
+    @keyframes neural-breathe {
+      0%, 100% { opacity: 0.45; }
+      50%      { opacity: 1; }
+    }
+  }
+
+  /* Sidebar nav */
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    font-family: var(--font-system); font-size: 12px; letter-spacing: 0.04em;
+    color: #6E6E73; background: transparent; border: none; text-align: left;
+    transition: all 180ms;
+  }
+  .nav-btn:hover { background: #F7F7F8; color: #1C1C1E; }
+  .nav-btn.active { background: #EE2B37; color: #FFFFFF; }
+  .nav-btn .nav-num { font-size: 10px; letter-spacing: 0.18em; opacity: 0.6; min-width: 22px; }
+  .nav-section {
+    font-family: var(--font-system); font-size: 10px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: #6E6E73; padding: 16px 12px 8px;
+  }
+
+  /* Voice modal — Jeffrey */
+  .voice-orb {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #00C2D1 0%, #0B1D3A 70%);
+    box-shadow: 0 0 80px rgba(0, 194, 209, 0.4);
+    animation: orb-pulse 3s ease-in-out infinite;
+  }
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 80px rgba(0, 194, 209, 0.4); }
+    50%      { transform: scale(1.04); box-shadow: 0 0 120px rgba(0, 194, 209, 0.6); }
+  }
+
+  /* Sparkline */
+  .spark { width: 100%; height: 32px; }
+
+  /* Hover states for nav-icon dock */
+  .icon-hr      { background: #1C1C1E; mask: radial-gradient(circle at center, #000 50%, transparent 60%); }
+
+  /* ─────────────────────────────────────────────────────────────
+     LIVING ANALYTICS — metric tiles, scrubbable trend, hover lift
+  ───────────────────────────────────────────────────────────── */
+  .metric-tile {
+    text-align: left;
+    background: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 240ms cubic-bezier(0.2, 0, 0, 1),
+                border-color 200ms,
+                box-shadow 200ms;
+    will-change: transform;
+  }
+  .metric-tile:hover {
+    transform: translateY(-1px);
+    border-color: #00C2D1;
+    box-shadow: 0 4px 14px -8px rgba(0, 194, 209, 0.45);
+  }
+  .metric-tile:active {
+    transform: translateY(0);
+  }
+  .metric-tile--hero {
+    padding: 16px;
+  }
+  .metric-tile--hero:hover {
+    border-color: rgba(0, 194, 209, 0.6);
+  }
+  .metric-tile .metric-spark {
+    overflow: visible;
+  }
+
+  /* Adherence cells */
+  .adh-cell { width: 16px; height: 16px; border-radius: 4px; background: #EFEFF1; }
+  .adh-cell.done   { background: #1C1C1E; }
+  .adh-cell.miss   { background: #FCE6E8; border: 1px solid #EE2B37; }
+  .adh-cell.future { background: #FFFFFF; border: 1px solid #E5E5EA; }
+
+  /* Aissisted logo — SVG symbol referenced via <use href="#logo">. Color via currentColor.
+     Aspect ratio locked at viewBox 454.43:84.84 (≈5.358:1). Block-level so it sits
+     against the left padding of its container. */
+  .logo {
+    display: block;
+    height: 22px;
+    aspect-ratio: 454.43 / 84.84;   /* ≈ 117.85px wide at 22px tall */
+    color: #1C1C1E;
+    flex-shrink: 0;
+  }
+  /* Sizes — phone-relative. Logo wordmark sits as ~30% of the 304px inner phone width. */
+  .logo--xs { height: 14px; }       /* dock chip, badges                 ≈ 75px wide */
+  .logo--sm { height: 18px; }       /* secondary headers / dark surfaces ≈ 96px wide */
+  .logo--md { height: 22px; }       /* default phone wordmark            ≈ 118px wide */
+  .logo--lg { height: 30px; }       /* desktop side-nav header           ≈ 161px wide */
+  .logo--xl { height: 44px; }       /* hero / cover screens              ≈ 236px wide */
+  .logo--white { color: #FFFFFF; }
+  .logo--red   { color: #EE2B37; }
+  /* Inline mode — when sitting alongside text and we want baseline alignment */
+  .logo-inline { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- Aissisted logo — symbol defined once, referenced everywhere with <use> + currentColor -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo" viewBox="0 0 454.43 84.84">
+      <g fill="currentColor">
+        <path d="M34.44,49.98v-1.26c0-13.72-1.68-19.04-6.3-19.04-4.2,0-5.88,4.06-5.88,8.54,0,7.14-3.92,10.78-9.24,10.78-6.72,0-9.94-5.32-8.4-11.06,2.1-7.7,12.74-13.02,23.24-13.02,16.94,0,27.72,7.7,27.72,23.66v26.32c0,3.92.14,5.18,2.52,5.6,1.68.42,2.24.84,2.24,1.4,0,.84-.7,1.4-1.82,1.68-1.12.42-4.34.56-5.74.56-7.84,0-15.96-3.36-18.34-11.76-2.66,7.42-8.82,12.46-16.8,12.46-11.9,0-17.64-7.28-17.64-15.26,0-11.34,14.28-19.46,34.44-19.6ZM34.44,53.2c-8.54.42-13.16,5.46-13.16,12.32,0,4.06,2.66,7.98,6.44,7.98s6.58-5.6,6.58-9.52v-6.58c0-.28,0-.42.14-.56v-3.64Z"/>
+        <path d="M88.34,77.7c0,1.96.84,2.52,2.8,3.22,1.26.28,1.82.98,1.82,1.68s-.7,1.26-1.68,1.26c-1.82,0-6.72-.28-13.58-.28s-11.62.28-13.44.28c-1.12,0-1.82-.56-1.82-1.26s.56-1.4,1.82-1.68c2.1-.7,2.8-1.26,2.8-3.22v-38.36c0-1.82-1.54-2.8-2.8-3.22-1.26-.28-1.82-.98-1.82-1.68s.7-1.26,1.82-1.4c2.8-.42,7.84-1.4,13.3-3.36,5.88-1.96,7.28-3.36,9.24-3.36,1.54,0,1.54,1.4,1.54,3.22v48.16ZM77.14,23.52c-6.86,0-13.16-4.9-13.16-11.76S70.28,0,77.14,0s13.3,4.9,13.3,11.76-6.3,11.76-13.3,11.76Z"/>
+        <path d="M121.24,84.84c-13.58,0-23.66-3.78-26.18-11.9-2.1-6.3,1.54-12.18,9.24-12.18,5.46,0,8.54,3.64,9.38,10.64.7,7.28,4.34,8.68,8.4,8.68s7.28-2.66,7.28-7c0-3.64-2.8-7.56-13.02-11.9-11.62-5.04-18.62-9.38-18.62-18.9,0-10.64,11.76-17.36,25.62-17.36,12.04,0,20.86,4.48,22.54,10.64,1.54,6.02-1.82,10.08-9.24,10.08-5.04,0-8.4-2.52-8.82-8.68-.42-4.62-2.52-7.28-6.44-7.28-4.2,0-6.72,2.52-6.72,5.74,0,5.04,3.64,6.86,13.16,10.92,16.24,7.14,20.3,13.16,20.3,21.14,0,9.1-8.4,17.36-26.88,17.36Z"/>
+        <path d="M177.8,84.84c-13.58,0-23.66-3.78-26.18-11.9-2.1-6.3,1.54-12.18,9.24-12.18,5.46,0,8.54,3.64,9.38,10.64.7,7.28,4.34,8.68,8.4,8.68s7.28-2.66,7.28-7c0-3.64-2.8-7.56-13.02-11.9-11.62-5.04-18.62-9.38-18.62-18.9,0-10.64,11.76-17.36,25.62-17.36,12.04,0,20.86,4.48,22.54,10.64,1.54,6.02-1.82,10.08-9.24,10.08-5.04,0-8.4-2.52-8.82-8.68-.42-4.62-2.52-7.28-6.44-7.28-4.2,0-6.72,2.52-6.72,5.74,0,5.04,3.64,6.86,13.16,10.92,16.24,7.14,20.3,13.16,20.3,21.14,0,9.1-8.4,17.36-26.88,17.36Z"/>
+        <path d="M233.38,77.7c0,1.96.84,2.52,2.8,3.22,1.26.28,1.82.98,1.82,1.68s-.7,1.26-1.68,1.26c-1.82,0-6.72-.28-13.58-.28s-11.62.28-13.44.28c-1.12,0-1.82-.56-1.82-1.26s.56-1.4,1.82-1.68c2.1-.7,2.8-1.26,2.8-3.22v-38.36c0-1.82-1.54-2.8-2.8-3.22-1.26-.28-1.82-.98-1.82-1.68s.7-1.26,1.82-1.4c2.8-.42,7.84-1.4,13.3-3.36,5.88-1.96,7.28-3.36,9.24-3.36,1.54,0,1.54,1.4,1.54,3.22v48.16ZM222.18,23.52c-6.86,0-13.16-4.9-13.16-11.76s6.3-11.76,13.16-11.76,13.3,4.9,13.3,11.76-6.3,11.76-13.3,11.76Z"/>
+        <path d="M266.28,84.84c-13.58,0-23.66-3.78-26.18-11.9-2.1-6.3,1.54-12.18,9.24-12.18,5.46,0,8.54,3.64,9.38,10.64.7,7.28,4.34,8.68,8.4,8.68s7.28-2.66,7.28-7c0-3.64-2.8-7.56-13.02-11.9-11.62-5.04-18.62-9.38-18.62-18.9,0-10.64,11.76-17.36,25.62-17.36,12.04,0,20.86,4.48,22.54,10.64,1.54,6.02-1.82,10.08-9.24,10.08-5.04,0-8.4-2.52-8.82-8.68-.42-4.62-2.52-7.28-6.44-7.28-4.2,0-6.72,2.52-6.72,5.74,0,5.04,3.64,6.86,13.16,10.92,16.24,7.14,20.3,13.16,20.3,21.14,0,9.1-8.4,17.36-26.88,17.36Z"/>
+        <path d="M320.45,26.32h8.4c1.4,0,1.82.56,1.82,1.4v1.96c0,.84-.56,1.4-1.82,1.4h-8.54v34.58c0,4.76,1.96,6.86,4.9,6.86,1.82,0,3.36-.14,4.76-.56,1.12-.28,2.38.84,1.26,2.38-3.92,4.9-8.26,9.24-16.38,9.24-11.62,0-15.82-8.68-15.82-16.8V29.54c-7.7-3.36-18.48-10.78-29.26-10.78-6.58,0-9.52,2.38-11.34,2.38-1.96,0-4.48-2.66-4.48-7.14,0-5.74,5.32-11.62,14-11.62,7.42,0,14.84,6.86,20.86,13.3,4.76,5.32,9.66,9.52,13.16,9.52,3.22,0,5.46-2.1,8.68-6.02,4.06-4.9,5.18-9.66,7.28-9.66h.56c1.4,0,1.96,1.26,1.96,3.22v13.58Z"/>
+        <path d="M388.21,51.52c0,.84-.56,1.4-1.82,1.4h-31.5c1.96,12.88,10.64,20.58,18.06,20.58,5.46,0,8.68-1.4,11.76-3.22.98-.56,2.66.56,1.82,2.38-1.82,3.5-11.62,12.18-24.5,12.18-17.92,0-28.84-13.86-28.84-29.4,0-18.2,12.88-30.52,30.66-30.52,15.4,0,24.36,10.5,24.36,26.6ZM354.47,48.16h9.94c1.12,0,2.94-.14,2.94-6.02,0-7.28-1.54-12.46-5.32-12.46s-7.56,7.84-7.56,17.64v.84Z"/>
+        <path d="M425.73,19.46c-1.26-.42-1.68-.98-1.68-1.82,0-.7.56-1.26,1.68-1.4,3.36-.42,8.26-1.4,13.44-3.5,5.88-2.52,7.56-4.62,9.1-4.62s1.54,1.4,1.54,3.22v66.36c0,1.96.84,2.38,2.8,2.94,1.4.42,1.82,1.12,1.82,1.82s-.56,1.26-1.68,1.26c-1.82,0-5.04-.28-13.58-.14-7.56.14-10.64,1.4-10.64-1.4v-5.88c-2.66,4.34-7.42,8.54-13.58,8.54-11.62,0-21.98-11.06-21.98-30.38s10.36-29.54,21.98-29.54c6.16,0,10.92,4.48,13.58,9.66v-12.04c0-1.82-1.54-2.8-2.8-3.08ZM414.25,54.18c0,14.42,3.78,20.58,7.7,20.58,3.5,0,6.3-5.46,6.58-18.48v-2.1c0-14.28-2.66-19.32-6.58-19.32s-7.7,5.04-7.7,19.32Z"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ═════════════════════════════════════════════════════════════════════
+     LAYOUT
+══════════════════════════════════════════════════════════════════════ -->
+<div class="flex min-h-screen">
+
+  <!-- ─────────────── SIDE NAV ─────────────── -->
+  <aside class="w-72 border-r border-line bg-surface flex flex-col">
+    <div class="px-5 py-6 border-b border-line">
+      <div class="flex items-center gap-2">
+        <svg class="logo logo--lg" aria-label="aissisted"><use href="#logo"/></svg>
+        <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">· local</span>
+      </div>
+      <p class="font-system text-[10px] tracking-[0.06em] text-soft mt-3 uppercase">Brand Bible v1.1 · Architecture A</p>
+    </div>
+
+    <nav id="screen-nav" class="flex-1 overflow-y-auto px-3 py-4">
+      <!-- Buttons rendered by JS -->
+    </nav>
+
+    <div class="px-5 py-5 border-t border-line">
+      <p class="font-accent italic text-[13px] text-soft leading-[1.4]">"Your body. Understood."</p>
+      <div class="flex items-center gap-2 mt-4">
+        <button id="prev-btn" class="cta-ghost text-[10px]">← Prev</button>
+        <button id="next-btn" class="cta-ghost text-[10px]">Next →</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─────────────── PREVIEW STAGE ─────────────── -->
+  <main class="flex-1 bg-surface-2 relative overflow-hidden">
+    <!-- ambient background dots -->
+    <div class="absolute inset-0 opacity-[0.04] pointer-events-none"
+         style="background-image: radial-gradient(circle, #1C1C1E 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+    <div class="relative h-full w-full flex flex-col items-center justify-center p-10">
+      <!-- Screen meta -->
+      <div class="absolute top-6 left-8 font-system text-[10px] tracking-[0.18em] text-soft uppercase">
+        <span id="screen-meta-num">00</span> · <span id="screen-meta-name">Welcome</span>
+      </div>
+
+      <div class="absolute top-6 right-8 font-system text-[10px] tracking-[0.18em] text-soft uppercase">
+        Tap dock buttons · click chips · use Next →
+      </div>
+
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-status">
+          <span>9:41</span>
+          <span class="flex items-center gap-1.5"><span>•••</span><span>◐</span><span>▮▮▮</span></span>
+        </div>
+
+        <div class="phone-screen" id="phone-screen">
+
+          <!-- ═══════ 01 · WELCOME ═══════ -->
+          <section class="screen px-8 pt-8 pb-7" data-screen="welcome" style="height:100%;">
+            <div class="stagger flex flex-col h-full" data-stagger>
+              <div data-step="0" class="text-left">
+                <svg class="logo logo--md" aria-label="aissisted"><use href="#logo"/></svg>
+              </div>
+
+              <div class="flex-1 flex flex-col justify-end pb-8">
+                <h1 data-step="2" class="rally-cry text-[52px] text-ink">
+                  Your<br/>body.<br/>Understood.
+                </h1>
+                <p data-step="3" class="font-accent italic text-[16px] text-ink/75 mt-7 leading-[1.45] max-w-[240px]">
+                  Tuned overnight. Every night.
+                </p>
+              </div>
+
+              <div data-step="4" class="flex flex-col gap-3 shrink-0">
+                <button class="cta-primary w-full" onclick="goScreen('handoff')">Begin</button>
+                <button class="cta-ghost mx-auto" onclick="goScreen('signin')">I already have an account</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══════ 01b · JEFFREY HAND-OFF (dark) ═══════ -->
+          <section class="screen h-full" data-screen="handoff" style="background: linear-gradient(180deg, #0B1D3A 0%, #061027 100%); color:#FFFFFF;">
+            <div class="px-8 pt-10 flex items-center justify-between">
+              <svg class="logo logo--white logo--sm" aria-label="aissisted"><use href="#logo"/></svg>
+              <span class="font-system text-[10px] tracking-[0.24em] uppercase" style="color: rgba(255,255,255,0.5)">01 · 04</span>
+            </div>
+
+            <div class="stagger px-8 mt-10 flex flex-col items-center text-center" data-stagger>
+              <div data-step="0" class="voice mb-10" data-size="lg" data-state="speaking" style="--vi-size:170px;">
+                
+              </div>
+              <span data-step="1" class="font-system text-[10px] tracking-[0.24em] uppercase" style="color: rgba(255,255,255,0.6)">Hand-off</span>
+              <h2 data-step="2" class="font-display text-[28px] leading-[1.05] mt-4" style="color:#FFFFFF; font-weight:700;">
+                The Jeffrey<br/>hand-off.
+              </h2>
+              <p data-step="3" class="font-accent italic text-[16px] leading-[1.5] mt-5 max-w-[270px]" style="color: rgba(255,255,255,0.8)">
+                "I&rsquo;ll learn your data. Then I get out of the way. Four short steps."
+              </p>
+            </div>
+
+            <div class="px-8 mt-12 flex items-center justify-between">
+              <button class="cta-ghost" style="color:#FFFFFF; border-color: rgba(255,255,255,0.3)" onclick="goScreen('welcome')">← Back</button>
+              <button class="cta-primary" style="background:#FFFFFF; color:#0B1D3A;" onclick="goScreen('connect')">Begin →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 02 · SIGN IN (skip path) ═══════ -->
+          <section class="screen px-7 pt-8 pb-6" data-screen="signin">
+            <svg class="logo logo--sm" aria-label="aissisted"><use href="#logo"/></svg>
+            <div class="mt-10">
+              <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Welcome back</span>
+              <h2 class="font-display text-[32px] text-ink leading-[1.05] mt-3">Sign in.</h2>
+            </div>
+            <div class="mt-10 flex flex-col gap-2">
+              <input class="input-line" type="email" placeholder="email">
+              <input class="input-line" type="password" placeholder="password">
+            </div>
+            <div class="mt-12 flex flex-col gap-3">
+              <button class="cta-primary w-full" onclick="goScreen('today')">Sign in</button>
+              <button class="cta-ghost mx-auto" onclick="goScreen('welcome')">← Back</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 03 · CONNECT SOURCES ═══════ -->
+          <section class="screen px-6 pt-7 pb-6" data-screen="connect">
+            <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Step 01 · 04</span>
+            <h2 class="font-display text-[30px] text-ink leading-[1.05] mt-3">Connect<br/>your signal.</h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-3 leading-[1.4]">
+              The more we hear, the better we tune. Connect at least one — add more anytime.
+            </p>
+
+            <div class="mt-7 flex flex-col gap-2.5">
+              <div class="source-card" onclick="toggleSource(this, 'whoop')">
+                <div class="src-icon" style="background:#1C1C1E;"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[17px] text-ink leading-tight">WHOOP</p>
+                  <p class="src-status">Recovery · Strain · HRV · Sleep stages</p>
+                </div>
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft connection-state">Connect</span>
+              </div>
+              <div class="source-card" onclick="toggleSource(this, 'oura')">
+                <div class="src-icon" style="background: linear-gradient(135deg, #4A4A4A, #1C1C1E);"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[17px] text-ink leading-tight">Oura Ring</p>
+                  <p class="src-status">Sleep · Readiness · Body temp · HRV</p>
+                </div>
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft connection-state">Connect</span>
+              </div>
+              <div class="source-card" onclick="toggleSource(this, 'apple')">
+                <div class="src-icon" style="background: #FFFFFF; border:1px solid #1C1C1E;"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[17px] text-ink leading-tight">Apple Watch</p>
+                  <p class="src-status">Workouts · VO₂max · Resting HR</p>
+                </div>
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft connection-state">Connect</span>
+              </div>
+              <div class="source-card" onclick="toggleSource(this, 'epic')">
+                <div class="src-icon" style="background: #EE2B37;"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[17px] text-ink leading-tight">Epic · MyChart</p>
+                  <p class="src-status">Lab results · medications · vitals</p>
+                </div>
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft connection-state">Connect</span>
+              </div>
+            </div>
+
+            <div class="mt-7 flex items-center justify-between">
+              <button class="cta-ghost" onclick="goScreen('welcome')">← Back</button>
+              <button class="cta-primary" onclick="goNext()">Continue →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 04 · PROFILE BASICS ═══════ -->
+          <section class="screen px-6 pt-7 pb-6" data-screen="profile">
+            <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Step 02 · 04</span>
+            <h2 class="font-display text-[30px] text-ink leading-[1.05] mt-3">A few basics.</h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-3 leading-[1.4]">
+              For dosing math. We never share or sell.
+            </p>
+
+            <div class="mt-7 flex flex-col gap-1">
+              <label class="font-system text-[10px] tracking-[0.18em] text-soft uppercase mt-3">Name</label>
+              <input class="input-line" type="text" value="Ron Gibori">
+              <label class="font-system text-[10px] tracking-[0.18em] text-soft uppercase mt-4">Sex assigned at birth</label>
+              <div class="flex gap-2 mt-1">
+                <button class="chip selected" onclick="pickChip(this)">Male</button>
+                <button class="chip" onclick="pickChip(this)">Female</button>
+                <button class="chip" onclick="pickChip(this)">Intersex</button>
+              </div>
+              <div class="grid grid-cols-3 gap-3 mt-5">
+                <div>
+                  <label class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Age</label>
+                  <input class="input-line" value="38">
+                </div>
+                <div>
+                  <label class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Weight</label>
+                  <input class="input-line" value="172 lb">
+                </div>
+                <div>
+                  <label class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Height</label>
+                  <input class="input-line" value="5'11&quot;">
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-7 flex items-center justify-between">
+              <button class="cta-ghost" onclick="goPrev()">← Back</button>
+              <button class="cta-primary" onclick="goNext()">Continue →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 05 · GOALS ═══════ -->
+          <section class="screen px-6 pt-7 pb-6" data-screen="goals">
+            <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Step 03 · 04</span>
+            <h2 class="font-display text-[30px] text-ink leading-[1.05] mt-3">What are<br/>we tuning for?</h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-3 leading-[1.4]">
+              Pick up to three. The formula prioritizes them — top to bottom.
+            </p>
+
+            <div class="mt-6 flex flex-wrap gap-2">
+              <button class="chip selected" onclick="pickGoal(this)">Recovery</button>
+              <button class="chip selected" onclick="pickGoal(this)">Sleep depth</button>
+              <button class="chip" onclick="pickGoal(this)">Focus</button>
+              <button class="chip" onclick="pickGoal(this)">Energy</button>
+              <button class="chip" onclick="pickGoal(this)">Strength</button>
+              <button class="chip selected" onclick="pickGoal(this)">Longevity</button>
+              <button class="chip" onclick="pickGoal(this)">Mood</button>
+              <button class="chip" onclick="pickGoal(this)">Inflammation</button>
+              <button class="chip" onclick="pickGoal(this)">Gut</button>
+              <button class="chip" onclick="pickGoal(this)">Hormones</button>
+              <button class="chip" onclick="pickGoal(this)">Skin</button>
+              <button class="chip" onclick="pickGoal(this)">Cognition</button>
+            </div>
+
+            <div class="mt-8 card-2">
+              <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Selected priority</span>
+              <ol class="mt-2 list-decimal list-inside flex flex-col gap-1 font-accent italic text-[15px] text-ink">
+                <li>Recovery</li>
+                <li>Sleep depth</li>
+                <li>Longevity</li>
+              </ol>
+            </div>
+
+            <div class="mt-7 flex items-center justify-between">
+              <button class="cta-ghost" onclick="goPrev()">← Back</button>
+              <button class="cta-primary" onclick="goNext()">Continue →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 06 · CURRENT STACK ═══════ -->
+          <section class="screen px-6 pt-7 pb-6" data-screen="current-stack">
+            <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Step 04 · 04</span>
+            <h2 class="font-display text-[30px] text-ink leading-[1.05] mt-3">What you<br/>already take.</h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-3 leading-[1.4]">
+              We&rsquo;ll layer your stack into the formula and flag any conflicts.
+            </p>
+
+            <div class="mt-6 flex flex-col gap-2">
+              <div class="card flex items-center justify-between">
+                <div>
+                  <p class="font-display text-[16px] text-ink">Magnesium glycinate</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase mt-0.5">300 mg · evening</p>
+                </div>
+                <button class="cta-ghost text-[10px]">Edit</button>
+              </div>
+              <div class="card flex items-center justify-between">
+                <div>
+                  <p class="font-display text-[16px] text-ink">Omega-3 (fish oil)</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase mt-0.5">2 g · breakfast</p>
+                </div>
+                <button class="cta-ghost text-[10px]">Edit</button>
+              </div>
+              <div class="card flex items-center justify-between">
+                <div>
+                  <p class="font-display text-[16px] text-ink">Creatine monohydrate</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase mt-0.5">5 g · daily</p>
+                </div>
+                <button class="cta-ghost text-[10px]">Edit</button>
+              </div>
+              <button class="card-2 text-left" onclick="toast('Add supplement modal — TODO')">
+                <p class="font-system text-[11px] tracking-[0.18em] text-soft uppercase">+ Add supplement</p>
+              </button>
+            </div>
+
+            <div class="mt-7 flex items-center justify-between">
+              <button class="cta-ghost" onclick="goPrev()">← Back</button>
+              <button class="cta-brand" onclick="goScreen('tuning')">Tune my formula →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 07 · TUNING (loading) ═══════ -->
+          <section class="screen px-7 pt-10 pb-6 h-full flex flex-col" data-screen="tuning">
+            <svg class="logo" aria-label="aissisted"><use href="#logo"/></svg>
+            <div class="flex-1 flex flex-col items-center justify-center text-center -mt-10">
+              <div class="voice mb-10" data-state="thinking" style="--vi-size:160px;">
+                
+              </div>
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Tuning</span>
+              <h2 class="font-display text-[30px] text-ink mt-3 leading-[1.05]">Reading 38 signals.</h2>
+              <p class="font-accent italic text-[15px] text-ink/70 mt-4 leading-[1.4] max-w-[260px]">
+                HRV trend · sleep architecture · recovery deficit · current stack · genetic flags.
+              </p>
+              <div class="progress-bar w-[200px] mt-8"><div class="progress-fill"></div></div>
+              <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase mt-4 tuning-pulse">Calibrating dose</span>
+            </div>
+            <div class="text-center">
+              <button class="cta-ghost" onclick="goScreen('formula')">Skip animation →</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 08 · FORMULA REVEAL ═══════ -->
+          <section class="screen px-6 pt-7 pb-6" data-screen="formula">
+            <div class="stagger" data-stagger>
+              <div data-step="0">
+                <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Built for you · v1.0</span>
+              </div>
+              <h2 data-step="1" class="font-display text-[34px] text-ink leading-[1.0] mt-3">
+                Your<br/>formula.
+              </h2>
+              <p data-step="2" class="font-accent italic text-[15px] text-ink/70 mt-4 leading-[1.4]">
+                Three windows. Twelve molecules. One conversation that keeps tuning.
+              </p>
+
+              <div data-step="3" class="mt-6 flex flex-col gap-2.5">
+                <FormulaWindow
+                  label="Morning · 06:30"
+                  count="4"
+                  preview="Tyrosine · Rhodiola · Vitamin D · B-complex"
+                  tone="sun"></FormulaWindow>
+                <FormulaWindow
+                  label="Day · 13:00"
+                  count="3"
+                  preview="Omega-3 · Creatine · Curcumin"
+                  tone="day"></FormulaWindow>
+                <FormulaWindow
+                  label="Night · 21:30"
+                  count="5"
+                  preview="Magnesium glycinate · Glycine · L-theanine · Apigenin · Ashwagandha"
+                  tone="moon"></FormulaWindow>
+              </div>
+
+              <div data-step="4" class="mt-7 card-2">
+                <p class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Why these?</p>
+                <p class="font-accent italic text-[15px] text-ink/85 mt-2 leading-[1.4]">
+                  &ldquo;Your evenings are running hot — Mg + Apigenin pull the brake. Mornings stay light. We&rsquo;ll re-tune nightly.&rdquo;
+                </p>
+                <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase mt-3">— Jeffrey · clinical layer</p>
+              </div>
+
+              <div data-step="5" class="mt-7 flex items-center justify-between">
+                <button class="cta-ghost" onclick="goScreen('current-stack')">← Adjust</button>
+                <button class="cta-brand" onclick="goScreen('hello')">Begin day 1 →</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══════ 09 · TODAY (the dashboard) ═══════ -->
+          <section class="screen" data-screen="today">
+            <div class="stagger px-7 pt-7 pb-6" data-stagger>
+              <div data-step="0">
+                <svg class="logo" aria-label="aissisted"><use href="#logo"/></svg>
+              </div>
+              <div data-step="1" class="mt-7">
+                <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Tue · May 2</span>
+              </div>
+              <h1 data-step="2" class="rally-cry text-[40px] text-ink mt-2.5">
+                Good morning,<br/>Ron.
+              </h1>
+              <p data-step="3" class="font-accent italic text-[16px] text-ink/75 mt-4 leading-[1.45] max-w-[260px]">
+                Recovery&rsquo;s up. We dialed your formula in overnight.
+              </p>
+
+              <!-- Metric trio -->
+              <div data-step="4" class="mt-7 flex items-center justify-between">
+                <span class="font-system text-[11px] tracking-[0.24em] text-soft uppercase">Today's read</span>
+                <span class="font-system text-[11px] text-soft">06:42</span>
+              </div>
+              <div class="mt-3 grid grid-cols-3 gap-2" data-step="4">
+                <div class="card">
+                  <p class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Recovery</p>
+                  <p class="font-display text-[34px] text-ink leading-none mt-1">78</p>
+                  <p class="font-system text-[10px] mt-1" style="color:#0F7A4C">+12</p>
+                </div>
+                <div class="card">
+                  <p class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Sleep</p>
+                  <p class="font-display text-[34px] text-ink leading-none mt-1">92</p>
+                  <p class="font-system text-[10px] text-soft mt-1">7h 41</p>
+                </div>
+                <div class="card">
+                  <p class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Strain</p>
+                  <p class="font-display text-[34px] text-ink leading-none mt-1">14</p>
+                  <p class="font-system text-[10px] mt-1" style="color:#B76B00">low</p>
+                </div>
+              </div>
+
+              <!-- Formula adaptation — Signal Red surface (the primary brand moment) -->
+              <div data-step="5" class="mt-5 rounded-2xl p-4" style="background:#EE2B37; color:#FFFFFF; border:1px solid #EE2B37;">
+                <div class="flex items-center justify-between">
+                  <span class="font-system text-[10px] tracking-[0.18em] uppercase" style="color:rgba(255,255,255,0.85)">Your formula</span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                    <span class="font-system text-[10px] tracking-[0.06em] uppercase" style="color:rgba(255,255,255,0.85)">v3.2 · adapted today</span>
+                  </span>
+                </div>
+                <p class="font-display text-[20px] leading-[1.2] mt-2" style="color:#FFFFFF; font-weight:700;">
+                  Magnesium up +40mg. Rhodiola back in. Zinc holding.
+                </p>
+                <p class="font-accent italic text-[13px] mt-2 leading-[1.4]" style="color:rgba(255,255,255,0.85)">
+                  Your overnight HRV cleared the threshold for stack adaptation.
+                </p>
+                <button class="font-system text-[11px] tracking-[0.06em] uppercase mt-4 pb-0.5 cursor-pointer" style="color:#FFFFFF; border-bottom:1px solid rgba(255,255,255,0.4);" onclick="goScreen('stack')">View full formula →</button>
+              </div>
+
+              <!-- Adherence row -->
+              <div data-step="5" class="mt-6 card">
+                <div class="flex items-center justify-between">
+                  <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Today's stack</span>
+                  <span class="font-system text-[10px] text-soft">2 of 3 windows</span>
+                </div>
+                <div class="mt-3 flex items-center gap-3">
+                  <div class="flex flex-col items-start">
+                    <span class="font-system text-[10px] text-soft uppercase tracking-[0.18em]">AM</span>
+                    <span class="adh-cell done mt-1"></span>
+                  </div>
+                  <div class="flex flex-col items-start">
+                    <span class="font-system text-[10px] text-soft uppercase tracking-[0.18em]">Day</span>
+                    <span class="adh-cell done mt-1"></span>
+                  </div>
+                  <div class="flex flex-col items-start">
+                    <span class="font-system text-[10px] text-soft uppercase tracking-[0.18em]">Night</span>
+                    <span class="adh-cell future mt-1"></span>
+                  </div>
+                  <div class="ml-auto"><button class="cta-ghost" onclick="goScreen('log')">Log →</button></div>
+                </div>
+              </div>
+
+              <!-- Jeffrey card -->
+              <div data-step="5" class="mt-5 card flex items-center gap-3 cursor-pointer" onclick="goScreen('jeffrey')">
+                <div class="voice" data-state="idle" style="--vi-size:40px;">
+                  
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[15px] text-ink leading-tight">Talk to Jeffrey</p>
+                  <p class="font-accent italic text-[12px] text-ink/70 leading-tight">"How are we feeling, this morning?"</p>
+                </div>
+                <span class="font-system text-[14px] text-ink">→</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══════ 10 · STACK DETAIL ═══════ -->
+          <section class="screen px-6 pt-6 pb-6" data-screen="stack">
+            <div class="flex items-center justify-between">
+              <button class="cta-ghost" onclick="goScreen('today')">← Today</button>
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">v3.2 · adapted today</span>
+            </div>
+            <h2 class="font-display text-[32px] text-ink leading-[1.0] mt-5">Your formula.</h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-2 leading-[1.4]">12 molecules. Three windows. Last tuned 04:17.</p>
+
+            <!-- Morning -->
+            <div class="mt-6 card">
+              <div class="flex items-center justify-between">
+                <span class="font-system text-[10px] tracking-[0.24em] uppercase text-soft">Morning · 06:30</span>
+                <span class="font-system text-[10px] text-soft">4 doses</span>
+              </div>
+              <ul class="mt-3 flex flex-col gap-2.5">
+                <StackRow></StackRow>
+              </ul>
+              <div class="mt-3 grid grid-cols-1 gap-2">
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">L-Tyrosine</span>
+                  <span class="font-system text-[11px] text-soft">500 mg</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Rhodiola rosea <span style="color:#EE2B37">●</span></span>
+                  <span class="font-system text-[11px] text-soft">300 mg · added today</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Vitamin D₃ + K₂</span>
+                  <span class="font-system text-[11px] text-soft">5000 IU / 100 mcg</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">B-complex</span>
+                  <span class="font-system text-[11px] text-soft">Methyl form</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day -->
+            <div class="mt-3 card">
+              <div class="flex items-center justify-between">
+                <span class="font-system text-[10px] tracking-[0.24em] uppercase text-soft">Day · 13:00</span>
+                <span class="font-system text-[10px] text-soft">3 doses</span>
+              </div>
+              <div class="mt-3 grid grid-cols-1 gap-2">
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Omega-3 (EPA/DHA)</span>
+                  <span class="font-system text-[11px] text-soft">2 g</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Creatine</span>
+                  <span class="font-system text-[11px] text-soft">5 g</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Curcumin (BCM-95)</span>
+                  <span class="font-system text-[11px] text-soft">500 mg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Night -->
+            <div class="mt-3 card">
+              <div class="flex items-center justify-between">
+                <span class="font-system text-[10px] tracking-[0.24em] uppercase text-soft">Night · 21:30</span>
+                <span class="font-system text-[10px] text-soft">5 doses</span>
+              </div>
+              <div class="mt-3 grid grid-cols-1 gap-2">
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Magnesium glycinate <span style="color:#EE2B37">●</span></span>
+                  <span class="font-system text-[11px] text-soft">340 mg · <span style="color:#EE2B37">+40 mg</span></span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Glycine</span>
+                  <span class="font-system text-[11px] text-soft">3 g</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">L-theanine</span>
+                  <span class="font-system text-[11px] text-soft">200 mg</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Apigenin</span>
+                  <span class="font-system text-[11px] text-soft">50 mg</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                  <span class="font-display text-[15px] text-ink">Ashwagandha (KSM-66)</span>
+                  <span class="font-system text-[11px] text-soft">600 mg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Adaptation note -->
+            <div class="mt-4 card-2">
+              <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft">What changed</span>
+              <p class="font-accent italic text-[15px] text-ink/85 mt-2 leading-[1.4]">
+                &ldquo;Your evenings ran hot all week. We pushed Mg up <span style="color:#EE2B37;font-style:normal;">+40 mg</span> and folded Rhodiola back in for the AM ramp. Holding Zinc — your levels are textbook.&rdquo;
+              </p>
+              <p class="font-system text-[10px] tracking-[0.06em] uppercase text-soft mt-3">— Jeffrey · 04:17</p>
+            </div>
+          </section>
+
+          <!-- ═══════ 11 · LOG / ADHERENCE ═══════ -->
+          <section class="screen px-6 pt-6 pb-6" data-screen="log">
+            <div class="flex items-center justify-between">
+              <button class="cta-ghost" onclick="goScreen('today')">← Today</button>
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Log</span>
+            </div>
+            <h2 class="font-display text-[30px] text-ink leading-[1.0] mt-5">
+              Tonight&rsquo;s window.
+            </h2>
+            <p class="font-accent italic text-[15px] text-ink/70 mt-2 leading-[1.4]">
+              5 doses · 21:30 ± 30 min. Mark when taken.
+            </p>
+
+            <div class="mt-5 flex flex-col gap-2">
+              <button class="card flex items-center gap-3 text-left" onclick="logDose(this)">
+                <span class="adh-cell future"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[16px] text-ink">Magnesium glycinate</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase">340 mg · with water</p>
+                </div>
+              </button>
+              <button class="card flex items-center gap-3 text-left" onclick="logDose(this)">
+                <span class="adh-cell future"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[16px] text-ink">Glycine</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase">3 g · powder</p>
+                </div>
+              </button>
+              <button class="card flex items-center gap-3 text-left" onclick="logDose(this)">
+                <span class="adh-cell future"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[16px] text-ink">L-theanine</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase">200 mg · capsule</p>
+                </div>
+              </button>
+              <button class="card flex items-center gap-3 text-left" onclick="logDose(this)">
+                <span class="adh-cell future"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[16px] text-ink">Apigenin</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase">50 mg · capsule</p>
+                </div>
+              </button>
+              <button class="card flex items-center gap-3 text-left" onclick="logDose(this)">
+                <span class="adh-cell future"></span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-display text-[16px] text-ink">Ashwagandha</p>
+                  <p class="font-system text-[10px] tracking-[0.06em] text-soft uppercase">600 mg · capsule</p>
+                </div>
+              </button>
+            </div>
+
+            <!-- 7-day grid -->
+            <div class="mt-7 card-2">
+              <div class="flex items-center justify-between">
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase text-soft">Last 7 days</span>
+                <span class="font-system text-[10px] text-soft">86% adherence</span>
+              </div>
+              <div class="mt-3 grid grid-cols-7 gap-1.5">
+                <!-- 7 days × 3 windows -->
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell done"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell miss"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell done"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell miss"></span><span class="adh-cell done"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell done"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell done"></span></div>
+                <div class="flex flex-col gap-1"><span class="adh-cell done"></span><span class="adh-cell done"></span><span class="adh-cell future"></span></div>
+              </div>
+              <div class="flex items-center justify-between mt-2 font-system text-[10px] text-soft">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══════ 12 · TRENDS · LIVING ANALYTICS ═══════ -->
+          <!--
+            Tile-based analytics surface — Apple/WHOOP fused with Aissisted DNA.
+            Modules:
+              · Hero interpretation (translated, not raw)
+              · 5 daily metrics (Energy / Recovery / Sleep / Stress / Readiness)
+              · Adaptive feedback loop (what / why / expected)
+              · Interactive 30-day trend chart (touch-scrubbable)
+              · Personal identity tail
+            Spec: §"high-end interactive analytics" 2026-05-03 brief
+          -->
+          <section class="screen px-6 pt-6 pb-6" data-screen="trends">
+            <!-- Header strip -->
+            <div class="flex items-center justify-between">
+              <button class="cta-ghost" onclick="goScreen('today')">← Today</button>
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Mon · May 3</span>
+            </div>
+
+            <!-- HERO · Interpretation (not raw data) -->
+            <div class="mt-6">
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Today's read</span>
+              <h2 class="rally-cry text-[34px] text-ink leading-[1.0] mt-3">
+                Your recovery<br/>is up.
+              </h2>
+              <p class="font-accent italic text-[16px] text-ink/75 mt-3 leading-[1.4] max-w-[280px]">
+                We dialed your formula in overnight. Tonight will run easier.
+              </p>
+            </div>
+
+            <!-- ADAPTIVE FEEDBACK LOOP — Signal Red surface, the brand moment -->
+            <div class="mt-6 rounded-2xl p-4" style="background:#EE2B37; color:#FFFFFF;">
+              <div class="flex items-center justify-between">
+                <span class="font-system text-[10px] tracking-[0.18em] uppercase" style="color:rgba(255,255,255,0.85)">Adaptation</span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                  <span class="font-system text-[10px] tracking-[0.06em] uppercase" style="color:rgba(255,255,255,0.85)">v3.2 → v3.3 · 04:17</span>
+                </span>
+              </div>
+
+              <!-- 3-line: WHAT / WHY / EXPECTED -->
+              <div class="mt-3 flex flex-col gap-2.5">
+                <div>
+                  <span class="font-system text-[9px] tracking-[0.24em] uppercase" style="color:rgba(255,255,255,0.55)">What</span>
+                  <p class="font-display text-[18px] leading-[1.2] mt-0.5" style="font-weight:700;">Magnesium up +40mg. Rhodiola back in.</p>
+                </div>
+                <div class="border-t pt-2.5" style="border-color: rgba(255,255,255,0.18);">
+                  <span class="font-system text-[9px] tracking-[0.24em] uppercase" style="color:rgba(255,255,255,0.55)">Why</span>
+                  <p class="font-accent italic text-[14px] leading-[1.4] mt-0.5" style="color:rgba(255,255,255,0.92)">Overnight HRV crossed your adaptation threshold. We had headroom.</p>
+                </div>
+                <div class="border-t pt-2.5" style="border-color: rgba(255,255,255,0.18);">
+                  <span class="font-system text-[9px] tracking-[0.24em] uppercase" style="color:rgba(255,255,255,0.55)">Expected</span>
+                  <p class="font-system text-[12px] leading-[1.5] mt-0.5" style="color:rgba(255,255,255,0.92)">Deeper sleep tonight. Recovery rebound by Wed. Watch for steadier mornings.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- DAILY OVERVIEW · 5 metrics in a tile grid -->
+            <div class="mt-6">
+              <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Today's vitals</span>
+              <!-- 5-tile grid: 1 hero (Energy) + 2x2 (Recovery, Sleep, Stress, Readiness) -->
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <!-- HERO TILE — Energy spans 2 cols -->
+                <button class="metric-tile metric-tile--hero col-span-2" data-metric="energy"
+                        onclick="event.stopPropagation()">
+                  <div class="flex items-baseline justify-between">
+                    <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Energy</span>
+                    <span class="font-system text-[10px]" style="color:#0F7A4C">+ 6</span>
+                  </div>
+                  <div class="mt-2 flex items-baseline gap-3">
+                    <span class="rally-cry text-[44px] text-ink leading-none metric-value" data-target="78">0</span>
+                    <svg class="metric-spark flex-1" viewBox="0 0 200 36" preserveAspectRatio="none" style="height:36px;">
+                      <path class="spark-area" fill="rgba(0,194,209,0.10)" stroke="none"
+                            d="M0,28 L12,26 L24,30 L36,22 L48,24 L60,18 L72,20 L84,14 L96,18 L108,11 L120,14 L132,9 L144,11 L156,7 L168,9 L180,5 L192,8 L200,6 L200,36 L0,36 Z"/>
+                      <polyline class="spark-line" fill="none" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        points="0,28 12,26 24,30 36,22 48,24 60,18 72,20 84,14 96,18 108,11 120,14 132,9 144,11 156,7 168,9 180,5 192,8 200,6"/>
+                    </svg>
+                  </div>
+                  <p class="font-accent italic text-[13px] text-ink/70 mt-1.5 leading-[1.35]">Composite of HRV, sleep depth, and recent strain.</p>
+                </button>
+
+                <!-- Recovery -->
+                <button class="metric-tile" data-metric="recovery" onclick="event.stopPropagation()">
+                  <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Recovery</span>
+                  <div class="mt-1 flex items-baseline gap-1">
+                    <span class="font-display text-[28px] text-ink leading-none metric-value" data-target="78">0</span>
+                    <span class="font-system text-[10px]" style="color:#0F7A4C">+12</span>
+                  </div>
+                  <svg class="metric-spark mt-1.5" viewBox="0 0 100 18" preserveAspectRatio="none" style="height:18px;width:100%;">
+                    <polyline fill="none" stroke="#00C2D1" stroke-width="1.2" stroke-linecap="round"
+                      points="0,14 10,12 20,15 30,10 40,12 50,8 60,10 70,6 80,8 90,4 100,5"/>
+                  </svg>
+                  <p class="font-system text-[10px] text-soft mt-1">Above your 30d avg.</p>
+                </button>
+
+                <!-- Sleep -->
+                <button class="metric-tile" data-metric="sleep" onclick="event.stopPropagation()">
+                  <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Sleep</span>
+                  <div class="mt-1 flex items-baseline gap-1">
+                    <span class="font-display text-[28px] text-ink leading-none metric-value" data-target="92">0</span>
+                    <span class="font-system text-[10px] text-soft">7h 41</span>
+                  </div>
+                  <svg class="metric-spark mt-1.5" viewBox="0 0 100 18" preserveAspectRatio="none" style="height:18px;width:100%;">
+                    <polyline fill="none" stroke="#00C2D1" stroke-width="1.2" stroke-linecap="round"
+                      points="0,10 10,12 20,8 30,11 40,7 50,9 60,5 70,7 80,4 90,6 100,3"/>
+                  </svg>
+                  <p class="font-system text-[10px] text-soft mt-1">Deep 1h22 · REM 1h54.</p>
+                </button>
+
+                <!-- Stress -->
+                <button class="metric-tile" data-metric="stress" onclick="event.stopPropagation()">
+                  <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Stress</span>
+                  <div class="mt-1 flex items-baseline gap-1">
+                    <span class="font-display text-[28px] text-ink leading-none metric-value" data-target="14">0</span>
+                    <span class="font-system text-[10px]" style="color:#B76B00">low</span>
+                  </div>
+                  <svg class="metric-spark mt-1.5" viewBox="0 0 100 18" preserveAspectRatio="none" style="height:18px;width:100%;">
+                    <polyline fill="none" stroke="#1C1C1E" stroke-width="1.2" stroke-linecap="round"
+                      points="0,7 10,9 20,6 30,11 40,8 50,12 60,7 70,10 80,6 90,9 100,5"/>
+                  </svg>
+                  <p class="font-system text-[10px] text-soft mt-1">RHR 54 · within band.</p>
+                </button>
+
+                <!-- Readiness -->
+                <button class="metric-tile" data-metric="readiness" onclick="event.stopPropagation()">
+                  <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Readiness</span>
+                  <div class="mt-1 flex items-baseline gap-1">
+                    <span class="font-display text-[28px] text-ink leading-none metric-value" data-target="84">0</span>
+                    <span class="font-system text-[10px]" style="color:#EE2B37">go</span>
+                  </div>
+                  <svg class="metric-spark mt-1.5" viewBox="0 0 100 18" preserveAspectRatio="none" style="height:18px;width:100%;">
+                    <polyline fill="none" stroke="#EE2B37" stroke-width="1.2" stroke-linecap="round"
+                      points="0,12 10,11 20,13 30,9 40,10 50,7 60,9 70,5 80,7 90,3 100,4"/>
+                  </svg>
+                  <p class="font-system text-[10px] text-soft mt-1">Train hard. Skip caffeine after 2.</p>
+                </button>
+              </div>
+            </div>
+
+            <!-- INTERACTIVE 30-DAY TREND — touch/mouse scrub -->
+            <div class="mt-6">
+              <div class="flex items-baseline justify-between">
+                <span class="font-system text-[10px] tracking-[0.24em] text-soft uppercase">Trajectory</span>
+                <div class="flex items-center gap-3 font-system text-[9px] tracking-[0.06em] uppercase">
+                  <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-px" style="background:#1C1C1E"></span><span class="text-soft">Recovery</span></span>
+                  <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-px" style="background:#00C2D1"></span><span class="text-soft">HRV</span></span>
+                  <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-px" style="background:#EE2B37"></span><span class="text-soft">Sleep</span></span>
+                </div>
+              </div>
+
+              <!-- Trend chart container — touch-scrub interactive -->
+              <div id="trend-chart-container" class="mt-3 card relative overflow-hidden" style="height:140px; padding:0;">
+                <svg id="trend-chart" viewBox="0 0 600 180" preserveAspectRatio="none"
+                     style="width:100%;height:100%; cursor:crosshair;" aria-label="30 day trend">
+                  <!-- Background grid -->
+                  <line x1="0" y1="60"  x2="600" y2="60"  stroke="#E5E5EA" stroke-width="0.5"/>
+                  <line x1="0" y1="120" x2="600" y2="120" stroke="#E5E5EA" stroke-width="0.5"/>
+                  <!-- Recovery (graphite) -->
+                  <path id="trend-recovery-area" fill="rgba(28,28,30,0.06)" stroke="none"
+                        d=""/>
+                  <polyline id="trend-recovery" fill="none" stroke="#1C1C1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- HRV (aqua) -->
+                  <polyline id="trend-hrv" fill="none" stroke="#00C2D1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                  <!-- Sleep (red) -->
+                  <polyline id="trend-sleep" fill="none" stroke="#EE2B37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                  <!-- Crosshair -->
+                  <line id="trend-crosshair" x1="-10" y1="0" x2="-10" y2="180" stroke="#1C1C1E" stroke-width="0.8" stroke-dasharray="2 3" opacity="0"/>
+                  <circle id="trend-cursor-recovery" r="3.5" fill="#1C1C1E" opacity="0"/>
+                  <circle id="trend-cursor-hrv" r="3.5" fill="#00C2D1" opacity="0"/>
+                  <circle id="trend-cursor-sleep" r="3.5" fill="#EE2B37" opacity="0"/>
+                </svg>
+                <!-- Cursor label — fades in over the chart on hover -->
+                <div id="trend-cursor-label" class="absolute top-2 left-3 font-system text-[10px] tracking-[0.06em] text-ink uppercase pointer-events-none" style="opacity:0; transition: opacity 200ms;">
+                  <div><span class="text-soft">Day</span> <span id="trend-day">14</span></div>
+                </div>
+              </div>
+
+              <!-- Read panel — updates as user scrubs -->
+              <div id="trend-read" class="mt-3 card-2">
+                <span class="font-system text-[10px] tracking-[0.18em] text-soft uppercase">Read</span>
+                <p id="trend-read-text" class="font-accent italic text-[14px] text-ink/85 mt-2 leading-[1.4]">
+                  &ldquo;Your evenings are calmer. The system is doing what we asked.&rdquo;
+                </p>
+                <p class="font-system text-[10px] tracking-[0.06em] uppercase text-soft mt-2">— Jeffrey · weekly read</p>
+              </div>
+            </div>
+
+            <!-- IDENTITY TAIL — "Made for Ron" -->
+            <div class="mt-6 rounded-2xl border border-line p-4" style="background:#FFFFFF;">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full font-display text-[15px] flex items-center justify-center" style="background:#1C1C1E; color:#FFFFFF; font-weight:700;">R</div>
+                  <div>
+                    <p class="font-display text-[14px] text-ink leading-tight" style="font-weight:600;">Made for Ron</p>
+                    <p class="font-system text-[10px] tracking-[0.06em] uppercase text-soft mt-0.5">73 days · 12 adaptations</p>
+                  </div>
+                </div>
+                <span class="font-system text-[10px] tracking-[0.06em] uppercase" style="color:#0F7A4C">+14% to baseline</span>
+              </div>
+              <p class="font-accent italic text-[13px] text-ink/70 mt-3 leading-[1.4]">
+                Your formula has converged 14% closer to your personal baseline since week one.
+              </p>
+            </div>
+          </section>
+
+          <!-- ═══════ 13 · JEFFREY (voice modal — dark) ═══════ -->
+          <section class="screen h-full" data-screen="jeffrey" style="background: #050B1A; color: #FFFFFF;">
+            <div class="px-7 pt-7 flex items-center justify-between">
+              <button class="cta-ghost" style="color:#FFFFFF; border-color: rgba(255,255,255,0.3)" onclick="stopJeffreyVoice(); goScreen('today')">← Close</button>
+              <span id="jeffrey-status-label" class="font-system text-[10px] tracking-[0.24em] uppercase" style="color: rgba(255,255,255,0.55)">Jeffrey · idle</span>
+            </div>
+
+            <div class="px-7 mt-10 flex flex-col items-center text-center">
+              <button id="jeffrey-orb-btn" class="voice" data-size="lg" data-state="idle"
+                      style="border:0; cursor:pointer; padding:0;"
+                      onclick="toggleJeffreyVoice()"
+                      aria-label="Tap to talk to Jeffrey">
+                
+              </button>
+              <p id="jeffrey-caption" class="font-accent italic text-[19px] mt-10 leading-[1.45] max-w-[300px] min-h-[58px]" style="color: rgba(255,255,255,0.92)">
+                &ldquo;Tap the orb. I&rsquo;ll listen.&rdquo;
+              </p>
+              <p id="jeffrey-hint" class="font-system text-[10px] tracking-[0.24em] uppercase mt-4" style="color: rgba(255,255,255,0.45)">
+                Tap to speak · tap again to end
+              </p>
+            </div>
+
+            <!-- Audio sink — OpenAI Realtime audio plays here -->
+            <audio id="jeffrey-audio" autoplay playsinline style="display:none"></audio>
+
+            <!-- Suggested prompts (click to send to Jeffrey) -->
+            <div class="px-6 mt-10 flex flex-col gap-2">
+              <button class="text-left rounded-2xl px-4 py-3" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); cursor:pointer;"
+                      onclick="sendJeffreyText('Move tonight’s dose 30 minutes earlier.')">
+                <p class="font-display text-[15px]" style="color:#FFFFFF; font-weight:600;">Move tonight&rsquo;s dose 30 min earlier.</p>
+                <p class="font-system text-[10px] tracking-[0.06em] uppercase mt-1" style="color: rgba(255,255,255,0.55)">Suggested · bedtime drifted</p>
+              </button>
+              <button class="text-left rounded-2xl px-4 py-3" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); cursor:pointer;"
+                      onclick="sendJeffreyText('Why is Rhodiola back in my morning stack?')">
+                <p class="font-display text-[15px]" style="color:#FFFFFF; font-weight:600;">Why is Rhodiola back in?</p>
+                <p class="font-system text-[10px] tracking-[0.06em] uppercase mt-1" style="color: rgba(255,255,255,0.55)">Common question</p>
+              </button>
+              <button class="text-left rounded-2xl px-4 py-3" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); cursor:pointer;"
+                      onclick="sendJeffreyText('Pause my stack for the next three days while I travel.')">
+                <p class="font-display text-[15px]" style="color:#FFFFFF; font-weight:600;">Pause stack for travel</p>
+                <p class="font-system text-[10px] tracking-[0.06em] uppercase mt-1" style="color: rgba(255,255,255,0.55)">3-day pause</p>
+              </button>
+            </div>
+
+            <!-- Connection / error notice -->
+            <p id="jeffrey-error" class="px-6 mt-4 font-system text-[10px] tracking-[0.06em] text-center" style="color: rgba(238,43,55,0.85); display:none;"></p>
+          </section>
+
+          <!-- ═══════ 14 · PERSONALIZED RETURN (Ron · post-onboarding handoff) ═══════ -->
+          <section class="screen h-full" data-screen="hello" style="background: radial-gradient(120% 80% at 50% 30%, #0F2A52 0%, #0B1D3A 45%, #050B1A 100%); color: #FFFFFF;">
+            <div class="px-7 pt-7 flex items-center justify-between">
+              <svg class="logo logo--white logo--sm" aria-label="aissisted"><use href="#logo"/></svg>
+              <span class="font-system text-[10px] tracking-[0.24em] uppercase" style="color: rgba(255,255,255,0.5)">Day 1</span>
+            </div>
+
+            <div class="stagger px-7 mt-12 flex flex-col items-center text-center" data-stagger>
+              <div data-step="0" class="w-20 h-20 rounded-full flex items-center justify-center font-display text-[26px]" style="background:#FFFFFF; color:#0B1D3A; font-weight:700; letter-spacing:-0.02em;">
+                R
+              </div>
+              <span data-step="1" class="font-system text-[10px] tracking-[0.24em] uppercase mt-7" style="color: rgba(255,255,255,0.55)">Welcome, Ron</span>
+              <h2 data-step="2" class="font-display text-[36px] leading-[1.0] mt-4" style="color:#FFFFFF; font-weight:700;">
+                Your formula<br/>is live.
+              </h2>
+              <p data-step="3" class="font-accent italic text-[16px] leading-[1.5] mt-6 max-w-[270px]" style="color: rgba(255,255,255,0.78)">
+                "I&rsquo;ll watch the signal tonight and tune at 04:00. You&rsquo;ll hear from me at 06:42."
+              </p>
+              <span data-step="3" class="font-system text-[10px] tracking-[0.06em] uppercase mt-3" style="color: rgba(255,255,255,0.45)">— Jeffrey</span>
+            </div>
+
+            <div class="px-7 mt-auto pt-12 pb-8 flex flex-col gap-3">
+              <button class="cta-primary w-full" style="background:#FFFFFF; color:#0B1D3A;" onclick="goScreen('today')">Open today's read →</button>
+              <button class="cta-ghost mx-auto" style="color:#FFFFFF; border-color: rgba(255,255,255,0.3)" onclick="goScreen('jeffrey')">Talk to Jeffrey</button>
+            </div>
+          </section>
+
+          <!-- ═══════ 15 · JOURNAL CONFIRMATION ═══════ -->
+          <section class="screen px-7 pt-8 pb-6 h-full flex flex-col text-center items-center" data-screen="confirm">
+            <span class="font-system text-[11px] tracking-[0.24em] uppercase mt-12" style="color: rgba(28,28,30,0.7)">Entry logged</span>
+            <h3 class="font-display text-[44px] text-ink leading-[1.0] mt-6">Got it.</h3>
+            <p class="font-accent italic text-[17px] text-ink/80 mt-6 leading-[1.4] max-w-[260px]">
+              I&rsquo;ll fold this into today&rsquo;s read.
+            </p>
+            <span class="font-system text-[11px] tracking-[0.06em] mt-14 text-soft">06:42 → 09:41</span>
+            <button class="cta-ghost mt-auto mb-2" onclick="goScreen('today')">View today&rsquo;s read →</button>
+          </section>
+
+        </div><!-- /phone-screen -->
+
+        <!-- Dock (only visible on app screens) -->
+        <div class="phone-dock" id="phone-dock">
+          <button class="dock-btn active" data-dock="today" onclick="goScreen('today')">
+            <span class="glyph"></span><span class="label">Today</span>
+          </button>
+          <button class="dock-btn" data-dock="stack" onclick="goScreen('stack')">
+            <span class="glyph"></span><span class="label">Stack</span>
+          </button>
+          <button class="dock-btn" data-dock="jeffrey" onclick="goScreen('jeffrey')">
+            <span class="voice" data-state="idle" style="--vi-size:24px;">
+              
+            </span>
+            <span class="label">Jeffrey</span>
+          </button>
+          <button class="dock-btn" data-dock="trends" onclick="goScreen('trends')">
+            <span class="glyph"></span><span class="label">Trends</span>
+          </button>
+        </div>
+      </div><!-- /phone -->
+
+      <!-- Toast -->
+      <div id="toast" class="absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-ink text-surface font-system text-[11px] tracking-[0.06em] uppercase rounded-md opacity-0 transition-opacity duration-200 pointer-events-none">
+        toast
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════════════════════════════════ -->
+<script>
+  // Screen registry — order = "Next" navigation order
+  const screens = [
+    { id: 'welcome',       group: 'onboard', label: 'Welcome',          num: '01' },
+    { id: 'handoff',       group: 'onboard', label: 'Jeffrey hand-off', num: '02' },
+    { id: 'connect',       group: 'onboard', label: 'Connect sources',  num: '03' },
+    { id: 'profile',       group: 'onboard', label: 'Profile',          num: '04' },
+    { id: 'goals',         group: 'onboard', label: 'Goals',            num: '05' },
+    { id: 'current-stack', group: 'onboard', label: 'Current stack',    num: '06' },
+    { id: 'tuning',        group: 'onboard', label: 'Tuning',           num: '07' },
+    { id: 'formula',       group: 'onboard', label: 'Formula reveal',   num: '08' },
+    { id: 'hello',         group: 'onboard', label: 'Day 1 (signed-in)', num: '09' },
+    { id: 'today',         group: 'app',     label: 'Today (Dashboard)', num: '10' },
+    { id: 'stack',         group: 'app',     label: 'Stack detail',     num: '11' },
+    { id: 'log',           group: 'app',     label: 'Log / Adherence',  num: '12' },
+    { id: 'trends',        group: 'app',     label: 'Trends',           num: '13' },
+    { id: 'jeffrey',       group: 'app',     label: 'Jeffrey (Voice)',  num: '14' },
+    { id: 'confirm',       group: 'app',     label: 'Journal confirm',  num: '15' },
+    { id: 'signin',        group: 'aux',     label: 'Sign in',          num: '16' },
+  ];
+
+  // Render side nav
+  const navEl = document.getElementById('screen-nav');
+  let currentSection = null;
+  screens.forEach(s => {
+    if (s.group !== currentSection) {
+      currentSection = s.group;
+      const h = document.createElement('div');
+      h.className = 'nav-section';
+      h.textContent = s.group === 'onboard' ? 'Onboarding' :
+                       s.group === 'app'     ? 'App core'  : 'Auxiliary';
+      navEl.appendChild(h);
+    }
+    const b = document.createElement('button');
+    b.className = 'nav-btn';
+    b.dataset.target = s.id;
+    b.innerHTML = `<span class="nav-num">${s.num}</span><span>${s.label}</span>`;
+    b.onclick = () => goScreen(s.id);
+    navEl.appendChild(b);
+  });
+
+  function currentIndex() {
+    const id = (document.querySelector('.screen.active') || {}).dataset?.screen;
+    return Math.max(0, screens.findIndex(s => s.id === id));
+  }
+
+  function goScreen(id) {
+    // Hide all
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active');
+      const stagger = s.querySelector('.stagger');
+      if (stagger) stagger.classList.remove('show');
+    });
+    // Show target
+    const target = document.querySelector(`[data-screen="${id}"]`);
+    if (!target) return;
+    target.classList.add('active');
+    // Trigger stagger if present
+    const stagger = target.querySelector('[data-stagger]');
+    if (stagger) requestAnimationFrame(() => stagger.classList.add('show'));
+
+    // Update nav highlight
+    document.querySelectorAll('.nav-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.target === id));
+
+    // Update meta
+    const s = screens.find(x => x.id === id);
+    if (s) {
+      document.getElementById('screen-meta-num').textContent = s.num;
+      document.getElementById('screen-meta-name').textContent = s.label;
+    }
+
+    // Dock highlight (for app screens)
+    document.querySelectorAll('.dock-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.dock === id));
+
+    // Hide dock during onboarding flow + dark surfaces
+    const dock = document.getElementById('phone-dock');
+    const phoneScreen = document.getElementById('phone-screen');
+    const dockGroup = ['today','stack','log','trends'];
+    const showDock = dockGroup.includes(id);
+    dock.style.display = showDock ? 'flex' : 'none';
+    phoneScreen.classList.toggle('has-dock', showDock);
+
+    // Reset phone scroll
+    document.getElementById('phone-screen').scrollTop = 0;
+  }
+
+  function goNext() {
+    const i = currentIndex();
+    if (i < screens.length - 1) goScreen(screens[i + 1].id);
+  }
+  function goPrev() {
+    const i = currentIndex();
+    if (i > 0) goScreen(screens[i - 1].id);
+  }
+
+  document.getElementById('next-btn').onclick = goNext;
+  document.getElementById('prev-btn').onclick = goPrev;
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') goNext();
+    else if (e.key === 'ArrowLeft') goPrev();
+  });
+
+  // Source connect toggle
+  function toggleSource(el, key) {
+    el.classList.toggle('connected');
+    const status = el.querySelector('.connection-state');
+    status.textContent = el.classList.contains('connected') ? 'Connected ✓' : 'Connect';
+  }
+
+  // Chip pick (single-select group via parent)
+  function pickChip(el) {
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  function pickGoal(el) {
+    el.classList.toggle('selected');
+  }
+
+  // Log a dose — flip cell
+  function logDose(btn) {
+    const cell = btn.querySelector('.adh-cell');
+    cell.classList.remove('future');
+    cell.classList.toggle('done');
+  }
+
+  // Toast
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.style.opacity = '0', 2000);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // JEFFREY NEURAL VOICE INDICATOR — vanilla JS engine + bootstrap
+  // Replaces the deprecated 5-bar pulse with a small living neural network.
+  // Spec: docs/specs/JEFFREY_NEURAL_INDICATOR_SPEC.md
+  // ═════════════════════════════════════════════════════════════════════════
+
+  (function NeuralIndicator() {
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const VB = 1000;
+
+    const STATE_PROFILES = {
+      idle:       { spawnRate: 0.4, baseline: 0.20, driftAmp: 0.020, scale: 1.00, redProb: 0.00, burstMs: 0   },
+      listening:  { spawnRate: 2.0, baseline: 0.40, driftAmp: 0.028, scale: 1.04, redProb: 0.00, burstMs: 0   },
+      thinking:   { spawnRate: 5.0, baseline: 0.60, driftAmp: 0.018, scale: 0.96, redProb: 0.08, burstMs: 0   },
+      speaking:   { spawnRate: 3.0, baseline: 0.50, driftAmp: 0.022, scale: 1.02, redProb: 0.00, burstMs: 666 },
+      error:      { spawnRate: 0.0, baseline: 0.15, driftAmp: 0.000, scale: 1.00, redProb: 0.00, burstMs: 0   },
+    };
+    const ACTIVATION_TAU = 600, STATE_TAU = 320, SCALE_TAU = 400, SIGNAL_SPEED = 2.8;
+
+    function mulberry32(seed) {
+      let t = seed >>> 0;
+      return function () {
+        t = (t + 0x6d2b79f5) >>> 0;
+        let r = t;
+        r = Math.imul(r ^ (r >>> 15), r | 1);
+        r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    /**
+     * Brain-anatomy topology.
+     *
+     * Twelve "lobe anchors" placed in normalized coords forming a human-brain
+     * cross-section: two hemispheres (frontal / parietal / temporal / occipital
+     * for each side), a corpus-callosum center, two cerebellum bulges, and a
+     * brainstem at the bottom. Each anchor gets 3–4 nodes scattered around it
+     * with bounded random jitter, producing a believable cortical point cloud.
+     *
+     * Edges: k-nearest mesh (k=4) plus explicit corpus-callosum bridges so the
+     * two hemispheres read as one organism, not two clouds.
+     *
+     * Total: ~40 nodes, ~100 edges. Frame budget at 60fps: trivial.
+     */
+    function buildTopology(seed) {
+      const rand = mulberry32(seed);
+      const r = (amp) => (rand() * 2 - 1) * amp; // signed jitter
+
+      // Anchor centers — anatomy. Each entry: [x, y, count, regionFlag]
+      // regionFlag: 'L' left hemi · 'R' right hemi · 'C' midline · 'B' cerebellum · 'S' brainstem
+      // Coordinate frame: x=0 left, x=1 right, y=0 top, y=1 bottom.
+      const anchors = [
+        // Left hemisphere
+        [0.34, 0.30, 4, 'L'], // frontal
+        [0.30, 0.42, 4, 'L'], // parietal
+        [0.26, 0.55, 3, 'L'], // temporal
+        [0.34, 0.62, 3, 'L'], // occipital
+        // Right hemisphere
+        [0.66, 0.30, 4, 'R'],
+        [0.70, 0.42, 4, 'R'],
+        [0.74, 0.55, 3, 'R'],
+        [0.66, 0.62, 3, 'R'],
+        // Midline / corpus callosum
+        [0.50, 0.36, 2, 'C'],
+        [0.50, 0.50, 2, 'C'], // central node — high connectivity
+        // Cerebellum
+        [0.40, 0.74, 3, 'B'],
+        [0.60, 0.74, 3, 'B'],
+        // Brainstem
+        [0.50, 0.84, 2, 'S'],
+      ];
+
+      const nodes = [];
+      let id = 0;
+      // Pick a unique central "hero" node (id=0) for speaking-burst origin.
+      // Place it at the midline center.
+      nodes.push({ id: id++, x: 0.50, y: 0.50, ds: rand(), act: 0, fired: 0, c: true, region: 'C' });
+
+      for (const [ax, ay, count, region] of anchors) {
+        // Skip the duplicate center (we already added one)
+        const baseCount = (Math.abs(ax - 0.5) < 0.001 && Math.abs(ay - 0.5) < 0.001)
+          ? Math.max(0, count - 1) : count;
+        for (let i = 0; i < baseCount; i++) {
+          // Jitter scaled to lobe size — frontal/parietal jitter wider, brainstem tighter
+          const jitter = region === 'S' ? 0.025 : region === 'B' ? 0.04 : 0.055;
+          const x = ax + r(jitter);
+          const y = ay + r(jitter);
+          nodes.push({ id: id++, x, y, ds: rand(), act: 0, fired: 0, c: false, region });
+        }
+      }
+
+      // Build k-nearest edges. Each node connects to its 4 nearest neighbors
+      // that aren't already connected. Avoid cross-hemisphere mesh except
+      // through explicit midline bridges (so the sagittal fissure is visible).
+      const edges = [];
+      const seen = new Set();
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+      const key = (a, b) => (a < b ? a + '-' + b : b + '-' + a);
+
+      function canConnect(a, b) {
+        const A = nodes[a], B = nodes[b];
+        // Allow same-region freely, midline-anything freely, brainstem to cerebellum.
+        if (A.region === B.region) return true;
+        if (A.region === 'C' || B.region === 'C') return true;
+        if ((A.region === 'B' && B.region === 'S') || (A.region === 'S' && B.region === 'B')) return true;
+        if ((A.region === 'B' && B.region === 'B')) return true;
+        // Cross-hemisphere (L↔R) only if both nodes are very near the midline
+        if ((A.region === 'L' && B.region === 'R') || (A.region === 'R' && B.region === 'L')) {
+          return Math.abs(A.x - 0.5) < 0.10 && Math.abs(B.x - 0.5) < 0.10;
+        }
+        // L/R to cerebellum/brainstem only if vertically aligned
+        if ((A.region === 'B' || A.region === 'S' || B.region === 'B' || B.region === 'S')) {
+          return true;
+        }
+        return false;
+      }
+
+      for (let i = 0; i < nodes.length; i++) {
+        const dists = [];
+        for (let j = 0; j < nodes.length; j++) {
+          if (i === j) continue;
+          if (!canConnect(i, j)) continue;
+          dists.push({ j, d: dist(nodes[i], nodes[j]) });
+        }
+        dists.sort((a, b) => a.d - b.d);
+        const k = nodes[i].region === 'C' ? 5 : 4;
+        for (let n = 0; n < Math.min(k, dists.length); n++) {
+          const j = dists[n].j;
+          const kk = key(i, j);
+          if (seen.has(kk)) continue;
+          seen.add(kk);
+          edges.push({ from: i, to: j, signals: [] });
+        }
+      }
+
+      // Explicit corpus-callosum bridges — two extra edges connecting matching
+      // L and R lobes near the midline so the brain reads as one network.
+      const findClosest = (region, x, y) => {
+        let best = -1, bd = Infinity;
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].region !== region) continue;
+          const d = Math.hypot(nodes[i].x - x, nodes[i].y - y);
+          if (d < bd) { bd = d; best = i; }
+        }
+        return best;
+      };
+      const bridgePairs = [
+        [findClosest('L', 0.42, 0.32), findClosest('R', 0.58, 0.32)], // frontal bridge
+        [findClosest('L', 0.42, 0.50), findClosest('R', 0.58, 0.50)], // parietal bridge
+      ];
+      for (const [a, b] of bridgePairs) {
+        if (a < 0 || b < 0) continue;
+        const kk = key(a, b);
+        if (seen.has(kk)) continue;
+        seen.add(kk);
+        edges.push({ from: a, to: b, signals: [] });
+      }
+
+      return { nodes, edges };
+    }
+    function pickEdge(model) {
+      let total = 0; const w = [];
+      for (const e of model.edges) { const v = 0.2 + model.nodes[e.from].act * 1.5; w.push(v); total += v; }
+      let r = Math.random() * total;
+      for (let i = 0; i < model.edges.length; i++) { r -= w[i]; if (r <= 0) return model.edges[i]; }
+      return model.edges[model.edges.length - 1];
+    }
+    function tick(model, state, intensity, now) {
+      const dt = model.lastTick === 0 ? 16 : Math.min(64, now - model.lastTick);
+      model.lastTick = now;
+      const p = STATE_PROFILES[state] || STATE_PROFILES.idle;
+      const lerpA = 1 - Math.exp(-dt / STATE_TAU);
+      model.driftAmp += (p.driftAmp - model.driftAmp) * lerpA;
+      model.baseline += (p.baseline - model.baseline) * lerpA;
+      model.scale += (p.scale - model.scale) * (1 - Math.exp(-dt / SCALE_TAU));
+      const decay = Math.exp(-dt / ACTIVATION_TAU);
+      for (const n of model.nodes) { n.act = model.baseline + (n.act - model.baseline) * decay; if (n.act > 1) n.act = 1; if (n.act < 0) n.act = 0; }
+      for (const e of model.edges) {
+        if (!e.signals.length) continue;
+        for (const s of e.signals) s.progress += s.speed * (dt / 1000);
+        e.signals = e.signals.filter(s => { if (s.progress >= 1) { model.nodes[e.to].act = 1; model.nodes[e.to].fired = now; return false; } return true; });
+      }
+      const expected = p.spawnRate * intensity * (dt / 1000);
+      let toSpawn = Math.floor(expected);
+      if (Math.random() < (expected - toSpawn)) toSpawn++;
+      for (let i = 0; i < toSpawn; i++) {
+        const e = pickEdge(model); if (!e) break;
+        e.signals.push({ progress: 0, speed: SIGNAL_SPEED * (0.85 + Math.random() * 0.3), red: Math.random() < p.redProb });
+      }
+      if (p.burstMs > 0 && now - model.lastBurst > p.burstMs) {
+        model.lastBurst = now;
+        for (const e of model.edges) if (e.from === 0 || e.to === 0) e.signals.push({ progress: 0, speed: SIGNAL_SPEED * 1.3, red: false });
+        model.nodes[0].act = 1; model.nodes[0].fired = now;
+      }
+    }
+    function nodePos(n, driftAmp, now, cursor) {
+      // 1. Base position + organic drift
+      let x = n.x;
+      let y = n.y;
+      if (driftAmp >= 1e-4) {
+        x += Math.sin(now * 0.0006 + n.ds * 6.2832) * driftAmp;
+        y += Math.cos(now * 0.0008 + n.ds * 4.7124) * driftAmp;
+      }
+      // 2. Cursor displacement — radial push within influence radius.
+      // BrainFutures-style: nodes nearer the cursor are pushed outward more.
+      // cursor is { x, y, active } in normalized 0..1 coords; active=false → skip.
+      if (cursor && cursor.active) {
+        const dx = x - cursor.x;
+        const dy = y - cursor.y;
+        const d = Math.hypot(dx, dy);
+        const R = 0.28;          // influence radius (normalized)
+        const maxPush = 0.06;    // how far a node at distance 0 gets pushed
+        if (d < R && d > 1e-4) {
+          const falloff = (1 - d / R) * (1 - d / R); // quadratic falloff
+          const push = falloff * maxPush;
+          x += (dx / d) * push;
+          y += (dy / d) * push;
+        }
+      }
+      return { x, y };
+    }
+
+    function mountIndicator(el, seed) {
+      const size = el.dataset.size || 'md';
+      const sizePx = size === 'sm' ? 24 : size === 'md' ? 80 : 240;
+      const inlineSize = parseInt((el.style.getPropertyValue('--vi-size') || '').replace('px', ''), 10);
+      const px = isFinite(inlineSize) && inlineSize > 0 ? inlineSize : sizePx;
+      // Smaller nodes — true neuron-mesh feel like BrainFutures wireframe brain
+      const nodeRBase = px <= 30 ? 8  : px <= 90 ? 9  : 11;
+      const nodeRPeak = px <= 30 ? 14 : px <= 90 ? 18 : 24;
+      const signalR =   px <= 30 ? 7  : px <= 90 ? 8  : 10;
+
+      const model = buildTopology(seed || 1);
+      model.scale = STATE_PROFILES.idle.scale;
+      model.driftAmp = STATE_PROFILES.idle.driftAmp;
+      model.baseline = STATE_PROFILES.idle.baseline;
+      model.lastBurst = 0; model.lastTick = 0;
+
+      el.innerHTML = '';
+      const svg = document.createElementNS(SVG_NS, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${VB} ${VB}`);
+      svg.setAttribute('aria-hidden', 'true');
+      el.appendChild(svg);
+      const root = document.createElementNS(SVG_NS, 'g');
+      svg.appendChild(root);
+
+      // Cursor interactivity — BrainFutures-style mesh deformation.
+      // cursor coords are normalized 0..1 in viewBox space. `active` tracks
+      // whether the cursor is currently inside the indicator's bounds. The
+      // displacement smoothly fades in/out via cursorAmp.
+      const cursor = { x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5, active: false, amp: 0, targetAmp: 0 };
+      function updateCursor(ev) {
+        const rect = el.getBoundingClientRect();
+        const cx = (ev.clientX - rect.left) / rect.width;
+        const cy = (ev.clientY - rect.top) / rect.height;
+        cursor.targetX = cx;
+        cursor.targetY = cy;
+        cursor.targetAmp = 1;
+        cursor.active = true;
+      }
+      el.addEventListener('pointermove', updateCursor);
+      el.addEventListener('pointerenter', updateCursor);
+      el.addEventListener('pointerleave', () => { cursor.targetAmp = 0; });
+
+      // Edges — fine wire mesh in aqua. Visible on both light + dark surfaces.
+      // Stroke width scales with size. Thinner lines = denser brain-mesh feel.
+      const edgeStroke = px <= 30 ? 0.8 : px <= 90 ? 1.2 : 1.5;
+      const edgeEls = model.edges.map(() => {
+        const ln = document.createElementNS(SVG_NS, 'line');
+        ln.setAttribute('stroke', '#00C2D1');
+        ln.setAttribute('stroke-opacity', '0.30');
+        ln.setAttribute('stroke-width', String(edgeStroke));
+        ln.setAttribute('stroke-linecap', 'round');
+        root.appendChild(ln);
+        return ln;
+      });
+      const signalGroup = document.createElementNS(SVG_NS, 'g');
+      root.appendChild(signalGroup);
+      const nodeGroups = model.nodes.map(() => {
+        const g = document.createElementNS(SVG_NS, 'g');
+        const halo = document.createElementNS(SVG_NS, 'circle');
+        halo.setAttribute('fill', '#00C2D1'); halo.setAttribute('opacity', '0');
+        g.appendChild(halo);
+        const ring = document.createElementNS(SVG_NS, 'circle');
+        ring.setAttribute('fill', '#00C2D1'); ring.setAttribute('r', String(nodeRBase));
+        g.appendChild(ring);
+        const core = document.createElementNS(SVG_NS, 'circle');
+        core.setAttribute('class', 'neural-node-core'); core.setAttribute('fill', '#00C2D1');
+        g.appendChild(core);
+        root.appendChild(g);
+        return { halo, ring, core };
+      });
+
+      return function render(state, intensity, now) {
+        const stateKey = STATE_PROFILES[state] ? state : 'idle';
+        tick(model, stateKey, intensity || 1, now);
+
+        // Smoothly interpolate cursor toward target (so node displacement
+        // follows the cursor with a slight ease — feels organic, not snappy)
+        const cLerp = 0.18;
+        cursor.x += (cursor.targetX - cursor.x) * cLerp;
+        cursor.y += (cursor.targetY - cursor.y) * cLerp;
+        cursor.amp += (cursor.targetAmp - cursor.amp) * 0.08;
+        const cursorActive = cursor.amp > 0.02
+          ? { x: cursor.x, y: cursor.y, active: true, amp: cursor.amp }
+          : null;
+
+        const positions = model.nodes.map(n => {
+          const p = nodePos(n, model.driftAmp, now, cursorActive);
+          return p;
+        });
+        root.setAttribute('transform',
+          `translate(${VB / 2}, ${VB / 2}) scale(${model.scale}) translate(${-VB / 2}, ${-VB / 2})`);
+        for (let i = 0; i < model.edges.length; i++) {
+          const e = model.edges[i]; const a = positions[e.from], b = positions[e.to];
+          const ln = edgeEls[i];
+          ln.setAttribute('x1', String(a.x * VB));
+          ln.setAttribute('y1', String(a.y * VB));
+          ln.setAttribute('x2', String(b.x * VB));
+          ln.setAttribute('y2', String(b.y * VB));
+        }
+        signalGroup.innerHTML = '';
+        for (const e of model.edges) {
+          const a = positions[e.from], b = positions[e.to];
+          for (const s of e.signals) {
+            const x = (a.x + (b.x - a.x) * s.progress) * VB;
+            const y = (a.y + (b.y - a.y) * s.progress) * VB;
+            const c = document.createElementNS(SVG_NS, 'circle');
+            c.setAttribute('cx', String(x)); c.setAttribute('cy', String(y));
+            c.setAttribute('r', String(signalR));
+            c.setAttribute('fill', s.red ? '#EE2B37' : '#00C2D1');
+            c.setAttribute('opacity', String(1 - Math.abs(s.progress - 0.5) * 0.4));
+            signalGroup.appendChild(c);
+          }
+        }
+        for (let i = 0; i < model.nodes.length; i++) {
+          const p = positions[i]; const a = model.nodes[i].act;
+          const coreR = nodeRBase + (nodeRPeak - nodeRBase) * a;
+          const g = nodeGroups[i];
+          const cx = String(p.x * VB), cy = String(p.y * VB);
+          if (a > 0.5) {
+            g.halo.setAttribute('cx', cx); g.halo.setAttribute('cy', cy);
+            g.halo.setAttribute('r', String(coreR * 1.6));
+            g.halo.setAttribute('opacity', String((a - 0.5) * 0.3));
+          } else { g.halo.setAttribute('opacity', '0'); }
+          g.ring.setAttribute('cx', cx); g.ring.setAttribute('cy', cy);
+          g.ring.setAttribute('opacity', String(0.35 + a * 0.35));
+          g.core.setAttribute('cx', cx); g.core.setAttribute('cy', cy);
+          g.core.setAttribute('r', String(Math.max(0, coreR * 0.55)));
+          g.core.setAttribute('fill', a > 0.7 ? '#FFFFFF' : '#00C2D1');
+          g.core.setAttribute('opacity', String(a));
+        }
+      };
+    }
+
+    const indicators = [];
+    let rafId = null;
+    function loop(now) {
+      for (const ind of indicators) ind.render(ind.el.dataset.state || 'idle', 1, now);
+      rafId = requestAnimationFrame(loop);
+    }
+    function start() { if (rafId === null) rafId = requestAnimationFrame(loop); }
+    function stop() { if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; } }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });
+
+    let nextSeed = 1;
+    function mountAll() {
+      document.querySelectorAll('.voice').forEach(el => {
+        if (el._neuralMounted) return;
+        // Large indicator → WebGL Brain (4k particles, physics, hover explosion).
+        // Small/medium → SVG mesh (cheap, crisp at small sizes).
+        const isLarge = el.dataset.size === 'lg';
+        if (isLarge && window.THREE && window.__mountBrainGL) {
+          const ok = window.__mountBrainGL(el);
+          if (ok) { el._neuralMounted = true; return; }
+          // fall through to SVG if Brain failed
+        }
+        const render = mountIndicator(el, nextSeed++);
+        indicators.push({ el, render });
+        el._neuralMounted = true;
+      });
+      if (indicators.length) start();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountAll);
+    else mountAll();
+    // Re-scan after each screen change so any voice elements that materialize get mounted
+    window.__neuralRescan = mountAll;
+  })();
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // BRAIN GL — WebGL-rendered 4k-particle living brain (lg-only).
+  // Spec: §"high-end brain visualization" 2026-05-03 brief.
+  //
+  // Architecture:
+  //   • Brain shape: union of ellipses (cerebrum + frontal bump + cerebellum
+  //     + brainstem) — rejection-sampled to a point cloud.
+  //   • Each particle: home position (in brain shape), live position, velocity.
+  //   • Physics each frame: spring force toward home + cursor repulsion field
+  //     + damping. Result: form holds at rest; explodes outward on hover;
+  //     reforms when cursor leaves.
+  //   • Three.js Points with custom shader: size, color, depth-fade per point.
+  //   • State machine drives spring strength + base color + signal-pulse rate.
+  // ═════════════════════════════════════════════════════════════════════════
+  (function BrainGL() {
+    if (!window.THREE) return;
+
+    const NODE_COUNT = 10000;
+    // Distribution — bumped for stronger anatomical silhouette.
+    // Cortex 72% gives a visibly denser outer boundary; interior softer.
+    const DIST = { cortex: 0.72, interior: 0.16, stem: 0.08, atmosphere: 0.04 };
+
+    // ─── Brain silhouette — anatomical side profile via SVG path ─────────────
+    // Point-in-path test using a hidden canvas. The path traces a medical-
+    // illustration brain side-view: frontal lobe forward (right), parietal
+    // dome on top, occipital pointed back-left, distinct indent above
+    // cerebellum, cerebellum bulge at lower-left, brainstem extending down.
+    //
+    // Path coordinates are in 0..1000 (scaled to 0..1 normalized space at use).
+    const BRAIN_PATH_D = [
+      // Start at lower-front (under frontal lobe)
+      'M 760 580',
+      // Up the front of the frontal lobe (right side)
+      'C 880 540, 940 460, 920 380',
+      'C 905 320, 880 270, 830 235',
+      // Top of frontal → top of cerebrum (parietal dome)
+      'C 770 195, 690 175, 600 175',
+      'C 510 175, 410 190, 330 220',
+      // Top-back curving down to occipital
+      'C 240 260, 170 320, 145 410',
+      // Occipital pointed back-bulge
+      'C 130 470, 145 510, 180 530',
+      // INDENT — clear separation between occipital and cerebellum (key brain feature)
+      'C 200 540, 215 545, 220 555',
+      // Top of cerebellum (bulges out to the lower-left)
+      'C 195 575, 175 615, 180 660',
+      'C 188 705, 220 735, 270 740',
+      // Cerebellum back-bottom
+      'C 305 740, 325 720, 330 695',
+      // Pons-junction up to brainstem area
+      'C 335 705, 340 720, 345 735',
+      // Brainstem extending down
+      'C 350 760, 360 800, 370 850',
+      'C 375 880, 380 905, 385 920',
+      // Brainstem floor (small flat bottom)
+      'L 425 920',
+      'C 430 905, 435 880, 440 850',
+      // Brainstem-up to inferior frontal area
+      'C 445 800, 450 770, 460 740',
+      // Temporal lobe lower curve (under cerebrum)
+      'C 480 720, 510 700, 545 685',
+      'C 600 670, 660 660, 720 640',
+      // Sweep up to lower-front (closing toward start point)
+      'C 760 625, 775 605, 760 580',
+      'Z',
+    ].join(' ');
+
+    let _brainPath = null;
+    let _brainCtx = null;
+    function getBrainPath() {
+      if (_brainPath) return { path: _brainPath, ctx: _brainCtx };
+      _brainPath = new Path2D(BRAIN_PATH_D);
+      const c = document.createElement('canvas');
+      c.width = 1000; c.height = 1000;
+      _brainCtx = c.getContext('2d');
+      return { path: _brainPath, ctx: _brainCtx };
+    }
+    function isInBrain(x, y) {
+      const { path, ctx } = getBrainPath();
+      return ctx.isPointInPath(path, x * 1000, y * 1000);
+    }
+
+    // Internal sulci — thin exclusion bands suggesting major brain folds.
+    function isInSulcus(x, y) {
+      // Central sulcus (separates frontal from parietal). Thin curved band.
+      const cs_x = 0.62 + 0.04 * Math.sin((y - 0.20) * 6);
+      if (Math.abs(x - cs_x) < 0.012 && y > 0.20 && y < 0.50) return true;
+      // Lateral (Sylvian) fissure — separates temporal from frontal+parietal.
+      const lf_y = 0.50 + 0.02 * Math.sin((x - 0.30) * 8);
+      if (Math.abs(y - lf_y) < 0.010 && x > 0.30 && x < 0.78) return true;
+      return false;
+    }
+
+    // Classify a point inside the brain as cortex (near boundary),
+    // stem (in the brainstem region), or interior (everything else).
+    // Cortex test: probe 4 nearby offsets — if ANY is outside the brain,
+    // the point is considered cortex. This is what gives the brain its
+    // sharp outline density (60% of nodes live near the edge).
+    function classifyInside(x, y) {
+      // Wider eps + 8-direction probe → catches MORE boundary points.
+      // Result: thicker, denser cortex band → unmistakable brain silhouette.
+      const eps = 0.032;
+      const probes = [
+        [eps, 0], [-eps, 0], [0, eps], [0, -eps],
+        [eps*0.7, eps*0.7], [-eps*0.7, eps*0.7],
+        [eps*0.7, -eps*0.7], [-eps*0.7, -eps*0.7],
+      ];
+      for (const [dx, dy] of probes) {
+        if (!isInBrain(x + dx, y + dy)) return 'cortex';
+      }
+      // Brainstem region — narrow vertical band at lower-front
+      if (y > 0.74 && y < 0.93 && x > 0.30 && x < 0.45) return 'stem';
+      return 'interior';
+    }
+
+    // Atmospheric halo — points outside the brain but very close to it.
+    function isInAtmosphere(x, y) {
+      if (isInBrain(x, y)) return false;
+      // Probe 8 directions at radius 0.03 — if any hit the brain, we're in halo
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2;
+        if (isInBrain(x + Math.cos(ang) * 0.03, y + Math.sin(ang) * 0.03)) return true;
+      }
+      return false;
+    }
+
+    /**
+     * Generate brain points with anatomical density distribution.
+     *
+     * 60% cortex (dense outline)  · 25% interior (lighter)
+     * 10% brainstem (focused)     ·  5% atmospheric (faded halo)
+     *
+     * Plus per-point typing — micro / standard / hub — driving size and
+     * connectivity downstream. Hub nodes are pathway junctions and
+     * receive more edges + brighter glow.
+     */
+    function generateBrainPoints(count) {
+      const targets = {
+        cortex:     Math.round(count * DIST.cortex),
+        interior:   Math.round(count * DIST.interior),
+        stem:       Math.round(count * DIST.stem),
+        atmosphere: Math.round(count * DIST.atmosphere),
+      };
+      const got = { cortex: 0, interior: 0, stem: 0, atmosphere: 0 };
+      const pts = [];
+      let attempts = 0;
+      const maxAttempts = count * 60;
+
+      function isDone() {
+        return got.cortex >= targets.cortex
+            && got.interior >= targets.interior
+            && got.stem >= targets.stem
+            && got.atmosphere >= targets.atmosphere;
+      }
+
+      function pushPoint(x, y, kind) {
+        // Node type — hub (rare, larger), standard, micro
+        const r = Math.random();
+        let nodeType, sizeBase;
+        if (kind === 'cortex' && r < 0.025) {
+          // ~2.5% of cortex are hubs — pathway junctions
+          nodeType = 'hub';
+          sizeBase = 5 + Math.random() * 3;       // 5–8 px equivalent
+        } else if (r < 0.6) {
+          nodeType = 'standard';
+          // Cortex sizes bumped — visible brain edge.
+          sizeBase = kind === 'cortex'     ? 2.6 + Math.random() * 2.0   // 2.6–4.6
+                   : kind === 'stem'        ? 1.8 + Math.random() * 1.2   // 1.8–3.0
+                   : kind === 'atmosphere'  ? 0.6 + Math.random() * 0.5   // 0.6–1.1
+                   :                          0.9 + Math.random() * 0.9;  // 0.9–1.8
+        } else {
+          nodeType = 'micro';
+          // Cortex micros stay relatively visible — they're part of the outline.
+          sizeBase = kind === 'cortex'     ? 1.6 + Math.random() * 0.9   // 1.6–2.5
+                   : kind === 'atmosphere'  ? 0.4 + Math.random() * 0.3
+                   :                          0.7 + Math.random() * 0.7;
+        }
+
+        // Layer / depth — cortex is foreground-biased (sharper + brighter)
+        let layer;
+        if (kind === 'cortex')         layer = 0.70 + Math.random() * 0.30;  // brighter cortex
+        else if (kind === 'atmosphere') layer = 0.00 + Math.random() * 0.30;
+        else if (kind === 'stem')      layer = 0.55 + Math.random() * 0.30;
+        else                            layer = 0.20 + Math.random() * 0.35;  // softer interior
+
+        pts.push({
+          hx: x, hy: y,
+          x: x, y: y,
+          vx: 0, vy: 0,
+          size: sizeBase,
+          layer,
+          kind,
+          nodeType,
+        });
+      }
+
+      while (!isDone() && attempts < maxAttempts) {
+        const x = Math.random();
+        const y = Math.random();
+
+        if (isInBrain(x, y)) {
+          if (isInSulcus(x, y)) { attempts++; continue; }
+          const cls = classifyInside(x, y);
+          if (cls === 'cortex' && got.cortex < targets.cortex) {
+            pushPoint(x, y, 'cortex');
+            got.cortex++;
+          } else if (cls === 'interior' && got.interior < targets.interior) {
+            pushPoint(x, y, 'interior');
+            got.interior++;
+          } else if (cls === 'stem' && got.stem < targets.stem) {
+            pushPoint(x, y, 'stem');
+            got.stem++;
+          }
+        } else if (got.atmosphere < targets.atmosphere && isInAtmosphere(x, y)) {
+          pushPoint(x, y, 'atmosphere');
+          got.atmosphere++;
+        }
+        attempts++;
+      }
+      return pts;
+    }
+
+    /**
+     * Mount a WebGL brain into the given .voice element. Returns true on success.
+     * Window-attached so the SVG mountAll above can call it for large indicators.
+     */
+    window.__mountBrainGL = function (el) {
+      try {
+        const inlineSize = parseInt((el.style.getPropertyValue('--vi-size') || '').replace('px', ''), 10);
+        const px = isFinite(inlineSize) && inlineSize > 0 ? inlineSize : 240;
+        // Render at device pixel ratio for crispness (Apple-tier expectation)
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+        // Build the particle pool
+        const particles = generateBrainPoints(NODE_COUNT);
+        const N = particles.length;
+
+        // Three.js setup — orthographic camera in 0..1 brain space
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-0.55, 0.55, 0.55, -0.55, -1, 1);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: false });
+        renderer.setPixelRatio(dpr);
+        renderer.setSize(px, px);
+        renderer.setClearColor(0x000000, 0); // transparent
+        renderer.domElement.style.display = 'block';
+        renderer.domElement.style.width = '100%';
+        renderer.domElement.style.height = '100%';
+        // No border-radius — brain floats free, not contained in a circle.
+
+        // BufferGeometry: position + color + size attribute per particle
+        const positions = new Float32Array(N * 3);
+        const colors    = new Float32Array(N * 3);
+        const sizes     = new Float32Array(N);
+        const layers    = new Float32Array(N);
+
+        for (let i = 0; i < N; i++) {
+          // Translate brain coords (0..1) to centered (-0.5..0.5), flip Y for screen
+          positions[i*3]     =   particles[i].x - 0.5;
+          positions[i*3 + 1] = -(particles[i].y - 0.5);
+          positions[i*3 + 2] = (particles[i].layer - 0.5) * 0.2; // depth
+          colors[i*3]     = 0.0;   // R
+          colors[i*3 + 1] = 0.76;  // G  → aqua #00C2D1 ≈ rgb(0, 194, 209)
+          colors[i*3 + 2] = 0.82;  // B
+          sizes[i]   = particles[i].size;
+          layers[i]  = particles[i].layer;
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
+        geo.setAttribute('size',     new THREE.BufferAttribute(sizes, 1));
+        geo.setAttribute('layerVal', new THREE.BufferAttribute(layers, 1));
+
+        // Custom shader — circular soft point with depth-driven opacity
+        const material = new THREE.ShaderMaterial({
+          uniforms: { dpr: { value: dpr }, sizeMul: { value: px / 240 } },
+          vertexShader: `
+            attribute float size;
+            attribute vec3  color;
+            attribute float layerVal;
+            varying vec3 vColor;
+            varying float vLayer;
+            uniform float dpr;
+            uniform float sizeMul;
+            void main() {
+              vColor = color;
+              vLayer = layerVal;
+              vec4 mv = modelViewMatrix * vec4(position, 1.0);
+              gl_Position = projectionMatrix * mv;
+              // Foreground = larger; size influenced by velocity-derived growth via attribute
+              gl_PointSize = size * 4.0 * dpr * sizeMul;
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vColor;
+            varying float vLayer;
+            void main() {
+              vec2 c = gl_PointCoord - vec2(0.5);
+              float d = length(c);
+              if (d > 0.5) discard;
+              // Soft circular falloff
+              float alpha = smoothstep(0.5, 0.05, d);
+              // Depth-based brightness — foreground brighter
+              float depthBrightness = mix(0.55, 1.20, vLayer);
+              gl_FragColor = vec4(vColor * depthBrightness, alpha * (0.55 + 0.45 * vLayer));
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+
+        const points = new THREE.Points(geo, material);
+        scene.add(points);
+
+        // ─── SYNAPSE EDGES — k-nearest network, drawn as lines ──────────
+        // Build a sparse k-nearest mesh between particles. Limit total edges
+        // to keep performance under control. Edges live as a single
+        // BufferGeometry of LineSegments.
+        const K = 5;                      // each particle connects to its 5 nearest
+        const MAX_EDGE_LEN_SQ = 0.0070;   // tighter — keeps mesh local + dense
+        const edgeIndices = [];           // [a0,b0, a1,b1, ...]
+        // Build via spatial bucket grid
+        const grid = new Map();
+        const cellSize = 0.05;
+        const cellOf = (x, y) => `${Math.floor(x / cellSize)},${Math.floor(y / cellSize)}`;
+        for (let i = 0; i < N; i++) {
+          const k = cellOf(particles[i].hx, particles[i].hy);
+          if (!grid.has(k)) grid.set(k, []);
+          grid.get(k).push(i);
+        }
+        for (let i = 0; i < N; i++) {
+          const p = particles[i];
+          const cx = Math.floor(p.hx / cellSize);
+          const cy = Math.floor(p.hy / cellSize);
+          const cands = [];
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const arr = grid.get(`${cx + dx},${cy + dy}`);
+              if (arr) for (const j of arr) if (j > i) cands.push(j);
+            }
+          }
+          const dists = cands.map(j => ({ j, d: (particles[j].hx - p.hx)**2 + (particles[j].hy - p.hy)**2 }))
+                              .filter(o => o.d < MAX_EDGE_LEN_SQ)
+                              .sort((a,b) => a.d - b.d)
+                              .slice(0, K);
+          for (const { j } of dists) edgeIndices.push(i, j);
+        }
+
+        // ─── LONG-RANGE NEURAL BACKBONE ────────────────────────────────
+        // High-connectivity hub nodes get extra direct edges to other
+        // distant hubs, creating visible long-range pathways across the
+        // brain. These read as the "neural backbone" — the major routes
+        // that information flows along during cognition.
+        const hubIndices = [];
+        for (let i = 0; i < N; i++) {
+          if (particles[i].nodeType === 'hub') hubIndices.push(i);
+        }
+        const LONG_RANGE_EDGES_PER_HUB = 2;
+        for (const hubA of hubIndices) {
+          for (let k = 0; k < LONG_RANGE_EDGES_PER_HUB; k++) {
+            // Pick a distant hub — must be at least 0.18 away
+            let best = -1, bestD = -1;
+            for (let attempts = 0; attempts < 12; attempts++) {
+              const hubB = hubIndices[(Math.random() * hubIndices.length) | 0];
+              if (hubB === hubA) continue;
+              const dx = particles[hubA].hx - particles[hubB].hx;
+              const dy = particles[hubA].hy - particles[hubB].hy;
+              const d = dx*dx + dy*dy;
+              if (d > 0.032 && d > bestD) { best = hubB; bestD = d; }
+            }
+            if (best >= 0) {
+              edgeIndices.push(Math.min(hubA, best), Math.max(hubA, best));
+            }
+          }
+        }
+        const E = edgeIndices.length / 2;
+
+        // Adjacency map — for each node, which edges include it.
+        // Used to spawn cascading signals (signals from recently-fired nodes
+        // travel along their outgoing edges → visible propagation cluster
+        // to cluster instead of random scatter).
+        const adjacency = new Array(N);
+        for (let i = 0; i < N; i++) adjacency[i] = [];
+        for (let ei = 0; ei < E; ei++) {
+          adjacency[edgeIndices[ei*2]].push(ei);
+          adjacency[edgeIndices[ei*2 + 1]].push(ei);
+        }
+        // Recently-fired queue — small ring buffer of node indices that
+        // have just received a pulse. New pulses prefer to spawn from
+        // these → cascade behavior.
+        const firedQueue = [];
+        const FIRED_TTL_MS = 600;
+
+        // Edge geometry — positions per-pair updated each frame from particle positions
+        const edgePositions = new Float32Array(E * 2 * 3);
+        const edgeColors    = new Float32Array(E * 2 * 3);
+        const edgeAlphas    = new Float32Array(E * 2);
+        const edgeGeo = new THREE.BufferGeometry();
+        edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
+        edgeGeo.setAttribute('color',    new THREE.BufferAttribute(edgeColors, 3));
+        edgeGeo.setAttribute('alpha',    new THREE.BufferAttribute(edgeAlphas, 1));
+
+        const edgeMat = new THREE.ShaderMaterial({
+          vertexShader: `
+            attribute vec3 color;
+            attribute float alpha;
+            varying vec3 vColor;
+            varying float vAlpha;
+            void main() {
+              vColor = color;
+              vAlpha = alpha;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vColor;
+            varying float vAlpha;
+            void main() { gl_FragColor = vec4(vColor, vAlpha); }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
+        scene.add(edgeLines);
+
+        // ─── FIRING SYNAPSES — bright pulses traveling along edges ──────
+        // We maintain a small pool of in-flight pulses. Each has:
+        //   edgeIdx, t (0→1 progress), speed, red (boolean accent)
+        // Per frame: advance t, drop completed, spawn new based on state rate.
+        const pulses = [];
+        const MAX_PULSES = 80;
+        // Each pulse is rendered as an extra point — re-use the points buffer
+        // is too messy, so render pulses as their own Points mesh.
+        const pulsePositions = new Float32Array(MAX_PULSES * 3);
+        const pulseColors    = new Float32Array(MAX_PULSES * 3);
+        const pulseSizes     = new Float32Array(MAX_PULSES);
+        const pulseGeo = new THREE.BufferGeometry();
+        pulseGeo.setAttribute('position', new THREE.BufferAttribute(pulsePositions, 3));
+        pulseGeo.setAttribute('color',    new THREE.BufferAttribute(pulseColors, 3));
+        pulseGeo.setAttribute('size',     new THREE.BufferAttribute(pulseSizes, 1));
+        // Use the same shader as nodes but bigger sizes
+        const pulseMat = new THREE.ShaderMaterial({
+          uniforms: { dpr: { value: dpr } },
+          vertexShader: `
+            attribute float size;
+            attribute vec3 color;
+            varying vec3 vColor;
+            uniform float dpr;
+            void main() {
+              vColor = color;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+              gl_PointSize = size * dpr;
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vColor;
+            void main() {
+              vec2 c = gl_PointCoord - vec2(0.5);
+              float d = length(c);
+              if (d > 0.5) discard;
+              float alpha = smoothstep(0.5, 0.0, d);
+              gl_FragColor = vec4(vColor, alpha);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const pulseMesh = new THREE.Points(pulseGeo, pulseMat);
+        scene.add(pulseMesh);
+
+        // Mount the canvas
+        el.innerHTML = '';
+        el.appendChild(renderer.domElement);
+
+        // ─── Cursor tracking + Explosion event (5-state motion spec) ───
+        // Spec: docs/specs/JEFFREY_BRAIN_MOTION_SPEC.md
+        const cursor = { x: 0.5, y: 0.5, active: false, amp: 0, lastInteractAt: 0 };
+        // Explosion event: t (ms since fire), origin (centered coords), active flag.
+        // Phases:
+        //   0–80ms     impact recognition
+        //   80–360ms   primary burst
+        //   360–680ms  full deconstruction
+        //   680–1400ms drift / processing
+        //   1400ms+    reformation (handled by spring returning to baseline)
+        const EXPLOSION_DURATION_MS = 1400;
+        const explosion = { fireT: -Infinity, ox: 0, oy: 0 };
+        function fireExplosion(ev) {
+          const rect = el.getBoundingClientRect();
+          const cx = (ev.clientX - rect.left) / rect.width;
+          const cy = (ev.clientY - rect.top)  / rect.height;
+          explosion.ox =   cx - 0.5;
+          explosion.oy = -(cy - 0.5);
+          explosion.fireT = performance.now();
+        }
+        function updateCursor(ev) {
+          const rect = el.getBoundingClientRect();
+          cursor.x = (ev.clientX - rect.left) / rect.width;
+          cursor.y = (ev.clientY - rect.top)  / rect.height;
+          cursor.active = true;
+          cursor.lastInteractAt = performance.now();
+        }
+        el.addEventListener('pointermove', updateCursor);
+        el.addEventListener('pointerenter', updateCursor);
+        el.addEventListener('pointerleave', () => { cursor.active = false; });
+        // Click anywhere on the brain → explosion. Skip if there's another
+        // click handler already attached (the orb button has its own onclick).
+        el.addEventListener('click', fireExplosion, true);
+
+        // ─── State profiles ───
+        const STATES = {
+          idle:       { spring: 0.060, baseR: 0.00, baseG: 0.76, baseB: 0.82, intensity: 0.5 },
+          listening:  { spring: 0.045, baseR: 0.00, baseG: 0.85, baseB: 0.95, intensity: 1.0 },
+          thinking:   { spring: 0.080, baseR: 0.10, baseG: 0.70, baseB: 0.78, intensity: 1.2 },
+          speaking:   { spring: 0.055, baseR: 0.05, baseG: 0.90, baseB: 1.00, intensity: 1.3 },
+          error:      { spring: 0.080, baseR: 0.93, baseG: 0.17, baseB: 0.22, intensity: 0.4 },
+        };
+        let currentSpring = STATES.idle.spring;
+        let currentR = STATES.idle.baseR;
+        let currentG = STATES.idle.baseG;
+        let currentB = STATES.idle.baseB;
+        let currentIntensity = STATES.idle.intensity;
+
+        // ─── Animation loop ───
+        let lastT = 0;
+        function tick(now) {
+          if (!el.isConnected) return; // detached, stop
+          if (lastT === 0) lastT = now;
+          const dt = Math.min(48, now - lastT) / 16.67; // normalized delta (1 = ~60fps frame)
+          lastT = now;
+
+          // Smoothly interpolate state targets
+          const stateKey = el.dataset.state in STATES ? el.dataset.state : 'idle';
+          const target = STATES[stateKey];
+          const sLerp = 0.06 * dt;
+          currentSpring     += (target.spring     - currentSpring)     * sLerp;
+          currentR          += (target.baseR      - currentR)          * sLerp;
+          currentG          += (target.baseG      - currentG)          * sLerp;
+          currentB          += (target.baseB      - currentB)          * sLerp;
+          currentIntensity  += (target.intensity  - currentIntensity)  * sLerp;
+
+          // Smoothly interpolate cursor amp
+          cursor.amp += ((cursor.active ? 1 : 0) - cursor.amp) * 0.10 * dt;
+
+          // ─── PARALLAX ROTATION ─────────────────────────────────────
+          // Subtle camera rotation tied to cursor amp (max ~2° per spec).
+          // Creates the "depth" feel from the AI-network references
+          // without adding sphere/globe geometry. Y-rotation only — keeps
+          // the brain's profile orientation intact.
+          const targetYaw = cursor.active
+            ? (cursor.x - 0.5) * 0.06    // ±~3.4° at edges
+            : 0;
+          points.rotation.y += (targetYaw - points.rotation.y) * 0.05;
+          edgeLines.rotation.y = points.rotation.y;
+          pulseMesh.rotation.y = points.rotation.y;
+
+          // Cursor in centered coords (matching positions array)
+          const cx =   cursor.x - 0.5;
+          const cy = -(cursor.y - 0.5);
+
+          // ─── EXPLOSION PHASED ENVELOPE ───────────────────────────────
+          // Pulls the spec's 5-state motion spec into per-frame numbers.
+          // Each phase modulates: spring strength, explosion force, red color
+          // flash, and a separate "explosion-source" repulsion field.
+          const eT = now - explosion.fireT;            // ms since fire
+          let explForce = 0;                            // outward push from origin
+          let explRedFlash = 0;                         // 0–1 red color saturation
+          let explSpringMul = 1;                        // multiplies base spring (>1 weak; <1 strong reformation)
+          // LOCAL ACTIVATION (not full explosion). Click → brief outward
+          // ripple from the impact point, decays in ~600ms. No deconstruction
+          // of the brain. Spring stays mostly intact. Color flash + signal
+          // propagation does the heavy lifting for the "thinking" feel.
+          if (eT >= 0 && eT <= 700) {
+            if (eT < 60) {
+              // Impact recognition — flash, tiny inward compress
+              explForce = -0.0015 * (1 - eT / 60);
+              explRedFlash = eT / 60;
+              explSpringMul = 1.0;
+            } else if (eT < 280) {
+              // Local ripple outward — small radius around click point only
+              const t = (eT - 60) / 220;
+              const eased = 1 - Math.pow(1 - t, 2.5);
+              explForce = 0.012 * (1 - eased);   // small force, decays
+              explRedFlash = 1 - t * 0.7;
+              explSpringMul = 1.4 - 0.4 * eased;  // mild spring weakening
+            } else if (eT < 700) {
+              // Settle — color fades, spring returns to baseline
+              const t = (eT - 280) / 420;
+              const eased = t * t * (3 - 2 * t);
+              explForce = 0;
+              explRedFlash = 0.30 * (1 - eased);
+              explSpringMul = 1.0 + 0.05 * (1 - eased);
+            }
+          }
+
+          // Spring weakens during cursor explosion AND during click explosion
+          const baseSpring = currentSpring * (1 - 0.85 * cursor.amp);
+          const spring = baseSpring / explSpringMul;
+          const REPEL_R = 0.30;
+          const REPEL_F = 0.022 * cursor.amp;
+          const DAMPING = explForce > 0 ? 0.92 : 0.86;  // less damping during burst
+
+          // Random-fire signal: occasionally pulse a small region with extra activation
+          const fireThisFrame = Math.random() < 0.018 * currentIntensity;
+          let firePts = null;
+          if (fireThisFrame) {
+            const rr = Math.random();
+            firePts = {
+              cx: rr < 0.5 ? -0.10 + Math.random() * 0.20 : 0.10 + Math.random() * 0.30,
+              cy: -0.20 + Math.random() * 0.40,
+              radius: 0.08,
+            };
+          }
+
+          const posAttr = geo.attributes.position;
+          const colAttr = geo.attributes.color;
+          const posArr = posAttr.array;
+          const colArr = colAttr.array;
+
+          for (let i = 0; i < N; i++) {
+            const p = particles[i];
+            const ix = i*3, iy = i*3 + 1;
+            let px = posArr[ix];
+            let py = posArr[iy];
+            // Home in centered coords
+            const hx =  p.hx - 0.5;
+            const hy = -(p.hy - 0.5);
+
+            // Spring force toward home
+            let fx = (hx - px) * spring;
+            let fy = (hy - py) * spring;
+
+            // Cursor repulsion (radial) — pre-activation hover pull
+            if (cursor.amp > 0.04) {
+              const dx = px - cx;
+              const dy = py - cy;
+              const d2 = dx*dx + dy*dy;
+              if (d2 < REPEL_R * REPEL_R && d2 > 1e-5) {
+                const d = Math.sqrt(d2);
+                const fall = (1 - d / REPEL_R);
+                const f = fall * fall * REPEL_F;
+                fx += (dx / d) * f;
+                fy += (dy / d) * f;
+              }
+            }
+
+            // LOCAL activation — only particles within a tight radius of the
+            // click point are pushed. The rest of the brain stays in shape.
+            // This is what differentiates "intelligent local response" from
+            // "decorative full-screen explosion".
+            if (explForce !== 0) {
+              const ex = px - explosion.ox;
+              const ey = py - explosion.oy;
+              const ed2 = ex*ex + ey*ey;
+              const LOCAL_R = 0.18;
+              if (ed2 < LOCAL_R * LOCAL_R) {
+                const ed = Math.sqrt(ed2) || 1e-4;
+                const fall = (1 - ed / LOCAL_R);
+                const layerScale = 0.7 + p.layer * 0.6;
+                const dirSign = explForce > 0 ? 1 : -1;
+                const mag = Math.abs(explForce) * fall * fall * layerScale * 1.6;
+                fx += (ex / ed) * mag * dirSign;
+                fy += (ey / ed) * mag * dirSign;
+              }
+            }
+
+            // Optional region-fire impulse
+            if (firePts) {
+              const dx = px - firePts.cx;
+              const dy = py - firePts.cy;
+              const d2 = dx*dx + dy*dy;
+              if (d2 < firePts.radius * firePts.radius) {
+                const d = Math.sqrt(d2) || 1e-4;
+                const fall = (1 - d / firePts.radius);
+                fx += (dx / d) * fall * 0.008 * currentIntensity;
+                fy += (dy / d) * fall * 0.008 * currentIntensity;
+              }
+            }
+
+            // Update velocity + position with damping
+            p.vx = (p.vx + fx) * DAMPING;
+            p.vy = (p.vy + fy) * DAMPING;
+            posArr[ix] = px + p.vx;
+            posArr[iy] = py + p.vy;
+
+            // Energy from velocity → blends in red signal accent.
+            // Explosion red-flash boosts the energy signal during phase A/B
+            // (red flashes 180–480ms per spec).
+            const speed = Math.hypot(p.vx, p.vy);
+            const energy = Math.min(1, speed * 80 + explRedFlash * 0.55);
+
+            // Color: blend baseline (state color) with red, then add white flash
+            // during the very first impact window (0–80ms) for "ignition" feel.
+            const whiteFlash = (eT >= 0 && eT < 120) ? Math.max(0, 1 - eT / 120) * 0.35 : 0;
+            const r = (currentR * (1 - energy) + 0.93 * energy) + whiteFlash;
+            const g = (currentG * (1 - energy) + 0.17 * energy) + whiteFlash;
+            const b = (currentB * (1 - energy) + 0.22 * energy) + whiteFlash;
+            colArr[ix]     = Math.min(1, r);
+            colArr[iy]     = Math.min(1, g);
+            colArr[i*3+2]  = Math.min(1, b);
+          }
+
+          posAttr.needsUpdate = true;
+          colAttr.needsUpdate = true;
+
+          // ─── Update synapse edges ────────────────────────────────────
+          // Edge positions follow node positions each frame (edges deform
+          // with the brain). Edge alpha tracks node activation — bright
+          // when either endpoint is fired/moving.
+          const edgePosArr = edgeGeo.attributes.position.array;
+          const edgeColArr = edgeGeo.attributes.color.array;
+          const edgeAlphaArr = edgeGeo.attributes.alpha.array;
+          for (let i = 0; i < E; i++) {
+            const a = edgeIndices[i*2];
+            const b = edgeIndices[i*2 + 1];
+            const ax = posArr[a*3];
+            const ay = posArr[a*3 + 1];
+            const az = posArr[a*3 + 2];
+            const bx = posArr[b*3];
+            const by = posArr[b*3 + 1];
+            const bz = posArr[b*3 + 2];
+            edgePosArr[i*6]     = ax;
+            edgePosArr[i*6 + 1] = ay;
+            edgePosArr[i*6 + 2] = az;
+            edgePosArr[i*6 + 3] = bx;
+            edgePosArr[i*6 + 4] = by;
+            edgePosArr[i*6 + 5] = bz;
+            // Color: aqua, with red boost from explosion phases
+            const eR = currentR + explRedFlash * 0.6;
+            const eG = currentG * (1 - explRedFlash * 0.4);
+            const eB = currentB * (1 - explRedFlash * 0.4);
+            edgeColArr[i*6]     = eR; edgeColArr[i*6+1] = eG; edgeColArr[i*6+2] = eB;
+            edgeColArr[i*6+3]   = eR; edgeColArr[i*6+4] = eG; edgeColArr[i*6+5] = eB;
+            // Alpha — denser baseline + bigger boost from endpoint activity.
+            // Pulls the AI-network "webbing" feel: edges stay softly visible
+            // at rest, glow brightly when signals are traveling, snap back.
+            const speedA = Math.hypot(particles[a].vx, particles[a].vy);
+            const speedB = Math.hypot(particles[b].vx, particles[b].vy);
+            // Recent fires brighten incident edges
+            const recentBoostA = particles[a].fired && (now - particles[a].fired) < 400
+              ? 0.45 * (1 - (now - particles[a].fired) / 400) : 0;
+            const recentBoostB = particles[b].fired && (now - particles[b].fired) < 400
+              ? 0.45 * (1 - (now - particles[b].fired) / 400) : 0;
+            const baseA = 0.18 + 0.10 * currentIntensity;
+            const a1 = Math.min(0.85, baseA + speedA * 8 + recentBoostA);
+            const a2 = Math.min(0.85, baseA + speedB * 8 + recentBoostB);
+            edgeAlphaArr[i*2]   = a1;
+            edgeAlphaArr[i*2+1] = a2;
+          }
+          edgeGeo.attributes.position.needsUpdate = true;
+          edgeGeo.attributes.color.needsUpdate = true;
+          edgeGeo.attributes.alpha.needsUpdate = true;
+
+          // ─── Spawn + advance synapse firing pulses ──────────────────
+          // State drives spawn rate. Speaking/thinking → high; idle → low.
+          let spawnRate = 0.5;  // pulses per second baseline
+          if (stateKey === 'listening') spawnRate = 6;
+          else if (stateKey === 'thinking') spawnRate = 14;
+          else if (stateKey === 'speaking') spawnRate = 18;
+          else if (stateKey === 'idle')      spawnRate = 1.4;
+          spawnRate *= currentIntensity;
+          const dtSec = (now - (lastT || now)) / 1000;
+          // Add explosion bonus
+          const explosionBonus = explForce > 0 ? 30 : 0;
+          let toSpawn = (spawnRate + explosionBonus) * dtSec;
+          // Evict stale entries from fired queue (so cascade follows the wavefront)
+          while (firedQueue.length > 0 && now - firedQueue[0].t > FIRED_TTL_MS) {
+            firedQueue.shift();
+          }
+
+          // Spawn whole pulses — biased toward cascading from recently-fired
+          // nodes (70% chance) so signals propagate along the network instead
+          // of appearing randomly. Idle state uses lower cascade bias for
+          // calmer "background activity" feel.
+          const cascadeBias = stateKey === 'idle' ? 0.3
+                            : stateKey === 'listening' ? 0.55
+                            : 0.78;
+          while (toSpawn > 0 && pulses.length < MAX_PULSES) {
+            if (Math.random() > toSpawn) break;
+            let edgeIdx = -1;
+            if (firedQueue.length > 0 && Math.random() < cascadeBias) {
+              // Cascade — pick a node that just fired, walk one of its edges
+              const src = firedQueue[(Math.random() * firedQueue.length) | 0].idx;
+              const adj = adjacency[src];
+              if (adj && adj.length) {
+                edgeIdx = adj[(Math.random() * adj.length) | 0];
+              }
+            }
+            if (edgeIdx === -1) {
+              edgeIdx = (Math.random() * E) | 0;
+            }
+            pulses.push({
+              edgeIdx,
+              t: 0,
+              speed: 1.5 + Math.random() * 1.5,
+              red: Math.random() < 0.10 + explRedFlash * 0.4,
+            });
+            toSpawn--;
+          }
+          // Advance pulses + write to pulse buffer.
+          // Each pulse renders as TWO sprites: the bright core at progress t,
+          // plus a dimmer trail at t-0.08 (visible motion blur / energy trail).
+          let writeIdx = 0;
+          for (let pi = pulses.length - 1; pi >= 0; pi--) {
+            const ps = pulses[pi];
+            ps.t += ps.speed * dtSec;
+            if (ps.t >= 1) {
+              // Mark destination node as fired:
+              //   firedQueue → next frame's cascade picks it as a likely source
+              //   particles[].fired → edge alpha boost on incident edges
+              // Together these create visible signal propagation across the
+              // brain instead of random flashes.
+              const destIdx = edgeIndices[ps.edgeIdx*2 + 1];
+              firedQueue.push({ idx: destIdx, t: now });
+              if (firedQueue.length > 80) firedQueue.shift();
+              particles[destIdx].fired = now;
+              pulses.splice(pi, 1);
+              continue;
+            }
+            const a = edgeIndices[ps.edgeIdx*2];
+            const b = edgeIndices[ps.edgeIdx*2 + 1];
+            const ax = posArr[a*3], ay = posArr[a*3+1], az = posArr[a*3+2];
+            const bx = posArr[b*3], by = posArr[b*3+1], bz = posArr[b*3+2];
+            // Core pulse
+            const tCore = ps.t;
+            const xC = ax + (bx - ax) * tCore;
+            const yC = ay + (by - ay) * tCore;
+            const zC = az + (bz - az) * tCore;
+            const fadeC = 1 - Math.abs(tCore - 0.5) * 0.5;
+            pulsePositions[writeIdx*3]   = xC;
+            pulsePositions[writeIdx*3+1] = yC;
+            pulsePositions[writeIdx*3+2] = zC;
+            if (ps.red) {
+              pulseColors[writeIdx*3]   = 1.00 * fadeC;
+              pulseColors[writeIdx*3+1] = 0.30 * fadeC;
+              pulseColors[writeIdx*3+2] = 0.30 * fadeC;
+            } else {
+              pulseColors[writeIdx*3]   = 0.70 * fadeC;
+              pulseColors[writeIdx*3+1] = 1.00 * fadeC;
+              pulseColors[writeIdx*3+2] = 1.00 * fadeC;
+            }
+            pulseSizes[writeIdx] = 9 * fadeC * (px / 240);
+            writeIdx++;
+
+            // Trail sprite — dimmer, slightly behind the core
+            if (writeIdx < MAX_PULSES) {
+              const tTrail = Math.max(0, ps.t - 0.08);
+              const xT = ax + (bx - ax) * tTrail;
+              const yT = ay + (by - ay) * tTrail;
+              const zT = az + (bz - az) * tTrail;
+              const fadeT = (1 - Math.abs(tTrail - 0.5) * 0.5) * 0.4;
+              pulsePositions[writeIdx*3]   = xT;
+              pulsePositions[writeIdx*3+1] = yT;
+              pulsePositions[writeIdx*3+2] = zT;
+              if (ps.red) {
+                pulseColors[writeIdx*3]   = 0.93 * fadeT;
+                pulseColors[writeIdx*3+1] = 0.17 * fadeT;
+                pulseColors[writeIdx*3+2] = 0.22 * fadeT;
+              } else {
+                pulseColors[writeIdx*3]   = 0.40 * fadeT;
+                pulseColors[writeIdx*3+1] = 0.85 * fadeT;
+                pulseColors[writeIdx*3+2] = 1.00 * fadeT;
+              }
+              pulseSizes[writeIdx] = 14 * fadeT * (px / 240);  // larger but dimmer = soft glow
+              writeIdx++;
+            }
+          }
+          // Hide unused pulse slots
+          for (let i = writeIdx; i < MAX_PULSES; i++) {
+            pulseSizes[i] = 0;
+          }
+          pulseGeo.attributes.position.needsUpdate = true;
+          pulseGeo.attributes.color.needsUpdate = true;
+          pulseGeo.attributes.size.needsUpdate = true;
+          pulseGeo.setDrawRange(0, writeIdx);
+
+          renderer.render(scene, camera);
+
+          rafId = requestAnimationFrame(tick);
+        }
+        let rafId = requestAnimationFrame(tick);
+
+        // Pause when tab hidden
+        const onVis = () => { if (document.hidden) { cancelAnimationFrame(rafId); rafId = null; lastT = 0; } else if (rafId === null) { rafId = requestAnimationFrame(tick); } };
+        document.addEventListener('visibilitychange', onVis);
+
+        return true;
+      } catch (err) {
+        console.warn('[BrainGL] mount failed, falling back to SVG:', err);
+        return false;
+      }
+    };
+  })();
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // LIVING ANALYTICS — count-up on entry + scrubbable 30-day trend chart
+  // ═════════════════════════════════════════════════════════════════════════
+
+  (function Analytics() {
+    // 30 days of synthetic-but-coherent data for Recovery / HRV / Sleep
+    // Each array is 30 entries, day 0 = 30 days ago, day 29 = today.
+    // Numbers chosen to read as a real person trending up after the formula
+    // tuned at day 16 (visible inflection in all three series).
+    const DAYS = 30;
+    const recovery = [62, 65, 60, 68, 64, 66, 70, 68, 65, 72, 70, 73, 71, 74, 72, 70, 75, 73, 76, 74, 78, 76, 80, 78, 81, 79, 82, 80, 83, 78];
+    const hrv      = [48, 49, 47, 51, 50, 52, 53, 54, 52, 55, 54, 56, 55, 58, 57, 56, 59, 58, 60, 61, 62, 60, 63, 62, 64, 63, 65, 64, 66, 63];
+    const sleep    = [78, 80, 76, 82, 79, 81, 83, 80, 78, 84, 82, 85, 83, 86, 84, 83, 87, 85, 88, 86, 89, 88, 90, 89, 91, 90, 92, 91, 93, 92];
+
+    // Per-day Jeffrey reads. Anchor reads at key inflections; default fills the rest.
+    const reads = {
+      0:  "First baseline. We're listening.",
+      4:  "Your sleep architecture stabilized. Holding the formula steady.",
+      9:  "Recovery dipped midweek. Stress signal flagged.",
+      14: "Mid-month checkpoint. The pattern is forming.",
+      16: "Tuned overnight — magnesium up, rhodiola back. Watch the next 72h.",
+      20: "Recovery rebounded. The adaptation worked.",
+      24: "Your evenings are calmer. The system is doing what we asked.",
+      27: "Sleep depth at a 30-day high. Hold the line.",
+      29: "Today: recovery up 12, HRV up 11ms, sleep depth +9%."
+    };
+    function readForDay(d) {
+      if (reads[d]) return reads[d];
+      // fallback: nearest anchor
+      let nearest = 0, dist = 999;
+      for (const k of Object.keys(reads)) {
+        const kd = parseInt(k, 10);
+        if (Math.abs(kd - d) < dist) { nearest = kd; dist = Math.abs(kd - d); }
+      }
+      return reads[nearest];
+    }
+
+    // Map a value array to SVG polyline points within viewBox 600 × 180.
+    // Top padding 16px, bottom padding 16px, range 16..164 (148 high).
+    function pointsFor(arr, min, max) {
+      const range = max - min;
+      const stepX = 600 / (arr.length - 1);
+      return arr.map((v, i) => {
+        const x = i * stepX;
+        const t = (v - min) / range;
+        const y = 164 - t * 148;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+    }
+
+    function applyChart() {
+      const recPts = pointsFor(recovery, 55, 90);
+      const hrvPts = pointsFor(hrv, 40, 70);
+      const slPts  = pointsFor(sleep, 70, 95);
+
+      const recovEl = document.getElementById('trend-recovery');
+      const hrvEl   = document.getElementById('trend-hrv');
+      const sleepEl = document.getElementById('trend-sleep');
+      const areaEl  = document.getElementById('trend-recovery-area');
+      if (!recovEl) return; // chart not in DOM yet
+
+      recovEl.setAttribute('points', recPts);
+      hrvEl.setAttribute('points', hrvPts);
+      sleepEl.setAttribute('points', slPts);
+
+      // Area under recovery
+      const recArr = recPts.split(' ').map(p => p.split(',').map(parseFloat));
+      const areaPath =
+        'M' + recArr.map(p => p.join(',')).join(' L') +
+        ` L${recArr[recArr.length - 1][0]},180 L0,180 Z`;
+      areaEl.setAttribute('d', areaPath);
+    }
+
+    function attachScrub() {
+      const container = document.getElementById('trend-chart-container');
+      const svg = document.getElementById('trend-chart');
+      const crosshair = document.getElementById('trend-crosshair');
+      const cR = document.getElementById('trend-cursor-recovery');
+      const cH = document.getElementById('trend-cursor-hrv');
+      const cS = document.getElementById('trend-cursor-sleep');
+      const dayEl = document.getElementById('trend-day');
+      const readText = document.getElementById('trend-read-text');
+      const cursorLabel = document.getElementById('trend-cursor-label');
+      if (!container || container._scrubAttached) return;
+      container._scrubAttached = true;
+
+      function dayFromX(clientX) {
+        const rect = svg.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        return Math.round(ratio * (DAYS - 1));
+      }
+
+      function updateCrosshair(day) {
+        const stepX = 600 / (DAYS - 1);
+        const x = day * stepX;
+        crosshair.setAttribute('x1', String(x));
+        crosshair.setAttribute('x2', String(x));
+        crosshair.setAttribute('opacity', '0.5');
+
+        const yFor = (arr, min, max) => 164 - ((arr[day] - min) / (max - min)) * 148;
+        cR.setAttribute('cx', String(x)); cR.setAttribute('cy', String(yFor(recovery, 55, 90))); cR.setAttribute('opacity', '1');
+        cH.setAttribute('cx', String(x)); cH.setAttribute('cy', String(yFor(hrv, 40, 70)));      cH.setAttribute('opacity', '1');
+        cS.setAttribute('cx', String(x)); cS.setAttribute('cy', String(yFor(sleep, 70, 95)));    cS.setAttribute('opacity', '1');
+
+        if (dayEl) dayEl.textContent = String(DAYS - day);
+        if (readText) readText.textContent = '"' + readForDay(day) + '"';
+        if (cursorLabel) cursorLabel.style.opacity = '1';
+      }
+
+      function clearCrosshair() {
+        crosshair.setAttribute('opacity', '0');
+        cR.setAttribute('opacity', '0');
+        cH.setAttribute('opacity', '0');
+        cS.setAttribute('opacity', '0');
+        if (cursorLabel) cursorLabel.style.opacity = '0';
+        // Reset read text to today's
+        if (readText) readText.textContent = '"' + readForDay(29) + '"';
+      }
+
+      const onMove = (ev) => {
+        const x = ev.clientX ?? (ev.touches && ev.touches[0]?.clientX);
+        if (x === undefined) return;
+        updateCrosshair(dayFromX(x));
+      };
+      container.addEventListener('pointermove', onMove);
+      container.addEventListener('pointerleave', clearCrosshair);
+      container.addEventListener('touchmove', onMove, { passive: true });
+      container.addEventListener('touchend', clearCrosshair);
+    }
+
+    // Count-up animation for .metric-value elements when the screen mounts
+    function countUp() {
+      const els = document.querySelectorAll('[data-screen="trends"].active .metric-value');
+      els.forEach(el => {
+        if (el._countedUp) return;
+        const target = parseFloat(el.dataset.target || '0');
+        if (!isFinite(target)) return;
+        el._countedUp = true;
+        const start = performance.now();
+        const dur = 900;
+        function step(now) {
+          const t = Math.min(1, (now - start) / dur);
+          // ease-out cubic
+          const eased = 1 - Math.pow(1 - t, 3);
+          const v = Math.round(target * eased);
+          el.textContent = String(v);
+          if (t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+    }
+
+    // Hook into goScreen so analytics activates whenever the trends screen is shown
+    const _origGo = window.goScreen;
+    window.goScreen = function (id) {
+      const r = _origGo(id);
+      if (id === 'trends') {
+        // Reset count-up flags so it animates each time the screen is opened
+        document.querySelectorAll('[data-screen="trends"] .metric-value').forEach(el => {
+          el._countedUp = false;
+          el.textContent = '0';
+        });
+        setTimeout(() => {
+          applyChart();
+          attachScrub();
+          countUp();
+        }, 50);
+      }
+      return r;
+    };
+  })();
+
+  // Init
+  goScreen('welcome');
+
+  // After init, rescan for any voices that were inside hidden screens at mount
+  setTimeout(() => { if (window.__neuralRescan) window.__neuralRescan(); }, 100);
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // JEFFREY VOICE — OpenAI Realtime API via WebRTC
+  // ═════════════════════════════════════════════════════════════════════════
+  // Browser → /api/jeffrey-realtime-token (Vercel) mints ephemeral session
+  // token → browser opens RTCPeerConnection direct to OpenAI Realtime,
+  // streaming microphone audio + receiving Jeffrey's voice. The OPENAI_API_KEY
+  // never reaches the browser.
+  //
+  // State machine drives the .voice indicator's data-state attribute:
+  //   idle → listening (user speaking) → thinking (model generating) →
+  //   speaking (Jeffrey replying) → idle (turn done)
+  //
+  // Override the API base via window.AISSISTED_API_BASE (e.g. when the
+  // prototype is served from a tunnel and the API is on aissisted.me).
+
+  const JEFFREY = (() => {
+    const orbBtn   = document.getElementById('jeffrey-orb-btn');
+    const status   = document.getElementById('jeffrey-status-label');
+    const caption  = document.getElementById('jeffrey-caption');
+    const hint     = document.getElementById('jeffrey-hint');
+    const audioEl  = document.getElementById('jeffrey-audio');
+    const errorEl  = document.getElementById('jeffrey-error');
+
+    let pc = null;
+    let dc = null;
+    let micStream = null;
+    let connecting = false;
+    let connected = false;
+    let assistantBuffer = "";
+
+    function setState(state, label) {
+      if (!orbBtn) return;
+      orbBtn.dataset.state = state;
+      if (status) status.textContent = `Jeffrey · ${label || state}`;
+    }
+    function setCaption(text) { if (caption) caption.textContent = text; }
+    function setHint(text)    { if (hint) hint.textContent = text; }
+    function setError(msg) {
+      if (!errorEl) return;
+      if (!msg) { errorEl.style.display = 'none'; return; }
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+
+    function apiBase() {
+      // Allow override for tunnel-served prototypes pointing at aissisted.me
+      if (window.AISSISTED_API_BASE) return window.AISSISTED_API_BASE.replace(/\/$/, '');
+      return '';
+    }
+
+    async function start() {
+      if (connecting || connected) return;
+      connecting = true;
+      setError('');
+      setState('thinking', 'connecting');
+      setCaption('Connecting…');
+      setHint('Negotiating session');
+
+      try {
+        // 1. Mint ephemeral token
+        const tokenRes = await fetch(`${apiBase()}/api/jeffrey-realtime-token`, { method: 'POST' });
+        if (!tokenRes.ok) {
+          const body = await tokenRes.text();
+          throw new Error(`Token mint failed (${tokenRes.status}): ${body.slice(0, 200)}`);
+        }
+        const { client_secret, model } = await tokenRes.json();
+        if (!client_secret?.value) throw new Error('No client_secret in response');
+
+        // 2. Capture mic
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
+        // 3. RTCPeerConnection
+        pc = new RTCPeerConnection();
+        pc.ontrack = (e) => {
+          // Jeffrey's voice arrives here
+          if (e.streams && e.streams[0]) {
+            audioEl.srcObject = e.streams[0];
+          }
+        };
+        pc.oniceconnectionstatechange = () => {
+          if (pc && (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected')) {
+            setError('Connection lost. Tap the orb to retry.');
+            stop();
+          }
+        };
+
+        // Add the local mic track
+        for (const track of micStream.getTracks()) {
+          pc.addTrack(track, micStream);
+        }
+
+        // 4. Data channel for events (transcripts, state, etc.)
+        dc = pc.createDataChannel('oai-events');
+        dc.addEventListener('open', () => {
+          // Optional: nudge Jeffrey to greet first
+          dc.send(JSON.stringify({
+            type: 'response.create',
+            response: { modalities: ['audio','text'] },
+          }));
+        });
+        dc.addEventListener('message', handleRealtimeEvent);
+
+        // 5. Offer / answer with OpenAI Realtime
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(model)}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${client_secret.value}`,
+            'Content-Type': 'application/sdp',
+          },
+          body: offer.sdp,
+        });
+        if (!sdpRes.ok) {
+          const body = await sdpRes.text();
+          throw new Error(`SDP exchange failed (${sdpRes.status}): ${body.slice(0, 200)}`);
+        }
+        const answerSdp = await sdpRes.text();
+        await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+        connected = true;
+        connecting = false;
+        setState('listening', 'listening');
+        setCaption('I’m listening. Take your time.');
+        setHint('Tap the orb to end the call');
+      } catch (err) {
+        connecting = false;
+        setError(err && err.message ? err.message : 'Connection error');
+        stop();
+        setState('error', 'error');
+        setCaption('Couldn’t connect. Check the network or try again.');
+        setHint('Tap to retry');
+      }
+    }
+
+    function stop() {
+      try { if (dc) dc.close(); } catch (_) {}
+      try { if (pc) pc.close(); } catch (_) {}
+      if (micStream) {
+        for (const t of micStream.getTracks()) t.stop();
+      }
+      pc = null; dc = null; micStream = null;
+      connected = false; connecting = false;
+      assistantBuffer = "";
+      if (audioEl) audioEl.srcObject = null;
+      setState('idle', 'idle');
+      setCaption('“Tap the orb. I’ll listen.”');
+      setHint('Tap to speak · tap again to end');
+    }
+
+    function handleRealtimeEvent(ev) {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      // Drive the orb state machine + caption from event types
+      switch (msg.type) {
+        case 'input_audio_buffer.speech_started':
+          setState('listening', 'listening');
+          setCaption('Go on.');
+          break;
+        case 'input_audio_buffer.speech_stopped':
+          setState('thinking', 'thinking');
+          setCaption('Thinking…');
+          break;
+        case 'response.created':
+          setState('thinking', 'thinking');
+          assistantBuffer = "";
+          break;
+        case 'response.audio_transcript.delta':
+        case 'response.text.delta':
+          if (typeof msg.delta === 'string') {
+            assistantBuffer += msg.delta;
+            // Soft caption update — show first ~140 chars in the bubble
+            setCaption(assistantBuffer.slice(0, 140) + (assistantBuffer.length > 140 ? '…' : ''));
+            setState('speaking', 'speaking');
+          }
+          break;
+        case 'response.audio.delta':
+          setState('speaking', 'speaking');
+          break;
+        case 'response.done':
+          setState('listening', 'listening');
+          setHint('Tap the orb to end the call');
+          break;
+        case 'error':
+          setError(msg.error?.message || 'Realtime error');
+          break;
+        default:
+          // Other events (rate_limits, conversation.item.*, etc.) are silent.
+          break;
+      }
+    }
+
+    function sendText(text) {
+      if (!connected || !dc) {
+        // If not connected yet, start the call and queue the message after open
+        const onceOpen = () => {
+          dc?.removeEventListener('open', onceOpen);
+          sendText(text);
+        };
+        start().then(() => {
+          if (dc?.readyState === 'open') sendText(text);
+          else dc?.addEventListener('open', onceOpen);
+        });
+        return;
+      }
+      dc.send(JSON.stringify({
+        type: 'conversation.item.create',
+        item: {
+          type: 'message',
+          role: 'user',
+          content: [{ type: 'input_text', text }],
+        },
+      }));
+      dc.send(JSON.stringify({
+        type: 'response.create',
+        response: { modalities: ['audio','text'] },
+      }));
+      setState('thinking', 'thinking');
+      setCaption('Thinking…');
+    }
+
+    return { start, stop, sendText, isConnected: () => connected };
+  })();
+
+  // Public hooks used by the Jeffrey screen
+  function toggleJeffreyVoice() {
+    if (JEFFREY.isConnected()) JEFFREY.stop();
+    else JEFFREY.start();
+  }
+  function stopJeffreyVoice() { JEFFREY.stop(); }
+  function sendJeffreyText(text) {
+    goScreen('jeffrey');
+    JEFFREY.sendText(text);
+  }
+  // Auto-stop when navigating away from the Jeffrey screen
+  const _origGoScreen = goScreen;
+  goScreen = function(id) {
+    if (id !== 'jeffrey' && JEFFREY.isConnected()) JEFFREY.stop();
+    return _origGoScreen(id);
+  };
+</script>
+
+</body>
+</html>
