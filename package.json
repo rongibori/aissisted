@@ -10,7 +10,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=@aissisted/api",
     "db:generate": "turbo run db:generate --filter=@aissisted/db",
-    "db:push": "turbo run db:push --filter=@aissisted/db"
+    "db:push": "turbo run db:push --filter=@aissisted/db",
+    "seed:demo": "pnpm --filter @aissisted/api seed:demo"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

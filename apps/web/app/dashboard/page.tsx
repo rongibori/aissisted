@@ -76,7 +76,7 @@ const TILES: TileSpec[] = [
   {
     label: "Sleep",
     source: "WHOOP",
-    primary: "whoop_sleep_performance_pct",
+    primary: "whoop_sleep_performance",
     fallback: "whoop_total_sleep_hours",
     unit: "%",
     status: (v) => (v >= 85 ? "optimal" : v >= 70 ? "watch" : "alert"),
@@ -93,7 +93,7 @@ const TILES: TileSpec[] = [
   {
     label: "Performance",
     source: "WHOOP",
-    primary: "whoop_hrv_rmssd_ms",
+    primary: "whoop_hrv_rmssd",
     unit: "ms",
     status: (v) => (v >= 50 ? "optimal" : v >= 30 ? "watch" : "alert"),
     href: "/labs",
