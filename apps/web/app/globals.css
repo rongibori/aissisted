@@ -69,6 +69,30 @@
       transition-duration: 0.001ms !important;
     }
   }
+
+  /* ─── Neural-core / voice-orb animations ───────────────── */
+  @keyframes neural-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes neural-blink {
+    0%, 100% { opacity: 0.45; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes neural-pulse {
+    0%, 100% { transform: scale(0.95); }
+    50% { transform: scale(1.05); }
+  }
+  @keyframes neural-expand {
+    0% { transform: scale(0.85); opacity: 0.85; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+
+  .neural-spin { animation: neural-spin 6s linear infinite; }
+  .neural-spin-fast { animation: neural-spin 1.6s linear infinite; }
+  .neural-blink { animation: neural-blink 2.6s ease-in-out infinite; }
+  .neural-pulse { animation: neural-pulse 600ms ease-in-out infinite; }
+  .neural-expand { animation: neural-expand 1.2s ease-out infinite; }
 }
 
 /* Optional dark variant (NOT default — opt-in via .dark on html). */
