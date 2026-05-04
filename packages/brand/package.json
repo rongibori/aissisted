@@ -1,7 +1,7 @@
 {
   "name": "@aissisted/brand",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Aissisted Brand Bible v2 design tokens — color, type scale, spacing, radius, motion, elevation.",
   "type": "module",
   "exports": {
