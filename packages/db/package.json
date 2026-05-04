@@ -9,14 +9,16 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx src/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "seed:pilot": "tsx src/seed-pilot.ts",
     "build": "echo 'db build ok'",
-    "typecheck": "echo 'db typecheck ok'"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.38.0",
     "@libsql/client": "^0.14.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "drizzle-kit": "^0.30.0",
     "typescript": "^5.6.0"
   }

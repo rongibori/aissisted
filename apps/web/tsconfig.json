@@ -24,6 +24,12 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/* 2.ts",
+    "**/* 2.tsx",
+    "**/* 3.ts",
+    "**/* 3.tsx",
+    "**/*.d 2.ts",
+    "**/*.d 3.ts"
   ]
 }
