@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX `biomarkers_uniq` ON `biomarkers` (`user_id`,`name`,`measured_at`,`source`);--> statement-breakpoint
+CREATE UNIQUE INDEX `raw_fhir_resources_uniq` ON `raw_fhir_resources` (`user_id`,`provider`,`resource_type`,`resource_id`);
