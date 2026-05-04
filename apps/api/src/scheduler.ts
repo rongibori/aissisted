@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { db, schema, eq, lt } from "@aissisted/db";
 import { syncWhoopForUser } from "./integrations/whoop/sync.js";
 import { withRetry } from "./utils/retry.js";
+import { runMemoryLifecyclePass } from "./services/memory-lifecycle.js";
 import type { FastifyBaseLogger } from "fastify";
 
 const AUDIT_RETENTION_DAYS = 90;
@@ -51,5 +52,35 @@ export function startScheduler(log: FastifyBaseLogger): void {
     }
   });
 
-  log.info("Scheduler started — WHOOP sync every 30 min, audit pruning daily at 03:00");
+  // Memory lifecycle pass — nightly at 03:30 UTC (orchestrate per user-local in handler)
+  // Aligned with: JEFFREY_BRAIN_ROADMAP.md §J2-4
+  cron.schedule("30 3 * * *", async () => {
+    try {
+      const result = await runMemoryLifecyclePass(log, async () => {
+        const rows = await db.select({ userId: schema.users.id }).from(schema.users);
+        return rows.map((r) => ({ userId: r.userId }));
+      });
+      log.info(
+        { ...result.aggregate, users: result.usersProcessed },
+        "Memory lifecycle pass complete",
+      );
+    } catch (err) {
+      log.error(err, "Memory lifecycle pass error");
+    }
+  });
+
+  // Adaptive tuning pass — nightly at 04:00 UTC (per user-local in handler)
+  // Aligned with: JEFFREY_BRAIN_ROADMAP.md §J4-3
+  cron.schedule("0 4 * * *", async () => {
+    try {
+      // TODO(adaptive): wire signal aggregation + per-user tuning loop.
+      // Implementation lives in apps/api/src/services/adaptive-tuning.ts;
+      // here we just iterate users and call proposeAdaptiveTuning(...).
+      log.info("Adaptive tuning pass — pending wire-up (apps/api/src/services/adaptive-tuning.ts)");
+    } catch (err) {
+      log.error(err, "Adaptive tuning pass error");
+    }
+  });
+
+  log.info("Scheduler started — WHOOP sync every 30 min, audit pruning 03:00, memory lifecycle 03:30, adaptive tuning 04:00");
 }

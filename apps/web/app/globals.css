@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 /*
+ * Tailwind v4 content detection — explicit because pnpm workspace symlinks
+ * confuse the default heuristic. Without these, utility classes never get
+ * emitted and the entire app renders unstyled.
+ */
+@source "../app/**/*.{ts,tsx,js,jsx}";
+@source "../components/**/*.{ts,tsx,js,jsx}";
+@source "../lib/**/*.{ts,tsx,js,jsx}";
+
+/*
  * Aissisted — apps/web
  *
  * Color tokens + @theme live in @aissisted/brand/tokens.css (shared single

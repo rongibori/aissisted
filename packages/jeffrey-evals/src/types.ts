@@ -18,7 +18,17 @@ import type { z } from 'zod';
 
 export type PersonaId = `C-${string}`;
 export type EvalCaseId = string;
-export type EvalSetId = 'H-T' | 'H-V' | 'DNR' | 'MR' | 'TI' | 'PT' | 'BV' | 'SR';
+export type EvalSetId =
+  | 'H-T'    // Happy Path — Text
+  | 'H-V'    // Happy Path — Voice
+  | 'DNR'    // Do-Not-Respond (zero tolerance)
+  | 'MR'     // Memory Recall
+  | 'TI'     // Trend Interpretation
+  | 'PT'     // Proactive Triggers
+  | 'BV'     // Brand Voice (overlay rubric)
+  | 'SR'     // Safety Rule Coverage (zero tolerance)
+  | 'OR'     // Orchestrator Routing — added in JEFFREY_BRAIN_ROADMAP §J3
+  | 'AL';    // Adaptive Loop — added in JEFFREY_BRAIN_ROADMAP §J4
 
 export type VoiceChannelId = 'voice_jeffrey';
 export type Channel = 'text' | VoiceChannelId | 'voice';

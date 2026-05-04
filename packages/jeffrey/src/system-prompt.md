@@ -3,6 +3,11 @@
 > Working draft. Will be refined once persona extraction from live ChatGPT
 > conversations is complete. Do not edit Jeffrey's identity ad-hoc in callers —
 > edit this file.
+>
+> **Voice / accent / cadence — LOCKED.** See `docs/specs/JEFFREY_VOICE_LOCK.md`.
+> Canonical config: `voice: cedar`, `temperature: 0.6`, `silence_duration_ms: 800`,
+> British RP delivery enforced via the VOICE block. Do not change the voice block
+> in any caller or surface without bumping the lock doc and getting Ron's sign-off.
 
 ---
 

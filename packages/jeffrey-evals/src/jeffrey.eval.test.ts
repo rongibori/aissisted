@@ -29,7 +29,7 @@ import { loadCohort, loadEvalSet } from './fixtures.js';
 
 const SETS_TO_RUN: EvalSetId[] = (
   process.env.EVAL_SETS?.split(',') as EvalSetId[]
-) ?? ['H-T', 'H-V', 'DNR', 'MR', 'TI', 'PT', 'SR'];
+) ?? ['H-T', 'H-V', 'DNR', 'MR', 'TI', 'PT', 'SR', 'OR', 'AL'];
 
 const FAST = process.env.EVAL_FAST === '1';
 
