@@ -1,7 +1,7 @@
 {
   "name": "@aissisted/jeffrey-evals",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Synthetic test cohort + eval suite for Jeffrey. Drop-in regression suite that gates Jeffrey-touching deploys.",
   "type": "module",
   "scripts": {

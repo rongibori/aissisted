@@ -1,7 +1,7 @@
 {
   "name": "@aissisted/jeffrey",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Jeffrey — the operating intelligence of Aissisted. OpenAI brain, ElevenLabs voice, British premium persona. Server-only.",
   "type": "module",
   "main": "src/index.ts",

@@ -1,7 +1,7 @@
 {
   "name": "@aissisted/ui",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "main": "src/index.tsx",
   "peerDependencies": {
     "react": "^19.0.0"
