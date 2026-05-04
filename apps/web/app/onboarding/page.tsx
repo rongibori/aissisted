@@ -148,7 +148,7 @@ function OnboardingPage() {
   return (
     <>
       <Nav />
-      <div className="pt-14 min-h-screen flex items-center justify-center px-4 py-8">
+      <main className="pt-14 min-h-screen flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-lg">
           {/* Progress */}
           <div className="flex items-center gap-2 mb-8">
@@ -353,7 +353,7 @@ function OnboardingPage() {
             )}
           </Card>
         </div>
-      </div>
+      </main>
     </>
   );
 }

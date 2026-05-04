@@ -75,9 +75,9 @@ function StackPage() {
     return (
       <>
         <Nav />
-        <div className="pt-14 flex items-center justify-center min-h-screen">
+        <main className="pt-14 flex items-center justify-center min-h-screen">
           <Spinner size="lg" />
-        </div>
+        </main>
       </>
     );
   }
@@ -85,7 +85,7 @@ function StackPage() {
   return (
     <>
       <Nav />
-      <div className="pt-14 max-w-3xl mx-auto px-6 py-8">
+      <main className="pt-14 max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-graphite">My Stack</h1>
@@ -217,7 +217,7 @@ function StackPage() {
             </p>
           </>
         )}
-      </div>
+      </main>
     </>
   );
 }

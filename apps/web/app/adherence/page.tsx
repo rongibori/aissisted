@@ -298,14 +298,14 @@ export default function AdherencePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <main className="flex items-center justify-center min-h-[60vh]">
         <Spinner size="lg" />
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <main className="max-w-3xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-graphite">Adherence</h1>
@@ -457,6 +457,6 @@ export default function AdherencePage() {
           </div>
         </Card>
       )}
-    </div>
+    </main>
   );
 }
