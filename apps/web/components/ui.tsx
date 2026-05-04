@@ -19,17 +19,17 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0f] disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:ring-aqua disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
     primary:
-      "bg-indigo-600 hover:bg-indigo-500 text-white focus:ring-indigo-500",
+      "bg-midnight hover:bg-midnight/90 text-white",
     secondary:
-      "bg-[#1c1c26] hover:bg-[#2a2a38] text-[#e8e8f0] border border-[#2a2a38] focus:ring-indigo-500",
+      "bg-surface hover:bg-surface-2 text-graphite border border-border",
     ghost:
-      "hover:bg-[#1c1c26] text-[#7a7a98] hover:text-[#e8e8f0] focus:ring-indigo-500",
+      "hover:bg-surface-2 text-graphite-soft hover:text-graphite",
     danger:
-      "bg-red-600 hover:bg-red-500 text-white focus:ring-red-500",
+      "bg-signal-red hover:bg-signal-red/90 text-white",
   };
 
   const sizes = {
@@ -63,7 +63,7 @@ export function Card({ children, className = "", onClick }: CardProps) {
   return (
     <div
       onClick={onClick}
-      className={`bg-[#13131a] border border-[#2a2a38] rounded-xl p-5 ${onClick ? "cursor-pointer hover:border-[#3a3a50] transition-colors" : ""} ${className}`}
+      className={`bg-surface border border-border rounded-xl p-5 ${onClick ? "cursor-pointer hover:border-graphite-soft/40 transition-colors" : ""} ${className}`}
     >
       {children}
     </div>
@@ -87,14 +87,14 @@ export function Input({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-[#e8e8f0]">{label}</label>
+        <label className="text-sm font-medium text-graphite">{label}</label>
       )}
       <input
-        className={`bg-[#1c1c26] border ${error ? "border-red-500" : "border-[#2a2a38]"} rounded-lg px-3 py-2 text-[#e8e8f0] placeholder-[#7a7a98] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${className}`}
+        className={`bg-surface border ${error ? "border-signal-red" : "border-border"} rounded-lg px-3 py-2 text-graphite placeholder-graphite-soft text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aqua focus-visible:border-transparent transition-all ${className}`}
         {...props}
       />
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      {hint && !error && <p className="text-xs text-[#7a7a98]">{hint}</p>}
+      {error && <p className="text-xs text-signal-red">{error}</p>}
+      {hint && !error && <p className="text-xs text-graphite-soft">{hint}</p>}
     </div>
   );
 }
@@ -107,11 +107,11 @@ interface BadgeProps {
 
 export function Badge({ children, variant = "default" }: BadgeProps) {
   const variants = {
-    default: "bg-[#2a2a38] text-[#7a7a98]",
-    success: "bg-green-950 text-green-400",
-    warning: "bg-amber-950 text-amber-400",
-    danger: "bg-red-950 text-red-400",
-    info: "bg-indigo-950 text-indigo-400",
+    default: "bg-surface-2 text-graphite-soft border border-border",
+    success: "bg-aqua/10 text-aqua border border-aqua/30",
+    warning: "bg-warn/10 text-warn border border-warn/30",
+    danger: "bg-signal-red/10 text-signal-red border border-signal-red/30",
+    info: "bg-midnight/5 text-midnight border border-midnight/20",
   };
 
   return (
@@ -128,7 +128,9 @@ export function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const sizes = { sm: "w-4 h-4", md: "w-6 h-6", lg: "w-10 h-10" };
   return (
     <div
-      className={`${sizes[size]} border-2 border-[#2a2a38] border-t-indigo-500 rounded-full animate-spin`}
+      role="status"
+      aria-label="Loading"
+      className={`${sizes[size]} border-2 border-border border-t-aqua rounded-full animate-spin`}
     />
   );
 }
@@ -145,8 +147,8 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-      <p className="text-[#e8e8f0] font-medium">{title}</p>
-      {description && <p className="text-sm text-[#7a7a98] max-w-sm">{description}</p>}
+      <p className="text-graphite font-medium">{title}</p>
+      {description && <p className="text-sm text-graphite-soft max-w-sm">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

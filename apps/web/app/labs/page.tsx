@@ -181,7 +181,7 @@ function LabsPage() {
       <Nav />
       <div className="pt-14 max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#e8e8f0]">Labs</h1>
+          <h1 className="text-2xl font-bold text-graphite">Labs</h1>
           <Button size="sm" onClick={() => setShowForm(!showForm)}>
             {showForm ? "Cancel" : "+ Add result"}
           </Button>
@@ -190,12 +190,12 @@ function LabsPage() {
         {/* Add form */}
         {showForm && (
           <Card className="mb-5">
-            <h3 className="font-medium text-[#e8e8f0] mb-4">
+            <h3 className="font-medium text-graphite mb-4">
               Add biomarker reading
             </h3>
             <form onSubmit={handleAdd} className="flex flex-col gap-3">
               <div>
-                <label className="text-sm font-medium text-[#e8e8f0] block mb-1.5">
+                <label className="text-sm font-medium text-graphite block mb-1.5">
                   Biomarker
                 </label>
                 <select
@@ -210,7 +210,7 @@ function LabsPage() {
                       unit: selected?.unit ?? f.unit,
                     }));
                   }}
-                  className="w-full bg-[#1c1c26] border border-[#2a2a38] rounded-lg px-3 py-2 text-[#e8e8f0] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-graphite text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aqua"
                 >
                   <option value="">Select biomarker…</option>
                   {COMMON_BIOMARKERS.map((b) => (
@@ -292,7 +292,7 @@ function LabsPage() {
           </Card>
         ) : (
           <Card>
-            <div className="divide-y divide-[#2a2a38]">
+            <div className="divide-y divide-border">
               {allBiomarkers.map((b) => {
                 const trend = trends.get(b.name);
                 const status = getRangeStatus(b.name, b.value);
@@ -307,18 +307,18 @@ function LabsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-[#e8e8f0] capitalize">
+                        <p className="text-sm font-medium text-graphite capitalize">
                           {b.name.replace(/_/g, " ")}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-[#7a7a98]">
-                            {new Date(b.measuredAt).toLocaleDateString()}
+                          <p className="text-xs text-graphite-soft">
+                            <span className="font-data">{new Date(b.measuredAt).toLocaleDateString()}</span>
                             {b.source && b.source !== "manual" && (
                               <> · {b.source}</>
                             )}
                           </p>
                           {trend && trend.readingCount > 1 && (
-                            <span className="text-xs text-[#5a5a72]">
+                            <span className="text-xs text-graphite-soft/70 font-data">
                               {trend.readingCount} readings
                             </span>
                           )}
@@ -332,10 +332,10 @@ function LabsPage() {
                             height={24}
                             color={
                               status === "optimal"
-                                ? "#34d399"
+                                ? "#2EC4B6"
                                 : status === "high"
-                                ? "#fbbf24"
-                                : "#60a5fa"
+                                ? "#F59E0B"
+                                : "#0F1B2D"
                             }
                           />
                         )}
@@ -347,7 +347,7 @@ function LabsPage() {
                             {TREND_ICONS[dir as TrendDirection]}
                           </span>
                         )}
-                        <span className="text-sm font-medium text-[#e8e8f0]">
+                        <span className="text-sm font-medium text-graphite font-data">
                           {b.value} {b.unit}
                         </span>
                         {status !== "unknown" && (
@@ -360,21 +360,19 @@ function LabsPage() {
                       </div>
                     </div>
 
-                    {/* Slope annotation — only for worsening trends with meaningful slope */}
                     {slopeLabel && dir === "worsening" && (
-                      <p className="text-xs text-red-400 mt-1 ml-0">
+                      <p className="text-xs text-signal-red mt-1 ml-0 font-data">
                         {slopeLabel} over last 30 days
                       </p>
                     )}
                     {slopeLabel && dir === "improving" && (
-                      <p className="text-xs text-emerald-400 mt-1 ml-0">
+                      <p className="text-xs text-aqua mt-1 ml-0 font-data">
                         {slopeLabel} over last 30 days
                       </p>
                     )}
 
-                    {/* Rolling averages — only when multiple readings exist */}
                     {trend && trend.readingCount >= 3 && trend.rollingAvg30d !== null && (
-                      <p className="text-xs text-[#5a5a72] mt-0.5">
+                      <p className="text-xs text-graphite-soft/70 mt-0.5 font-data">
                         30-day avg: {trend.rollingAvg30d.toFixed(1)} {b.unit}
                         {trend.rollingAvg7d !== null && (
                           <> · 7-day avg: {trend.rollingAvg7d.toFixed(1)}</>

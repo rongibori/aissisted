@@ -41,7 +41,7 @@ function TagInput({
 
   return (
     <div>
-      <label className="text-sm font-medium text-[#e8e8f0] block mb-2">
+      <label className="text-sm font-medium text-graphite block mb-2">
         {label}
       </label>
       {suggestions && (
@@ -53,8 +53,8 @@ function TagInput({
               onClick={() => add(s)}
               className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                 values.includes(s)
-                  ? "bg-indigo-600 border-indigo-600 text-white"
-                  : "border-[#2a2a38] text-[#7a7a98] hover:border-indigo-500 hover:text-indigo-400"
+                  ? "bg-midnight border-midnight text-white"
+                  : "border-border text-graphite-soft hover:border-midnight hover:text-midnight"
               }`}
             >
               {s}
@@ -64,7 +64,7 @@ function TagInput({
       )}
       <div className="flex gap-2">
         <input
-          className="flex-1 bg-[#1c1c26] border border-[#2a2a38] rounded-lg px-3 py-2 text-[#e8e8f0] placeholder-[#7a7a98] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-graphite placeholder-graphite-soft text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aqua"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={placeholder}
@@ -89,13 +89,13 @@ function TagInput({
           {values.map((v) => (
             <span
               key={v}
-              className="flex items-center gap-1 text-xs px-2.5 py-1 bg-[#1c1c26] border border-[#2a2a38] rounded-full text-[#e8e8f0]"
+              className="flex items-center gap-1 text-xs px-2.5 py-1 bg-surface-2 border border-border rounded-full text-graphite"
             >
               {v}
               <button
                 type="button"
                 onClick={() => onChange(values.filter((x) => x !== v))}
-                className="text-[#7a7a98] hover:text-red-400"
+                className="text-graphite-soft hover:text-signal-red"
               >
                 ×
               </button>
@@ -155,15 +155,15 @@ function OnboardingPage() {
             {STEPS.map((s, i) => (
               <React.Fragment key={s}>
                 <div
-                  className={`flex items-center gap-2 ${i <= step ? "text-[#e8e8f0]" : "text-[#7a7a98]"}`}
+                  className={`flex items-center gap-2 ${i <= step ? "text-graphite" : "text-graphite-soft"}`}
                 >
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                       i < step
-                        ? "bg-indigo-600 text-white"
+                        ? "bg-aqua text-white"
                         : i === step
-                          ? "border-2 border-indigo-500 text-indigo-400"
-                          : "border border-[#2a2a38]"
+                          ? "border-2 border-aqua text-aqua"
+                          : "border border-border"
                     }`}
                   >
                     {i < step ? "✓" : i + 1}
@@ -172,7 +172,7 @@ function OnboardingPage() {
                 </div>
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-px ${i < step ? "bg-indigo-600" : "bg-[#2a2a38]"}`}
+                    className={`flex-1 h-px ${i < step ? "bg-aqua" : "bg-border"}`}
                   />
                 )}
               </React.Fragment>
@@ -183,7 +183,7 @@ function OnboardingPage() {
             {/* Step 0: Personal */}
             {step === 0 && (
               <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-semibold text-[#e8e8f0]">
+                <h2 className="text-lg font-semibold text-graphite">
                   Tell us about yourself
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
@@ -214,7 +214,7 @@ function OnboardingPage() {
                   }
                 />
                 <div>
-                  <label className="text-sm font-medium text-[#e8e8f0] block mb-2">
+                  <label className="text-sm font-medium text-graphite block mb-2">
                     Biological sex
                   </label>
                   <div className="flex gap-2">
@@ -225,8 +225,8 @@ function OnboardingPage() {
                         onClick={() => setData((d) => ({ ...d, sex: s }))}
                         className={`flex-1 py-2 rounded-lg text-sm capitalize border transition-colors ${
                           data.sex === s
-                            ? "bg-indigo-600 border-indigo-600 text-white"
-                            : "border-[#2a2a38] text-[#7a7a98] hover:border-indigo-500"
+                            ? "bg-midnight border-midnight text-white"
+                            : "border-border text-graphite-soft hover:border-midnight"
                         }`}
                       >
                         {s}
@@ -247,10 +247,10 @@ function OnboardingPage() {
             {/* Step 1: Goals */}
             {step === 1 && (
               <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-semibold text-[#e8e8f0]">
+                <h2 className="text-lg font-semibold text-graphite">
                   What are your health goals?
                 </h2>
-                <p className="text-sm text-[#7a7a98]">
+                <p className="text-sm text-graphite-soft">
                   Select all that apply. These drive your protocol
                   recommendations.
                 </p>
@@ -283,10 +283,10 @@ function OnboardingPage() {
             {/* Step 2: Medical */}
             {step === 2 && (
               <div className="flex flex-col gap-4">
-                <h2 className="text-lg font-semibold text-[#e8e8f0]">
+                <h2 className="text-lg font-semibold text-graphite">
                   Medical history
                 </h2>
-                <p className="text-sm text-[#7a7a98]">
+                <p className="text-sm text-graphite-soft">
                   Used for contraindication checking. Optional but recommended.
                 </p>
                 <TagInput
@@ -320,24 +320,24 @@ function OnboardingPage() {
             {step === 3 && (
               <div className="flex flex-col gap-5 text-center">
                 <div className="text-4xl">🎉</div>
-                <h2 className="text-lg font-semibold text-[#e8e8f0]">
+                <h2 className="text-lg font-semibold text-graphite">
                   Profile complete
                 </h2>
-                <p className="text-sm text-[#7a7a98]">
+                <p className="text-sm text-graphite-soft">
                   Your profile is ready. Head to your dashboard to generate
                   your first personalized protocol.
                 </p>
-                <div className="flex flex-col gap-2 text-left bg-[#1c1c26] rounded-lg p-3">
-                  <p className="text-xs text-[#7a7a98]">
+                <div className="flex flex-col gap-2 text-left bg-surface-2 rounded-lg p-3">
+                  <p className="text-xs text-graphite-soft">
                     Goals: {data.goals.join(", ") || "—"}
                   </p>
                   {data.conditions.length > 0 && (
-                    <p className="text-xs text-[#7a7a98]">
+                    <p className="text-xs text-graphite-soft">
                       Conditions: {data.conditions.join(", ")}
                     </p>
                   )}
                   {data.medications.length > 0 && (
-                    <p className="text-xs text-[#7a7a98]">
+                    <p className="text-xs text-graphite-soft">
                       Medications: {data.medications.join(", ")}
                     </p>
                   )}

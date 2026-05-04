@@ -36,14 +36,14 @@ function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#e8e8f0]">Aissisted</h1>
-          <p className="text-[#7a7a98] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-graphite">Aissisted</h1>
+          <p className="text-graphite-soft text-sm mt-1">
             Create your health profile
           </p>
         </div>
 
         <Card>
-          <h2 className="text-lg font-semibold text-[#e8e8f0] mb-5">
+          <h2 className="text-lg font-semibold text-graphite mb-5">
             Get started
           </h2>
 
@@ -67,7 +67,7 @@ function RegisterPage() {
             />
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-950 rounded-lg px-3 py-2">
+              <p className="text-sm text-signal-red bg-signal-red/10 border border-signal-red/30 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -77,11 +77,11 @@ function RegisterPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#7a7a98] mt-4">
+          <p className="text-center text-sm text-graphite-soft mt-4">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-indigo-400 hover:text-indigo-300"
+              className="text-midnight font-medium hover:underline"
             >
               Sign in
             </Link>

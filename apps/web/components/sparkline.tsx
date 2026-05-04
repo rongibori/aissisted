@@ -14,7 +14,7 @@ export function Sparkline({
   values,
   width = 80,
   height = 28,
-  color = "#6366f1",
+  color = "#0F1B2D",
   className = "",
 }: SparklineProps) {
   if (values.length < 2) {
@@ -53,15 +53,9 @@ export function Sparkline({
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.8"
+        opacity="0.85"
       />
-      {/* Dot at latest value */}
-      <circle
-        cx={lastPoint[0]}
-        cy={lastPoint[1]}
-        r="2.5"
-        fill={color}
-      />
+      <circle cx={lastPoint[0]} cy={lastPoint[1]} r="2.5" fill={color} />
     </svg>
   );
 }

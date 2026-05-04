@@ -141,8 +141,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[#e8e8f0]">Dashboard</h1>
-          <p className="text-[#7a7a98] text-sm mt-0.5">{user?.email}</p>
+          <h1 className="text-2xl font-bold text-graphite">Dashboard</h1>
+          <p className="text-graphite-soft text-sm mt-0.5">{user?.email}</p>
         </div>
         <Button onClick={handleGenerate} loading={generating}>
           Generate Protocol
@@ -151,8 +151,8 @@ export default function DashboardPage() {
 
       {/* Onboarding checklist — shown until all three steps are done */}
       {(!hasProfile || latestBiomarkers.length === 0 || !currentProtocol) && (
-        <div className="mb-6 p-4 bg-indigo-950 border border-indigo-800 rounded-xl">
-          <p className="text-sm font-medium text-indigo-300 mb-3">
+        <div className="mb-6 p-4 bg-midnight/5 border border-midnight/20 rounded-xl">
+          <p className="text-sm font-medium text-midnight mb-3">
             Complete your setup to unlock your personalized protocol
           </p>
           <div className="flex flex-col gap-2">
@@ -180,15 +180,15 @@ export default function DashboardPage() {
                 <span
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
                     step.done
-                      ? "bg-emerald-600 text-white"
-                      : "bg-[#2a2a38] text-[#7a7a98]"
+                      ? "bg-aqua text-white"
+                      : "bg-surface-2 border border-border text-graphite-soft"
                   }`}
                 >
                   {step.done ? "✓" : "○"}
                 </span>
                 <span
                   className={`text-sm flex-1 ${
-                    step.done ? "line-through text-[#7a7a98]" : "text-[#e8e8f0]"
+                    step.done ? "line-through text-graphite-soft" : "text-graphite"
                   }`}
                 >
                   {step.label}
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                 {!step.done && (
                   <button
                     onClick={step.action}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 shrink-0"
+                    className="text-xs text-midnight hover:underline shrink-0"
                   >
                     {step.cta} →
                   </button>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 flex flex-col gap-5">
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-[#e8e8f0]">
+              <h2 className="font-semibold text-graphite">
                 Current Protocol
               </h2>
               {currentProtocol && (
@@ -238,13 +238,13 @@ export default function DashboardPage() {
               />
             ) : (
               <>
-                <p className="text-sm text-[#7a7a98] mb-4 leading-relaxed">
+                <p className="text-sm text-graphite-soft mb-4 leading-relaxed">
                   {currentProtocol.summary}
                 </p>
                 {currentProtocol.warnings.length > 0 && (
-                  <div className="mb-4 p-3 bg-amber-950 border border-amber-900 rounded-lg">
+                  <div className="mb-4 p-3 bg-warn/10 border border-warn/30 rounded-lg">
                     {currentProtocol.warnings.map((w, i) => (
-                      <p key={i} className="text-xs text-amber-400">
+                      <p key={i} className="text-xs text-warn">
                         ⚠ {w}
                       </p>
                     ))}
@@ -254,17 +254,17 @@ export default function DashboardPage() {
                   {currentProtocol.recommendations.map((rec) => (
                     <div
                       key={rec.id}
-                      className="flex items-start gap-3 p-3 bg-[#1c1c26] rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-surface-2 rounded-lg"
                     >
-                      <div className="w-2 h-2 mt-1.5 rounded-full bg-indigo-500 shrink-0" />
+                      <div className="w-2 h-2 mt-1.5 rounded-full bg-aqua shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-[#e8e8f0]">
+                          <span className="text-sm font-medium text-graphite">
                             {rec.name}
                           </span>
                           <Badge variant="default">{rec.dosage}</Badge>
                         </div>
-                        <p className="text-xs text-[#7a7a98]">{rec.timing}</p>
+                        <p className="text-xs text-graphite-soft">{rec.timing}</p>
                       </div>
                     </div>
                   ))}
@@ -290,7 +290,7 @@ export default function DashboardPage() {
           {/* Biomarkers */}
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-[#e8e8f0]">Biomarkers</h2>
+              <h2 className="font-semibold text-graphite">Biomarkers</h2>
               <Button
                 variant="ghost"
                 size="sm"
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                       key={b.id}
                       className="flex items-center justify-between text-sm"
                     >
-                      <span className="text-[#7a7a98] capitalize truncate mr-2">
+                      <span className="text-graphite-soft capitalize truncate mr-2">
                         {b.name.replace(/_/g, " ")}
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -335,9 +335,9 @@ export default function DashboardPage() {
                             width={48}
                             height={20}
                             color={
-                              status === "optimal" ? "#34d399"
-                              : status === "high" || status === "low" ? "#fbbf24"
-                              : "#6366f1"
+                              status === "optimal" ? "#2EC4B6"
+                              : status === "high" || status === "low" ? "#F59E0B"
+                              : "#0F1B2D"
                             }
                           />
                         )}
@@ -346,7 +346,7 @@ export default function DashboardPage() {
                             {TREND_ICONS[dir as TrendDirection]}
                           </span>
                         )}
-                        <span className="text-[#e8e8f0] font-medium">
+                        <span className="text-graphite font-medium font-data">
                           {b.value} {b.unit}
                         </span>
                         {status !== "unknown" && (
@@ -364,7 +364,7 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <Card>
-            <h2 className="font-semibold text-[#e8e8f0] mb-4">
+            <h2 className="font-semibold text-graphite mb-4">
               Quick actions
             </h2>
             <div className="flex flex-col gap-2">

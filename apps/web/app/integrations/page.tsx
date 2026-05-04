@@ -111,8 +111,8 @@ export default function IntegrationsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold text-[#e8e8f0] mb-2">Integrations</h1>
-      <p className="text-sm text-[#7a7a98] mb-8">
+      <h1 className="text-2xl font-bold text-graphite mb-2">Integrations</h1>
+      <p className="text-sm text-graphite-soft mb-8">
         Connect data sources to power your personalized protocol.
       </p>
 
@@ -128,21 +128,21 @@ export default function IntegrationsPage() {
                 <span className="text-2xl">{provider.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-[#e8e8f0]">{provider.name}</span>
+                    <span className="font-semibold text-graphite">{provider.name}</span>
                     {connected && (
                       <Badge variant="success">Connected</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-[#7a7a98] mb-3">{provider.description}</p>
+                  <p className="text-sm text-graphite-soft mb-3">{provider.description}</p>
 
                   {connected && connectedAt && (
-                    <p className="text-xs text-[#7a7a98] mb-3">
+                    <p className="text-xs text-graphite-soft mb-3">
                       Connected {new Date(connectedAt).toLocaleDateString()}
                     </p>
                   )}
 
                   {message && (
-                    <p className="text-xs text-emerald-400 mb-3">{message}</p>
+                    <p className="text-xs text-aqua mb-3">{message}</p>
                   )}
 
                   <div className="flex items-center gap-2 flex-wrap">
@@ -188,7 +188,7 @@ export default function IntegrationsPage() {
                           </Button>
                         )}
                         {!connected && !provider.connect && (
-                          <span className="text-xs text-[#7a7a98]">
+                          <span className="text-xs text-graphite-soft">
                             Configure FHIR credentials to connect
                           </span>
                         )}

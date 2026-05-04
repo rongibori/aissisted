@@ -32,14 +32,14 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#e8e8f0]">Aissisted</h1>
-          <p className="text-[#7a7a98] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-graphite">Aissisted</h1>
+          <p className="text-graphite-soft text-sm mt-1">
             Your AI health concierge
           </p>
         </div>
 
         <Card>
-          <h2 className="text-lg font-semibold text-[#e8e8f0] mb-5">
+          <h2 className="text-lg font-semibold text-graphite mb-5">
             Sign in
           </h2>
 
@@ -63,7 +63,7 @@ function LoginPage() {
             />
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-950 rounded-lg px-3 py-2">
+              <p className="text-sm text-signal-red bg-signal-red/10 border border-signal-red/30 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -73,11 +73,11 @@ function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#7a7a98] mt-4">
+          <p className="text-center text-sm text-graphite-soft mt-4">
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-indigo-400 hover:text-indigo-300"
+              className="text-midnight font-medium hover:underline"
             >
               Create one
             </Link>

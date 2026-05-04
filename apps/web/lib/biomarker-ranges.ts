@@ -17,11 +17,11 @@ export const TREND_ICONS: Record<TrendDirection, string> = {
 };
 
 export const TREND_COLORS: Record<TrendDirection, string> = {
-  worsening: "text-red-400",
-  improving: "text-emerald-400",
-  stable: "text-[#7a7a98]",
-  new: "text-[#7a7a98]",
-  insufficient_data: "text-[#7a7a98]",
+  worsening: "text-signal-red",
+  improving: "text-aqua",
+  stable: "text-graphite-soft",
+  new: "text-graphite-soft",
+  insufficient_data: "text-graphite-soft",
 };
 
 export const TREND_LABELS: Record<TrendDirection, string> = {
@@ -68,8 +68,8 @@ export const STATUS_LABELS: Record<RangeStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<RangeStatus, string> = {
-  low: "text-blue-400 bg-blue-950 border-blue-900",
-  optimal: "text-emerald-400 bg-emerald-950 border-emerald-900",
-  high: "text-amber-400 bg-amber-950 border-amber-900",
-  unknown: "text-[#7a7a98] bg-[#1c1c26] border-[#2a2a38]",
+  low: "text-blue-700 bg-blue-50 border-blue-200",
+  optimal: "text-aqua bg-aqua/10 border-aqua/30",
+  high: "text-warn bg-warn/10 border-warn/30",
+  unknown: "text-graphite-soft bg-surface-2 border-border",
 };

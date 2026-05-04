@@ -39,7 +39,7 @@ function TagInput({
 
   return (
     <div>
-      <label className="text-sm font-medium text-[#e8e8f0] block mb-2">{label}</label>
+      <label className="text-sm font-medium text-graphite block mb-2">{label}</label>
       {suggestions && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {suggestions.map((s) => (
@@ -53,8 +53,8 @@ function TagInput({
               }
               className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                 values.includes(s)
-                  ? "bg-indigo-600 border-indigo-600 text-white"
-                  : "border-[#2a2a38] text-[#7a7a98] hover:border-indigo-500 hover:text-indigo-400"
+                  ? "bg-midnight border-midnight text-white"
+                  : "border-border text-graphite-soft hover:border-midnight hover:text-midnight"
               }`}
             >
               {s}
@@ -64,7 +64,7 @@ function TagInput({
       )}
       <div className="flex gap-2">
         <input
-          className="flex-1 bg-[#1c1c26] border border-[#2a2a38] rounded-lg px-3 py-2 text-[#e8e8f0] placeholder-[#7a7a98] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-graphite placeholder-graphite-soft text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aqua"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={placeholder}
@@ -84,13 +84,14 @@ function TagInput({
           {values.map((v) => (
             <span
               key={v}
-              className="flex items-center gap-1 text-xs px-2.5 py-1 bg-[#1c1c26] border border-[#2a2a38] rounded-full text-[#e8e8f0]"
+              className="flex items-center gap-1 text-xs px-2.5 py-1 bg-surface border border-border rounded-full text-graphite"
             >
               {v}
               <button
                 type="button"
                 onClick={() => onChange(values.filter((x) => x !== v))}
-                className="text-[#7a7a98] hover:text-red-400"
+                aria-label={`Remove ${v}`}
+                className="text-graphite-soft hover:text-signal-red"
               >
                 ×
               </button>
@@ -123,21 +124,21 @@ function DangerZone({ router }: { router: ReturnType<typeof useRouter> }) {
   };
 
   return (
-    <Card className="mt-5 border border-red-900">
-      <h2 className="font-semibold text-red-400 mb-2">Danger zone</h2>
+    <Card className="mt-5 border border-signal-red/30">
+      <h2 className="font-semibold text-signal-red mb-2">Danger zone</h2>
       {!open ? (
         <Button
           type="button"
           variant="secondary"
           size="sm"
           onClick={() => setOpen(true)}
-          className="border-red-900 text-red-400 hover:border-red-700"
+          className="border-signal-red/40 text-signal-red hover:border-signal-red"
         >
           Delete account
         </Button>
       ) : (
         <form onSubmit={handleDelete} className="flex flex-col gap-3">
-          <p className="text-sm text-[#7a7a98]">
+          <p className="text-sm text-graphite-soft">
             This will permanently delete your account and all data. Enter your
             password to confirm.
           </p>
@@ -148,7 +149,7 @@ function DangerZone({ router }: { router: ReturnType<typeof useRouter> }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-signal-red">{error}</p>}
           <div className="flex gap-2">
             <Button
               type="button"
@@ -161,8 +162,8 @@ function DangerZone({ router }: { router: ReturnType<typeof useRouter> }) {
             <Button
               type="submit"
               size="sm"
+              variant="danger"
               loading={deleting}
-              className="bg-red-700 hover:bg-red-600 border-red-700"
             >
               Delete forever
             </Button>
@@ -253,16 +254,16 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#e8e8f0]">Profile</h1>
+        <h1 className="text-2xl font-bold text-graphite">Profile</h1>
         {saved && (
-          <span className="text-sm text-emerald-400">✓ Saved</span>
+          <span className="text-sm text-aqua">✓ Saved</span>
         )}
       </div>
 
       <form onSubmit={handleSave} className="flex flex-col gap-5">
         {/* Personal */}
         <Card>
-          <h2 className="font-semibold text-[#e8e8f0] mb-4">Personal</h2>
+          <h2 className="font-semibold text-graphite mb-4">Personal</h2>
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               <Input
@@ -285,7 +286,7 @@ export default function ProfilePage() {
               onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
             />
             <div>
-              <label className="text-sm font-medium text-[#e8e8f0] block mb-2">
+              <label className="text-sm font-medium text-graphite block mb-2">
                 Biological sex
               </label>
               <div className="flex gap-2">
@@ -296,8 +297,8 @@ export default function ProfilePage() {
                     onClick={() => setForm((f) => ({ ...f, sex: s }))}
                     className={`flex-1 py-2 rounded-lg text-sm capitalize border transition-colors ${
                       form.sex === s
-                        ? "bg-indigo-600 border-indigo-600 text-white"
-                        : "border-[#2a2a38] text-[#7a7a98] hover:border-indigo-500"
+                        ? "bg-midnight border-midnight text-white"
+                        : "border-border text-graphite-soft hover:border-midnight"
                     }`}
                   >
                     {s}
@@ -310,7 +311,7 @@ export default function ProfilePage() {
 
         {/* Goals */}
         <Card>
-          <h2 className="font-semibold text-[#e8e8f0] mb-4">Health Goals</h2>
+          <h2 className="font-semibold text-graphite mb-4">Health Goals</h2>
           <TagInput
             label=""
             values={form.goals}
@@ -322,8 +323,8 @@ export default function ProfilePage() {
 
         {/* Medical */}
         <Card>
-          <h2 className="font-semibold text-[#e8e8f0] mb-1">Medical History</h2>
-          <p className="text-xs text-[#7a7a98] mb-4">
+          <h2 className="font-semibold text-graphite mb-1">Medical History</h2>
+          <p className="text-xs text-graphite-soft mb-4">
             Used for contraindication checking. Never shared.
           </p>
           <div className="flex flex-col gap-4">
@@ -350,7 +351,7 @@ export default function ProfilePage() {
       {/* Password change */}
       <DangerZone router={router} />
       <Card className="mt-5">
-        <h2 className="font-semibold text-[#e8e8f0] mb-4">Change password</h2>
+        <h2 className="font-semibold text-graphite mb-4">Change password</h2>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -394,7 +395,7 @@ export default function ProfilePage() {
             required
           />
           {pwMessage && (
-            <p className={`text-sm ${pwMessage.ok ? "text-emerald-400" : "text-red-400"}`}>
+            <p className={`text-sm ${pwMessage.ok ? "text-aqua" : "text-signal-red"}`}>
               {pwMessage.text}
             </p>
           )}

@@ -20,36 +20,43 @@ export function Nav() {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#0a0a0f] border-b border-[#2a2a38] flex items-center px-6 gap-8">
-      {/* Logo */}
-      <Link href="/dashboard" className="text-[#e8e8f0] font-semibold text-base tracking-tight">
+    <nav
+      aria-label="Primary"
+      className="fixed top-0 left-0 right-0 z-50 h-14 bg-surface/95 backdrop-blur border-b border-border flex items-center px-6 gap-8"
+    >
+      <Link
+        href="/dashboard"
+        className="text-graphite font-semibold text-base tracking-tight"
+      >
         Aissisted
       </Link>
 
-      {/* Links */}
       <div className="flex items-center gap-1 flex-1">
-        {links.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              pathname.startsWith(href)
-                ? "bg-[#1c1c26] text-[#e8e8f0]"
-                : "text-[#7a7a98] hover:text-[#e8e8f0] hover:bg-[#1c1c26]"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
+        {links.map(({ href, label }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                active
+                  ? "bg-surface-2 text-graphite font-medium"
+                  : "text-graphite-soft hover:text-graphite hover:bg-surface-2"
+              }`}
+            >
+              {label}
+            </Link>
+          );
+        })}
       </div>
 
-      {/* User */}
       {user && (
         <div className="flex items-center gap-3">
-          <span className="text-sm text-[#7a7a98]">{user.email}</span>
+          <span className="text-sm text-graphite-soft font-data">{user.email}</span>
           <button
             onClick={logout}
-            className="text-sm text-[#7a7a98] hover:text-[#e8e8f0] transition-colors"
+            className="text-sm text-graphite-soft hover:text-graphite transition-colors"
           >
             Sign out
           </button>
