@@ -20,6 +20,8 @@
     "./bridge": "./src/bridge/index.ts",
     "./prompts": "./src/prompts/index.ts",
     "./data": "./src/data/index.ts",
+    "./safety": "./src/safety/index.ts",
+    "./orchestrator": "./src/orchestrator.ts",
     "./system-prompt": "./src/system-prompt.md",
     "./package.json": "./package.json"
   },
