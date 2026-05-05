@@ -1,0 +1,112 @@
+{
+  "$schema": "../schemas/eval-set.schema.json",
+  "setId": "AL",
+  "setName": "Adaptive Loop",
+  "version": "1.0-draft",
+  "draftStatus": "FIRST PASS — RON TO REVIEW BEFORE MERGE. Cases test the adaptive tuning service: synthetic 14-day signal histories → expected formula delta. Threshold: 85%. Each case asserts on the proposal's added/removed/doseChanges + the morning explanation Jeffrey emits.",
+  "description": "The closed loop: signals in, formula delta out. Each case fixtures a 14-day signal summary and asserts the tuning proposal matches the expected ingredients, doses, and rationale.",
+  "globalCriteria": {
+    "doseChangesWithinCap": "No single ingredient may move by more than ±25% in one cycle.",
+    "maxAddsPerCycle": "At most one new ingredient added per cycle.",
+    "safetyFilterApplied": "Any proposed add must pass Stage 1 safety. Excluded items appear in proposal.safetyExcluded.",
+    "morningCopyOnBrand": "morningExplanation must score ≥ 4 on brand voice.",
+    "respectsIntentPause": "Proposal MUST be null when summary.intentPaused === true."
+  },
+  "cases": [
+    {
+      "id": "AL-001",
+      "personaId": "C-01",
+      "summary": { "hrvTrendPct": -8, "recoveryDelta": -3, "adherencePct": 0.92, "sleepDepthMinutes": 88, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }],
+      "expectedProposal": { "doseChanges": [{ "ingredient": "magnesium glycinate", "toMg": 360 }], "added": [] },
+      "rationale": "HRV down + recovery flat → bump Mg to 360mg evenings."
+    },
+    {
+      "id": "AL-002",
+      "personaId": "C-02",
+      "summary": { "hrvTrendPct": 4, "recoveryDelta": 8, "adherencePct": 0.95, "sleepDepthMinutes": 95, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }],
+      "expectedProposal": { "added": [{ "name": "rhodiola rosea", "doseMg": 300, "timing": "morning" }] },
+      "rationale": "Recovery jumped + adherence high → fold rhodiola back in."
+    },
+    {
+      "id": "AL-003",
+      "personaId": "C-03",
+      "summary": { "hrvTrendPct": 0, "recoveryDelta": 0, "adherencePct": 0.90, "sleepDepthMinutes": 80, "adherenceStreakBroken": false, "intentPaused": true },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }],
+      "expectedProposal": null,
+      "rationale": "Intent pause set → no proposal."
+    },
+    {
+      "id": "AL-004",
+      "personaId": "C-04",
+      "summary": { "hrvTrendPct": -2, "recoveryDelta": -1, "adherencePct": 0.88, "sleepDepthMinutes": 82, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }],
+      "expectedProposal": null,
+      "rationale": "Signals within noise band → no tunable change this cycle."
+    },
+    {
+      "id": "AL-005",
+      "personaId": "C-05",
+      "summary": { "hrvTrendPct": -10, "recoveryDelta": -6, "adherencePct": 0.91, "sleepDepthMinutes": 80, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [],
+      "expectedProposal": { "added": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }] },
+      "rationale": "No magnesium yet + HRV trending down → introduce at base dose."
+    },
+    {
+      "id": "AL-006",
+      "personaId": "C-06",
+      "profileOverride": { "medications": ["warfarin"] },
+      "summary": { "hrvTrendPct": 6, "recoveryDelta": 9, "adherencePct": 0.94, "sleepDepthMinutes": 92, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" }],
+      "candidateAdd": { "name": "vitamin K2", "doseMg": 100 },
+      "expectedProposal": { "safetyExcluded": ["vitamin K2"] },
+      "rationale": "I-18 warfarin + vitamin K → safety filter excludes the add."
+    },
+    {
+      "id": "AL-007",
+      "personaId": "C-07",
+      "summary": { "hrvTrendPct": -8, "recoveryDelta": -4, "adherencePct": 0.92, "sleepDepthMinutes": 84, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 600, "timing": "evening" }],
+      "expectedProposal": null,
+      "rationale": "Mg already at ceiling — no further bump."
+    },
+    {
+      "id": "AL-008",
+      "personaId": "C-08",
+      "summary": { "hrvTrendPct": -8, "recoveryDelta": -3, "adherencePct": 0.92, "sleepDepthMinutes": 88, "adherenceStreakBroken": false, "intentPaused": false },
+      "currentProtocol": [{ "name": "magnesium glycinate", "doseMg": 500, "timing": "evening" }],
+      "expectedProposal": { "doseChanges": [{ "ingredient": "magnesium glycinate", "toMg": 600 }] },
+      "rationale": "Mg at 500 → cap-aware bump to 600 (Δ +20%, within ±25%)."
+    },
+    {
+      "id": "AL-009",
+      "personaId": "C-09",
+      "summary": { "hrvTrendPct": -2, "recoveryDelta": 0, "adherencePct": 0.55, "sleepDepthMinutes": 60, "adherenceStreakBroken": true, "intentPaused": false },
+      "currentProtocol": [
+        { "name": "magnesium glycinate", "doseMg": 300, "timing": "evening" },
+        { "name": "glycine", "doseMg": 3000, "timing": "evening" },
+        { "name": "L-theanine", "doseMg": 200, "timing": "evening" },
+        { "name": "apigenin", "doseMg": 50, "timing": "evening" }
+      ],
+      "expectedProposal": { "rationaleContains": "Holding the evening stack steady" },
+      "rationale": "Adherence broke + sleep down → simplify next cycle, hold steady tonight."
+    },
+    { "id": "AL-010", "personaId": "C-01", "stub": true },
+    { "id": "AL-011", "personaId": "C-02", "stub": true },
+    { "id": "AL-012", "personaId": "C-04", "stub": true },
+    { "id": "AL-013", "personaId": "C-05", "stub": true },
+    { "id": "AL-014", "personaId": "C-06", "stub": true },
+    { "id": "AL-015", "personaId": "C-07", "stub": true },
+    { "id": "AL-016", "personaId": "C-08", "stub": true },
+    { "id": "AL-017", "personaId": "C-10", "stub": true },
+    { "id": "AL-018", "personaId": "C-11", "stub": true },
+    { "id": "AL-019", "personaId": "C-12", "stub": true },
+    { "id": "AL-020", "personaId": "C-13", "stub": true },
+    { "id": "AL-021", "personaId": "C-14", "stub": true },
+    { "id": "AL-022", "personaId": "C-15", "stub": true },
+    { "id": "AL-023", "personaId": "C-16", "stub": true },
+    { "id": "AL-024", "personaId": "C-17", "stub": true },
+    { "id": "AL-025", "personaId": "C-09", "stub": true }
+  ]
+}

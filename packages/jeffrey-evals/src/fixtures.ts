@@ -24,6 +24,8 @@ const SET_FILENAMES: Record<EvalSetId, string> = {
   PT: 'proactive-triggers.json',
   BV: 'brand-voice-rubric.json',
   SR: 'safety-rule-coverage.json',
+  OR: 'orchestrator-routing.json',  // §J3 — added 2026-05-02
+  AL: 'adaptive-loop.json',         // §J4 — added 2026-05-02
 };
 
 export async function loadCohort(): Promise<SyntheticPersona[]> {

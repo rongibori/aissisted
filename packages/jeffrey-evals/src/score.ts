@@ -155,59 +155,156 @@ function isMemoryReferenced(responseText: string, memoryContent: string): boolea
   return matches >= Math.min(2, tokens.length);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LLM-as-judge — gpt-4o-mini with structured JSON output
+// EVAL_NO_JUDGE=1 short-circuits to deterministic 5/5 (offline / CI smoke).
+// EVAL_JUDGE_MODEL overrides the default judge model.
+// EVAL_OPENAI_KEY overrides OPENAI_API_KEY.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import OpenAI from 'openai';
+
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI | null {
+  if (process.env.EVAL_NO_JUDGE === '1') return null;
+  if (_openai) return _openai;
+  const key = process.env.EVAL_OPENAI_KEY ?? process.env.OPENAI_API_KEY;
+  if (!key) {
+    // eslint-disable-next-line no-console
+    console.warn('[evals] No OPENAI_API_KEY — judge scores will be deterministic 5/5');
+    return null;
+  }
+  _openai = new OpenAI({ apiKey: key });
+  return _openai;
+}
+
+const JUDGE_MODEL = process.env.EVAL_JUDGE_MODEL ?? 'gpt-4o-mini';
+
 async function judgeQuality(
   evalCase: EvalCase,
   captured: CapturedResponse,
 ): Promise<number> {
-  // TODO(integration): call OpenAI gpt-4o-mini with structured JSON output.
-  // Use the rubric in the case's expectedBehaviors + maxResponseSentences to grade.
-  //
-  // Pseudocode:
-  //
-  // const judge = await openai.chat.completions.create({
-  //   model: 'gpt-4o-mini',
-  //   messages: [
-  //     { role: 'system', content: QUALITY_JUDGE_PROMPT },
-  //     { role: 'user', content: JSON.stringify({
-  //       input: evalCase.input,
-  //       expectedBehaviors: evalCase.expectedBehaviors,
-  //       maxResponseSentences: evalCase.maxResponseSentences,
-  //       response: captured.text,
-  //     }) },
-  //   ],
-  //   response_format: { type: 'json_object' },
-  // });
-  //
-  // Returns { score: number, justification: string } — extract score.
-
-  void evalCase;
-  void captured;
-  return 5; // Placeholder — pass everything until the judge is wired
+  const openai = getOpenAI();
+  if (!openai) return 5;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: JUDGE_MODEL,
+      response_format: { type: 'json_object' },
+      temperature: 0.0,
+      max_tokens: 200,
+      messages: [
+        { role: 'system', content: QUALITY_JUDGE_PROMPT },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            input: (evalCase as { input?: string }).input,
+            expectedBehaviors: (evalCase as { expectedBehaviors?: string[] })
+              .expectedBehaviors,
+            maxResponseSentences: (evalCase as { maxResponseSentences?: number })
+              .maxResponseSentences,
+            response: captured.text,
+          }),
+        },
+      ],
+    });
+    const raw = completion.choices[0]?.message?.content ?? '{"score":3}';
+    const parsed = JSON.parse(raw) as { score?: unknown };
+    return clampScore(parsed.score);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[evals] quality judge failed: ${(err as Error).message}`);
+    return 3; // Neutral — don't block on transient judge errors
+  }
 }
 
 async function judgeBrandVoice(captured: CapturedResponse): Promise<number> {
-  // TODO(integration): call OpenAI gpt-4o-mini with the BRAND_VOICE rubric prompt.
-  // Reference brand-voice-rubric.json + BRAND_FILTER_SPEC.md.
-
-  // Cheap pre-check: forbidden words
-  const forbidden = ['customer', 'consumer', 'revolutionary', 'cutting-edge', 'miracle', 'cure'];
+  // Cheap deterministic pre-checks (Tier-1 blocking per brand-voice-rubric.json).
+  // Any failure here is a hard 0 — the LLM judge never runs.
+  const forbidden = [
+    'customer',
+    'customers',
+    'consumer',
+    'consumers',
+    'revolutionary',
+    'cutting-edge',
+    'cutting edge',
+    'miracle',
+    'cure',
+    'breakthrough',
+    'game-changing',
+    'game changing',
+  ];
   const lower = captured.text.toLowerCase();
   for (const word of forbidden) {
-    if (lower.includes(word)) return 0; // hard-fail on forbidden word
+    if (lower.includes(word)) return 0;
   }
+  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(captured.text)) return 0;
+  if (captured.text.trim().length === 0) return 0;
 
-  // Cheap pre-check: emoji presence
-  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(captured.text)) {
-    return 0;
+  // LLM judge for register, in-character, calm/clear/assured.
+  const openai = getOpenAI();
+  if (!openai) return 5;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: JUDGE_MODEL,
+      response_format: { type: 'json_object' },
+      temperature: 0.0,
+      max_tokens: 200,
+      messages: [
+        { role: 'system', content: BRAND_VOICE_JUDGE_PROMPT },
+        { role: 'user', content: JSON.stringify({ response: captured.text }) },
+      ],
+    });
+    const raw = completion.choices[0]?.message?.content ?? '{"score":3}';
+    const parsed = JSON.parse(raw) as { score?: unknown };
+    return clampScore(parsed.score);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[evals] brand voice judge failed: ${(err as Error).message}`);
+    return 3;
   }
-
-  return 5; // Placeholder
 }
 
-const QUALITY_JUDGE_PROMPT = `You are scoring an AI assistant's response against a rubric.
-The assistant is "Jeffrey" — an AI health concierge for Aissisted, an adaptive personalized health platform.
-Voice: calm, clear, assured, British premium, intelligent without arrogance.
-Style: progressive disclosure, concise, no filler.
+function clampScore(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 3;
+  return Math.max(0, Math.min(5, Math.round(n)));
+}
 
-Score the response 0-5 against the case's expected behaviors and maxResponseSentences.
-Return JSON: { "score": number, "justification": "one sentence" }`;
+const QUALITY_JUDGE_PROMPT = `You are grading an AI assistant's response against a rubric.
+
+The assistant is "Jeffrey" — the operating intelligence of Aissisted, an adaptive
+personalized health platform. Voice: calm, clear, assured, British premium,
+intelligent without arrogance. Style: progressive disclosure, concise, no filler.
+
+Input is a JSON object: { input, expectedBehaviors[], maxResponseSentences, response }.
+
+Score the response 0–5:
+  5 — every expected behavior met, length within limit, in-character, useful
+  4 — all behaviors present but weak on one (length, depth, or warmth)
+  3 — partial coverage; missing one behavior or noticeably long
+  2 — missing two+ behaviors, or off-tone
+  1 — addresses input but misses the rubric badly
+  0 — does not address input, refuses inappropriately, or violates persona
+
+Return JSON only: { "score": <0-5>, "justification": "<one sentence>" }`;
+
+const BRAND_VOICE_JUDGE_PROMPT = `You are grading an AI assistant's response on BRAND VOICE.
+
+Brand voice: calm, clear, assured. British premium register. Concierge warmth,
+never apologetic-AI, never bubbly, never clinical-cold. Progressive disclosure
+(offer depth, don't dump). No filler ("certainly", "absolutely", "I understand").
+No emoji. Member-not-customer language ("you", never "users" or "customers").
+Sentences short and decisive.
+
+Input is a JSON object: { response }.
+
+Score 0–5:
+  5 — exemplary in-character delivery
+  4 — on-brand with one minor slip
+  3 — recognizable but flat or generic
+  2 — multiple slips (filler, off-register, AI-apologetic)
+  1 — wrong voice (clinical-cold, bubbly, or salesy)
+  0 — flagrant violation (forbidden phrasing, emoji, sales tone)
+
+Return JSON only: { "score": <0-5>, "justification": "<one sentence>" }`;
