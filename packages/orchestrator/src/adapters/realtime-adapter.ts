@@ -22,15 +22,15 @@
  * where we touch React refs, schedule timers, or call fetch.
  */
 
-import type { RealtimeState, TranscriptTurn } from "../web-types.js";
+import type { RealtimeState, TranscriptTurn } from "../web-types";
 import {
   classifyEmbedding,
   classifyResponseToClassification,
   initAnchorCache,
   type ClassifyFn,
   type EmbedFn,
-} from "../classifier/index.js";
-import type { OrchestrationEvent } from "../state/types.js";
+} from "../classifier/index";
+import type { OrchestrationEvent } from "../state/types";
 
 // ─── Public adapter interface ────────────────────────────────────────────
 

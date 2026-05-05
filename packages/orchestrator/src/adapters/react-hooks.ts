@@ -5,14 +5,14 @@
  */
 
 import { useShallow } from "zustand/react/shallow";
-import { useOrchestratorStore } from "../state/store.js";
+import { useOrchestratorStore } from "../state/store";
 import type {
   ModuleId,
   SystemMode,
   VoiceConnectionState,
   Classification,
   NarrativeNode,
-} from "../state/types.js";
+} from "../state/types";
 
 // ─── Atomic slices (most components want these) ──────────────────────────
 

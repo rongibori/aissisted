@@ -20,8 +20,8 @@ import type {
   Classification,
   Intent,
   ModuleId,
-} from "../state/types.js";
-import type { Urgency } from "./topics.js";
+} from "../state/types";
+import type { Urgency } from "./topics";
 
 // ─── Wire types ──────────────────────────────────────────────────────────
 

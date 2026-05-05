@@ -8,8 +8,8 @@
  * Re-exported from state/types.ts so callers can import either path.
  */
 
-export { type Intent } from "../state/types.js";
-export { MODULE_IDS, type ModuleId } from "../state/types.js";
+export { type Intent } from "../state/types";
+export { MODULE_IDS, type ModuleId } from "../state/types";
 
 /**
  * The full set of intents the LLM classifier may emit. Kept as a const array

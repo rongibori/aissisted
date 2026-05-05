@@ -12,7 +12,7 @@ import {
   type OrchestrationEvent,
   type OrchestrationState,
   type SystemMode,
-} from "./types.js";
+} from "./types";
 
 // ─── Decay parameters ────────────────────────────────────────────────────
 

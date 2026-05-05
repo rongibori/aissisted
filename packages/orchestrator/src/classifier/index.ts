@@ -15,12 +15,12 @@
  */
 
 // Concepts + anchors
-export { MODULE_CONCEPTS, flattenAnchors, TOTAL_ANCHORS } from "./module-concepts.js";
-export type { ModuleConcept, FlatAnchor } from "./module-concepts.js";
+export { MODULE_CONCEPTS, flattenAnchors, TOTAL_ANCHORS } from "./module-concepts";
+export type { ModuleConcept, FlatAnchor } from "./module-concepts";
 
 // Topic + intent enums
-export { INTENTS, URGENCY_LEVELS, type Urgency } from "./topics.js";
-export { type Intent, type ModuleId, MODULE_IDS } from "./topics.js";
+export { INTENTS, URGENCY_LEVELS, type Urgency } from "./topics";
+export { type Intent, type ModuleId, MODULE_IDS } from "./topics";
 
 // Embedding classifier
 export {
@@ -34,7 +34,7 @@ export {
   type EmbedResponse,
   type EmbedFn,
   type ClassifyOptions,
-} from "./embedding-classifier.js";
+} from "./embedding-classifier";
 
 // LLM classifier
 export {
@@ -42,4 +42,4 @@ export {
   type ClassifyRequest,
   type ClassifyResponse,
   type ClassifyFn,
-} from "./llm-classifier.js";
+} from "./llm-classifier";

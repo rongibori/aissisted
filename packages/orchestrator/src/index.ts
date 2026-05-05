@@ -43,7 +43,7 @@ export {
   reduce,
   INITIAL_STATE,
   TUNABLES,
-} from "./state/index.js";
+} from "./state/index";
 
 // Classifier
 export {
@@ -69,7 +69,7 @@ export {
   type ClassifyRequest,
   type ClassifyResponse,
   type ClassifyFn,
-} from "./classifier/index.js";
+} from "./classifier/index";
 
 // Adapters + React hooks
 export {
@@ -90,4 +90,4 @@ export {
   useOrchestrationDebugSnapshot,
   type RealtimeAdapterDeps,
   type RealtimeAdapterControls,
-} from "./adapters/index.js";
+} from "./adapters/index";

@@ -10,11 +10,11 @@
  */
 
 import { create } from "zustand";
-import { reduce, INITIAL_STATE } from "./reducers.js";
+import { reduce, INITIAL_STATE } from "./reducers";
 import type {
   OrchestrationEvent,
   OrchestrationState,
-} from "./types.js";
+} from "./types";
 
 interface OrchestratorStore extends OrchestrationState {
   /** Dispatch an event through the reducer. Synchronous, pure. */

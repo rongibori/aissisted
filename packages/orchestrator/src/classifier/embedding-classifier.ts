@@ -28,12 +28,12 @@ import {
   flattenAnchors,
   MODULE_CONCEPTS,
   type FlatAnchor,
-} from "./module-concepts.js";
+} from "./module-concepts";
 import {
   MODULE_IDS,
   type Classification,
   type ModuleId,
-} from "../state/types.js";
+} from "../state/types";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 

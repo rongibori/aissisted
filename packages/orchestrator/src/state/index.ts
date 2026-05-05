@@ -14,15 +14,15 @@ export type {
   ModuleData,
   OrchestrationState,
   OrchestrationEvent,
-} from "./types.js";
+} from "./types";
 
-export { MODULE_IDS } from "./types.js";
+export { MODULE_IDS } from "./types";
 
 export {
   useOrchestratorStore,
   dispatch,
   getOrchestrationState,
   subscribe,
-} from "./store.js";
+} from "./store";
 
-export { reduce, INITIAL_STATE, TUNABLES } from "./reducers.js";
+export { reduce, INITIAL_STATE, TUNABLES } from "./reducers";

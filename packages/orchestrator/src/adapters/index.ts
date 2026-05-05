@@ -6,7 +6,7 @@ export {
   createRealtimeAdapter,
   type RealtimeAdapterDeps,
   type RealtimeAdapterControls,
-} from "./realtime-adapter.js";
+} from "./realtime-adapter";
 
 export {
   useOrchestratorMode,
@@ -23,4 +23,4 @@ export {
   useLastUserUtterance,
   useLastAssistantUtterance,
   useOrchestrationDebugSnapshot,
-} from "./react-hooks.js";
+} from "./react-hooks";

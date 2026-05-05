@@ -23,7 +23,7 @@
  *     when he says them in voice.
  */
 
-import type { ModuleId } from "../state/types.js";
+import type { ModuleId } from "../state/types";
 
 export interface ModuleConcept {
   id: ModuleId;
