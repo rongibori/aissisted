@@ -233,6 +233,63 @@
     }
   }
 
+  /* ─────────────────────────────────────────────────────────────
+     JEFFREY VOICE MOBILE — finalize polish (demo)
+     • Caption + hint cross-fade on state change
+     • Status label brightens on active states
+     • Suggested-prompt cards dim during listening / thinking / speaking
+       so attention stays on the brain
+     • Idle orb breathing — subtle outer ring pulse so a paused orb
+       still reads as "alive and tappable"
+  ───────────────────────────────────────────────────────────── */
+  #jeffrey-caption,
+  #jeffrey-hint,
+  #jeffrey-status-label {
+    transition: opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+                color 240ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  #jeffrey-caption.is-swapping,
+  #jeffrey-hint.is-swapping {
+    opacity: 0;
+  }
+  /* Status label brightens when the system is doing something */
+  [data-screen="jeffrey"][data-jeffrey-state="listening"] #jeffrey-status-label,
+  [data-screen="jeffrey"][data-jeffrey-state="thinking"] #jeffrey-status-label,
+  [data-screen="jeffrey"][data-jeffrey-state="speaking"] #jeffrey-status-label {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  /* Suggested prompts dim during conversation, full opacity on idle/error */
+  #jeffrey-prompts {
+    transition: opacity 320ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  [data-screen="jeffrey"][data-jeffrey-state="listening"] #jeffrey-prompts,
+  [data-screen="jeffrey"][data-jeffrey-state="thinking"] #jeffrey-prompts,
+  [data-screen="jeffrey"][data-jeffrey-state="speaking"] #jeffrey-prompts {
+    opacity: 0.42;
+    pointer-events: none;
+  }
+  /* Idle ambient — soft breathing ring around the orb so a paused state
+     doesn't feel frozen. Disabled on reduced-motion via the existing media. */
+  [data-screen="jeffrey"][data-jeffrey-state="idle"] #jeffrey-orb-btn::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 194, 209, 0.22);
+    pointer-events: none;
+    animation: jeffrey-idle-breathe 3.6s cubic-bezier(0.45, 0.05, 0.25, 0.95) infinite;
+  }
+  #jeffrey-orb-btn { position: relative; }
+  @keyframes jeffrey-idle-breathe {
+    0%, 100% { transform: scale(1);    opacity: 0.55; }
+    50%      { transform: scale(1.06); opacity: 1.00; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-screen="jeffrey"][data-jeffrey-state="idle"] #jeffrey-orb-btn::after {
+      animation: none;
+    }
+  }
+
   /* Sidebar nav */
   .nav-btn {
     display: flex; align-items: center; gap: 10px; width: 100%;
@@ -1198,7 +1255,7 @@
             <audio id="jeffrey-audio" autoplay playsinline style="display:none"></audio>
 
             <!-- Suggested prompts (click to send to Jeffrey) -->
-            <div class="px-6 mt-10 flex flex-col gap-2">
+            <div id="jeffrey-prompts" class="px-6 mt-10 flex flex-col gap-2">
               <button class="text-left rounded-2xl px-4 py-3" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); cursor:pointer;"
                       onclick="sendJeffreyText('Move tonight’s dose 30 minutes earlier.')">
                 <p class="font-display text-[15px]" style="color:#FFFFFF; font-weight:600;">Move tonight&rsquo;s dose 30 min earlier.</p>
@@ -2922,13 +2979,48 @@
     let connected = false;
     let assistantBuffer = "";
 
+    // ── State-aware default copy ──────────────────────────────────────
+    // Each state has a default caption + hint. Explicit setCaption()/setHint()
+    // calls override these for the duration of that state.
+    const STATE_COPY = {
+      idle:      { caption: "Tap the orb. I’ll listen.",  hint: "Tap to speak · tap again to end" },
+      thinking:  { caption: "Thinking…",                  hint: "Working through your signals"        },
+      listening: { caption: "I’m listening.",             hint: "Tap again to end"                    },
+      speaking:  { caption: "…",                          hint: "Tap to interrupt"                    },
+      error:     { caption: "Something interrupted us.",       hint: "Tap to retry"                        },
+    };
+
+    // Cross-fade helper — swaps text under a 240ms opacity transition so the
+    // copy doesn't jump on state change. Pairs with the .is-swapping CSS class.
+    function fadeSwap(el, nextText) {
+      if (!el) return;
+      if (el.textContent === nextText) return;
+      el.classList.add("is-swapping");
+      setTimeout(() => {
+        el.textContent = nextText;
+        el.classList.remove("is-swapping");
+      }, 220);
+    }
+
     function setState(state, label) {
       if (!orbBtn) return;
       orbBtn.dataset.state = state;
+      // Mirror state onto the screen wrapper so the dim/brighten CSS rules
+      // can react without JS class juggling on every child.
+      const screenEl = document.querySelector('[data-screen="jeffrey"]');
+      if (screenEl) screenEl.dataset.jeffreyState = state;
       if (status) status.textContent = `Jeffrey · ${label || state}`;
+      // Auto-update copy from STATE_COPY unless a specific caption/hint was
+      // queued just before this setState (handled by the optional second arg
+      // pattern in start()/handleEvent — those call setCaption() AFTER this).
+      const copy = STATE_COPY[state];
+      if (copy) {
+        fadeSwap(caption, copy.caption);
+        fadeSwap(hint, copy.hint);
+      }
     }
-    function setCaption(text) { if (caption) caption.textContent = text; }
-    function setHint(text)    { if (hint) hint.textContent = text; }
+    function setCaption(text) { fadeSwap(caption, text); }
+    function setHint(text)    { fadeSwap(hint, text); }
     function setError(msg) {
       if (!errorEl) return;
       if (!msg) { errorEl.style.display = 'none'; return; }
