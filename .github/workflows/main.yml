@@ -37,3 +37,46 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Jeffrey eval gate — DNR + SR zero-tolerance. Fast on PR, full on main.
+  # Falls back to EVAL_NO_JUDGE=1 (deterministic 5/5) when no OPENAI_API_KEY
+  # is configured, so the gate runs in smoke mode for OSS contributors.
+  # ─────────────────────────────────────────────────────────────────────────
+  jeffrey-evals:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Jeffrey evals (fast — PR)
+        if: github.event_name == 'pull_request'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EVAL_FAST: '1'
+          EVAL_NO_JUDGE: ${{ secrets.OPENAI_API_KEY && '' || '1' }}
+        run: pnpm --filter @aissisted/jeffrey-evals run eval:fast
+
+      - name: Run Jeffrey evals (full — main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EVAL_NO_JUDGE: ${{ secrets.OPENAI_API_KEY && '' || '1' }}
+        run: pnpm --filter @aissisted/jeffrey-evals run eval:full
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jeffrey-eval-report
+          path: packages/jeffrey-evals/.run-reports/
+          retention-days: 30
+          if-no-files-found: ignore

@@ -1,0 +1,36 @@
+name: Deploy prototype
+
+# Auto-syncs aissisted-app.html → apps/landing/preview.html on every push to main
+# so the static deploy (aissisted.me/preview) stays in lockstep with the canonical
+# prototype file. Vercel's git integration handles the actual deploy from the push.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "aissisted-app.html"
+      - "apps/landing/**"
+
+jobs:
+  sync-prototype:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync prototype into apps/landing
+        run: |
+          if ! cmp -s aissisted-app.html apps/landing/preview.html; then
+            cp aissisted-app.html apps/landing/preview.html
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add apps/landing/preview.html
+            git commit -m "chore(landing): sync prototype → preview.html [skip ci]"
+            git push
+          else
+            echo "preview.html already in sync"
+          fi
