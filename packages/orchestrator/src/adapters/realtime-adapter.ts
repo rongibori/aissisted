@@ -22,7 +22,7 @@
  * where we touch React refs, schedule timers, or call fetch.
  */
 
-import type { useJeffreyRealtime, RealtimeState, TranscriptTurn } from "../../../web-types.js";
+import type { RealtimeState, TranscriptTurn } from "../web-types.js";
 import {
   classifyEmbedding,
   classifyResponseToClassification,
