@@ -9,11 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aissisted/orchestrator": "workspace:*",
     "@tailwindcss/typography": "^0.5.19",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
