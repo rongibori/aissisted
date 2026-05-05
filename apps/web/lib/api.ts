@@ -287,3 +287,45 @@ export const healthState = {
   refresh: () =>
     request<any>("/health-state/refresh", { method: "POST" }),
 };
+
+// ─── System (composite payloads) ─────────────────────────
+// Mirrors apps/api/src/services/system-snapshot.service.ts. Kept in sync by
+// matching the SystemSnapshot shape declared in
+// apps/web/components/JeffreyAISystem/systemTypes.ts.
+export type SystemModuleStatus = "optimal" | "watch" | "priority";
+
+export type SystemModuleType =
+  | "sleep"
+  | "recovery"
+  | "stress"
+  | "performance"
+  | "metabolic"
+  | "labs"
+  | "stack";
+
+export interface SystemModuleData {
+  type: SystemModuleType;
+  label: string;
+  primaryValue: string;
+  caption: string;
+  status: SystemModuleStatus;
+  metrics?: { label: string; value: string; status?: SystemModuleStatus }[];
+  spark?: number[];
+}
+
+export interface SystemUserContext {
+  name: string;
+  lastSyncedAt: string;
+  state: string;
+}
+
+export interface SystemSnapshotPayload {
+  user: SystemUserContext;
+  modules: Record<SystemModuleType, SystemModuleData>;
+}
+
+export const system = {
+  /** GET /v1/system/snapshot — composes per-user neural-viz payload. */
+  snapshot: () =>
+    request<{ snapshot: SystemSnapshotPayload }>("/v1/system/snapshot"),
+};

@@ -1,13 +1,14 @@
 /**
- * /jeffrey-system — viewing route for the Jeffrey AI System scaffold.
+ * /jeffrey-system — viewing route for the Jeffrey AI System.
  *
- * This is the verification surface: open this route to see the Three.js
- * scaffold running with the mock Ron snapshot, all 5 mode buttons, and the
- * scripted demo. Production product surfaces will compose
- * <JeffreyAISystem /> directly with real bridge data.
+ * The page is a server component that hands off to JeffreySystemClient,
+ * which fetches the per-user SystemSnapshot from /v1/system/snapshot and
+ * passes it down to <JeffreyAISystem />. When the visitor is not
+ * authenticated, the client falls back to the in-component RON_SNAPSHOT
+ * default so the route still demos publicly.
  */
 
-import { JeffreyAISystem } from "../../components/JeffreyAISystem";
+import JeffreySystemClient from "./JeffreySystemClient";
 
 export const metadata = {
   title: "Jeffrey AI System — Aissisted",
@@ -23,7 +24,7 @@ export default function Page() {
         background: "#0B1D3A",
       }}
     >
-      <JeffreyAISystem />
+      <JeffreySystemClient />
     </main>
   );
 }

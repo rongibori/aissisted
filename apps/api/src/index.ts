@@ -16,6 +16,7 @@ import { jeffreyRealtimeRoutes } from "./routes/jeffrey-realtime.js";
 import { integrationsRoutes } from "./routes/integrations.js";
 import { adherenceRoutes } from "./routes/adherence.js";
 import { healthStateRoutes } from "./routes/health-state.js";
+import { systemRoutes } from "./routes/system.js";
 import { startScheduler } from "./scheduler.js";
 import { db, schema, sql } from "@aissisted/db";
 import { migrate } from "drizzle-orm/libsql/migrator";
@@ -116,6 +117,7 @@ await app.register(jeffreyRealtimeRoutes);
 await app.register(integrationsRoutes);
 await app.register(adherenceRoutes);
 await app.register(healthStateRoutes);
+await app.register(systemRoutes);
 
 // ─── DB Migration ────────────────────────────────────────
 try {
