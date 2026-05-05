@@ -228,8 +228,12 @@ export interface ClassifyOptions {
 
 const DEFAULT_OPTS: Required<ClassifyOptions> = {
   applyConceptWeight: true,
-  similarityFloor: 0.18,
-  similarityCeil: 0.62,
+  // Tuned 2026-05-05 for the experience surface: catch loosely-related
+  // semantic neighbors so modules begin warming before the topic is named
+  // explicitly. text-embedding-3-small typically lands "related" cosine in
+  // 0.45-0.60 and "loosely related" in 0.25-0.45 — our window catches both.
+  similarityFloor: 0.14, // was 0.18
+  similarityCeil: 0.54, // was 0.62 (lowered so confidence saturates earlier)
 };
 
 /**

@@ -15,10 +15,14 @@ import {
 } from "./types";
 
 // ─── Decay parameters ────────────────────────────────────────────────────
+// Tuned 2026-05-05 against the experience surface for "calm + responsive":
+// modules should warm before crossing the activation threshold (smooth ramp),
+// stay warm long enough to feel intentional, and decay gracefully when the
+// topic moves on.
 
 /** Topic confidence decays toward zero when a module is not reinforced. */
-const DECAY_PER_SECOND = 0.18; // ~5s half-life
-const ACTIVATION_THRESHOLD = 0.42; // module is "active" above this confidence
+const DECAY_PER_SECOND = 0.13; // ~7s half-life — was 0.18 (too fast, felt twitchy)
+const ACTIVATION_THRESHOLD = 0.30; // was 0.42 (too high — modules popped instead of warming)
 
 // ─── Initial state ───────────────────────────────────────────────────────
 

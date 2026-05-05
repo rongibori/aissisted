@@ -60,11 +60,15 @@ export interface RealtimeAdapterControls {
 }
 
 // ─── Tunables ────────────────────────────────────────────────────────────
+// Tuned 2026-05-05 for the experience surface: fire earlier and more often
+// during Jeffrey's speech so visual reaction begins before the sentence ends.
+// "He understands me in real time" requires the classifier to lead the audio
+// by ~1-2 spoken words.
 
-const STREAMING_CLASSIFY_DEBOUNCE_MS = 150;
+const STREAMING_CLASSIFY_DEBOUNCE_MS = 120; // was 150 (slightly faster reactivity)
 const TICK_INTERVAL_MS = 300;
 /** Min characters before the embedding classifier bothers to fire. */
-const MIN_TEXT_FOR_EMBEDDING = 24;
+const MIN_TEXT_FOR_EMBEDDING = 12; // was 24 (fire on a phrase, not a clause)
 
 // ─── Adapter ─────────────────────────────────────────────────────────────
 
