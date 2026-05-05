@@ -17,6 +17,7 @@ import { integrationsRoutes } from "./routes/integrations.js";
 import { adherenceRoutes } from "./routes/adherence.js";
 import { healthStateRoutes } from "./routes/health-state.js";
 import { systemRoutes } from "./routes/system.js";
+import { registerAllAgents } from "./agents/index.js";
 import { startScheduler } from "./scheduler.js";
 import { db, schema, sql } from "@aissisted/db";
 import { migrate } from "drizzle-orm/libsql/migrator";
@@ -78,6 +79,11 @@ await app.register(rateLimit, {
 
 await registerJwt(app);
 await registerAuditLog(app);
+
+// Register orchestrator sub-agents (formula/recall/proactive/safety).
+// Must happen before route handlers run; the chat route routes through
+// orchestrate() which dispatches to these.
+registerAllAgents();
 
 // WebSocket support for Jeffrey Realtime proxy. Must register before routes
 // that declare `{ websocket: true }`.

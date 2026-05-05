@@ -97,6 +97,13 @@ export interface AgentResponseDraft {
   text: string;
   citedTools: string[];
   protocolDelta?: ProtocolDelta;
+  /**
+   * Free-form per-agent metadata for downstream consumers — used by the
+   * chat route to thread back fields the orchestrator's standard contract
+   * doesn't model (intent classification, protocol-triggered flag,
+   * conversation id). Optional; agents may omit.
+   */
+  metadata?: Record<string, unknown>;
 }
 
 export interface ProtocolDelta {

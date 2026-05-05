@@ -86,6 +86,42 @@ export {
   type CreateSessionOptions,
 } from "./session.js";
 
+// ----- agent orchestrator + safety gate -----
+export {
+  orchestrate,
+  registerAgent,
+  clearAgentsForTests,
+  classifyAgent,
+  type AgentName,
+  type OrchestratorInput,
+  type OrchestratorOutput,
+  type SubAgent,
+} from "./orchestrator.js";
+
+export {
+  evaluateSafetyGate,
+  evaluateStage1,
+  runCheckpoint,
+  filterCandidatePool,
+  SAFETY_RULES_V1,
+} from "./safety/index.js";
+
+export type {
+  SafetyAction,
+  SafetyCategory,
+  SafetyCheckpoint,
+  SafetyContext,
+  SafetyFiring,
+  SafetyResult,
+  SafetyRule,
+  SafetySeverity,
+  SafetyUserProfile,
+  SafetyLabValue,
+  CandidateIngredient,
+  AgentResponseDraft,
+  ProtocolDelta,
+} from "./safety/index.js";
+
 // ----- types -----
 export type {
   JeffreySurface,

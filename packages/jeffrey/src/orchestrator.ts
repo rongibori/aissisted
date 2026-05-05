@@ -42,6 +42,12 @@ export interface OrchestratorInput {
   forceAgent?: AgentName;
   /** Profile context the safety gate needs */
   safetyContext: SafetyContext;
+  /**
+   * Optional conversation thread to continue. Threaded through to sub-agents
+   * via input.conversationId so the formula-agent can reuse the existing
+   * chat() pipeline without breaking persistence.
+   */
+  conversationId?: string;
 }
 
 export interface OrchestratorOutput {
