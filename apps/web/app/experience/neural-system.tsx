@@ -3,22 +3,44 @@
 /**
  * NeuralSystem — the only thing on screen.
  *
- * Tuned 2026-05-05 (round 2) for "inevitable and calm":
+ * Final pass — the version I would ship.
  *
- *  - Perception over reaction. Modules warm via SEMANTIC NEIGHBOR COUPLING:
- *    when a primary module activates, its conceptual neighbors receive a
- *    quiet boost. Investor says "recovery" → recovery climbs, but sleep,
- *    stress, performance also begin warming. The system reads as predictive.
- *  - No peaks. No spikes. Every transition is a slow arrival, never an
- *    arrival-and-decay. Easing curves favor symmetric ease-in-out.
- *  - Tightened contrast. Inactive 0.12 (not invisible). Active 0.74 (not
- *    glaring). Range collapsed; cohesion lifted.
- *  - Core is grounded. Scale deltas ≤0.8%. Internal motion (breathing,
- *    density) carries state. The orbit responds; the core IS.
- *  - Signals fade through opacity, never unmount. Interruption settles
- *    into listening; nothing snaps.
- *  - Removed decorative pulses. Every animation maps to attention,
- *    confidence, or transition. Nothing exists just to look alive.
+ * The standard for this pass: a first-time user must NOT perceive modules
+ * turning on, a system reacting, or anything being triggered. They should
+ * feel that the system is already oriented; understanding is emerging, not
+ * switching; nothing competes for attention; nothing explains itself.
+ *
+ * Decisions made (no options exposed, no knobs to twist):
+ *
+ *  - Module dynamic range collapsed to 0.18 → 0.62 (was 0.12 → 0.74). The
+ *    difference between dormant and active is now small enough that the
+ *    eye cannot track an off→on transition. It can only feel a SHIFT in
+ *    where the warmth lives.
+ *
+ *  - Per-module clock — each module gets a stable 1500–1850ms transition
+ *    duration (hand-picked, not random). They never lock-step. When the
+ *    classifier fires for multiple modules simultaneously, they arrive at
+ *    slightly different rates. Decouples visual from speech timing.
+ *
+ *  - Core scale FROZEN at 1.0 across every mode. Internal motion (breath
+ *    amplitude, ring stroke opacity) carries state. The core never grows
+ *    or shrinks. It exists.
+ *
+ *  - Halo opacity range tightened (0.07 idle → 0.30 speaking). Less mode
+ *    contrast — the system is one continuous presence, not five poses.
+ *
+ *  - Breath amplitude range tightened (1.020 idle → 1.035 speaking).
+ *    Always a calm pace. The depth shifts; the rhythm doesn't.
+ *
+ *  - Recommendation bloom 1800 → 2400ms with gentler curve. Even rare
+ *    moments arrive instead of land.
+ *
+ *  - Primary focus ring upper bound dropped (0.50 → 0.40). It is
+ *    noticeable, never loud.
+ *
+ *  - All keyframe pulses removed. Three keyframes remain: outer rotation
+ *    (180s, ambient — below conscious motion threshold), core breath (8s,
+ *    proof of life), recommendation bloom (rare event).
  */
 
 import { useMemo } from "react";
@@ -63,14 +85,21 @@ function nodesAtRadius(r: number): NodePos[] {
   });
 }
 
+// ─── Per-module clock — each module has its own slightly-different
+// transition tempo so they never lock-step. Hand-picked, not random,
+// so the values are stable across runs and easy to reason about. ────────
+
+const MODULE_TRANSITION_MS: Record<ModuleId, number> = {
+  sleep: 1600,
+  recovery: 1750,
+  stress: 1500,
+  performance: 1850,
+  metabolic: 1620,
+  labs: 1700,
+  stack: 1550,
+};
+
 // ─── Semantic neighbor coupling ─────────────────────────────────────────
-//
-// When one module's confidence rises, its conceptual neighbors receive a
-// quiet share. The effect on screen: when Jeffrey says "recovery", sleep
-// and stress and performance also begin warming a moment later, before he
-// names them. The system reads as anticipating, not reacting.
-//
-// Tuned conservatively — the secondary warming is meant to be felt, not seen.
 
 type NeighborWeight = [ModuleId, number];
 
@@ -109,8 +138,7 @@ const NEIGHBORS: Record<ModuleId, NeighborWeight[]> = {
   ],
 };
 
-/** Coupling strength applied to neighbor confidence before max-merging. */
-const COUPLING_STRENGTH = 0.42;
+const COUPLING_STRENGTH = 0.45;
 
 function perceivedConfidence(
   id: ModuleId,
@@ -127,11 +155,6 @@ function perceivedConfidence(
 
 // ─── Confidence → visual mapping ────────────────────────────────────────
 
-/**
- * Smooth visibility curve. pow(c, 0.55) lifts low confidences faster than
- * linear so warming reads as intentional, while higher confidences arrive
- * gradually instead of saturating quickly.
- */
 function visibility(conf: number): number {
   if (conf <= 0) return 0;
   return Math.pow(Math.min(1, conf), 0.55);
@@ -144,16 +167,12 @@ export function NeuralSystem({ connected }: Props) {
   const primary = usePrimaryFocus();
   const rawConfidence = useAllTopicConfidence();
 
-  // Compute perceived confidence per module (raw + neighbor coupling).
-  // Memoized only weakly — values change every state tick but allocation is
-  // tiny.
   const perceived = useMemo(() => {
     const out = {} as Record<ModuleId, number>;
     for (const id of MODULE_IDS) out[id] = perceivedConfidence(id, rawConfidence);
     return out;
   }, [rawConfidence]);
 
-  // viewBox is 600×600 centered at origin.
   const VB = 600;
   const HALF = VB / 2;
   const ORBIT_RADIUS = 210;
@@ -161,36 +180,34 @@ export function NeuralSystem({ connected }: Props) {
 
   const nodes = useMemo(() => nodesAtRadius(ORBIT_RADIUS), []);
 
-  // Core scale — almost imperceptible. The core is NOT what reacts.
-  const coreScale =
-    mode === "speaking"
-      ? 1.008
-      : mode === "listening"
-        ? 1.005
-        : mode === "recommendation"
-          ? 1.012
-          : 1.0;
+  // Core is FROZEN at scale 1. Mode lives in internal motion only.
+  const coreScale = 1.0;
 
-  // Core inner-ring breathing amplitude varies with mode. The TEMPO is
-  // constant (calm always); only the depth of the breath shifts.
+  // Breath amplitude — tightened to 1.020-1.035. Always calm pace; the
+  // depth of the inhale shifts with mode, not the rhythm.
   const breatheAmplitude =
     mode === "speaking"
-      ? 1.045
+      ? 1.035
       : mode === "listening"
-        ? 1.03
+        ? 1.028
         : mode === "thinking" || mode === "analyzing"
-          ? 1.028
-          : 1.022;
+          ? 1.025
+          : 1.02;
 
-  // Halo opacity — outer presence carries the state, not the core.
+  // Halo opacity — tightened range. Less contrast between modes; the
+  // system is one continuous presence, not a state machine displaying
+  // different costumes.
   const haloOpacity =
     mode === "speaking"
-      ? 0.36
+      ? 0.30
       : mode === "listening"
-        ? 0.24
+        ? 0.20
         : mode === "thinking" || mode === "analyzing"
-          ? 0.18
-          : 0.08;
+          ? 0.16
+          : 0.07;
+
+  // Inner ring stroke opacity — also tighter range.
+  const innerRingOpacity = mode === "idle" ? 0.32 : 0.42;
 
   // Pre-computed primary geometry.
   const primaryAngle = primary != null ? MODULE_ANGLES_DEG[primary] : null;
@@ -200,8 +217,6 @@ export function NeuralSystem({ connected }: Props) {
   const primaryY =
     primaryAngle != null ? -Math.sin(primaryRad) * ORBIT_RADIUS : 0;
 
-  // Mode-derived opacities for signals — drives the FADE rather than
-  // mounting/unmounting elements.
   const speakingSignalsOpacity = mode === "speaking" ? 1 : 0;
   const listeningSignalOpacity = mode === "listening" && primary != null ? 1 : 0;
 
@@ -213,8 +228,8 @@ export function NeuralSystem({ connected }: Props) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        opacity: connected ? 1 : 0.96,
-        transition: "opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
+        opacity: connected ? 1 : 0.97,
+        transition: "opacity 1600ms cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
       <svg
@@ -229,26 +244,26 @@ export function NeuralSystem({ connected }: Props) {
       >
         <defs>
           <radialGradient id="halo-grad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#00C2D1" stopOpacity="0.30" />
-            <stop offset="60%" stopColor="#00C2D1" stopOpacity="0.05" />
+            <stop offset="0%" stopColor="#00C2D1" stopOpacity="0.26" />
+            <stop offset="60%" stopColor="#00C2D1" stopOpacity="0.04" />
             <stop offset="100%" stopColor="#00C2D1" stopOpacity="0" />
           </radialGradient>
           <radialGradient id="rec-flash" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#EE2B37" stopOpacity="0.22" />
-            <stop offset="60%" stopColor="#EE2B37" stopOpacity="0.04" />
+            <stop offset="0%" stopColor="#EE2B37" stopOpacity="0.18" />
+            <stop offset="60%" stopColor="#EE2B37" stopOpacity="0.03" />
             <stop offset="100%" stopColor="#EE2B37" stopOpacity="0" />
           </radialGradient>
           <radialGradient id="core-grad" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.92" />
-            <stop offset="55%" stopColor="#00C2D1" stopOpacity="0.26" />
-            <stop offset="100%" stopColor="#0B1D3A" stopOpacity="0.72" />
+            <stop offset="55%" stopColor="#00C2D1" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#0B1D3A" stopOpacity="0.68" />
           </radialGradient>
           <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="6" />
           </filter>
         </defs>
 
-        {/* Halo — soft outer aqua presence. Mode-driven opacity, slow xfade. */}
+        {/* Halo — single continuous presence, mode shifts the depth */}
         <circle
           cx="0"
           cy="0"
@@ -256,11 +271,11 @@ export function NeuralSystem({ connected }: Props) {
           fill="url(#halo-grad)"
           opacity={haloOpacity}
           style={{
-            transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "opacity 1800ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
 
-        {/* Recommendation bloom — slow arrive, slow leave, no peak event */}
+        {/* Recommendation bloom — slowed further; arrives, never strikes */}
         {mode === "recommendation" && (
           <circle
             cx="0"
@@ -268,19 +283,21 @@ export function NeuralSystem({ connected }: Props) {
             r={ORBIT_RADIUS + 80}
             fill="url(#rec-flash)"
             style={{
-              animation: "aissisted-rec-bloom 1800ms ease-in-out forwards",
+              animation: "aissisted-rec-bloom 2400ms ease-in-out forwards",
             }}
           />
         )}
 
-        {/* Outer ring — extremely slow rotation. Almost still. The system
-            is alive but in no hurry. */}
+        {/* Outer ring — 180s rotation, below conscious-motion threshold.
+            The only proof, when nothing is being said, that the system is
+            present. Pulled to graphite at 7% so it never reads as a UI
+            chrome element. */}
         <circle
           cx="0"
           cy="0"
           r={ORBIT_RADIUS}
           fill="none"
-          stroke="rgba(28,28,30,0.085)"
+          stroke="rgba(28,28,30,0.07)"
           strokeWidth="1"
           strokeDasharray="2 14"
           style={{
@@ -289,23 +306,21 @@ export function NeuralSystem({ connected }: Props) {
           }}
         />
 
-        {/* Speaking signals: outward strokes from core to active modules.
-            Always rendered; opacity is the only mode gate so transitions
-            fade rather than mount/unmount. Width + opacity scale with
-            perceived confidence so secondary actives are visibly less
-            than primary without using a different color. */}
+        {/* Speaking signals — always rendered; opacity gates mode. The
+            per-module transition duration varies (1500-1850ms) so the lines
+            appear and recede at slightly different rates. The eye cannot
+            grab a single moment of "they all turned on." */}
         <g
           style={{
             opacity: speakingSignalsOpacity,
-            transition: "opacity 800ms cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
           {nodes.map((n) => {
             const conf = perceived[n.id];
             const v = visibility(conf);
-            // Don't bother stroking truly cold modules even in speaking mode
-            // — keeps the screen quiet.
-            if (v < 0.18) return null;
+            if (v < 0.20) return null;
+            const ms = MODULE_TRANSITION_MS[n.id];
             return (
               <line
                 key={`signal-${n.id}`}
@@ -314,20 +329,18 @@ export function NeuralSystem({ connected }: Props) {
                 x2={n.x}
                 y2={n.y}
                 stroke="#00C2D1"
-                strokeWidth={0.7 + v * 0.9}
-                strokeOpacity={0.10 + v * 0.24}
+                strokeWidth={0.7 + v * 0.7}
+                strokeOpacity={0.08 + v * 0.18}
                 strokeLinecap="round"
                 style={{
-                  transition:
-                    "stroke-opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1), stroke-width 1000ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: `stroke-opacity ${ms}ms cubic-bezier(0.4, 0, 0.2, 1), stroke-width ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`,
                 }}
               />
             );
           })}
         </g>
 
-        {/* Listening signal — opacity-faded line from primary focus to core.
-            No animation; the line itself carries the state. */}
+        {/* Listening signal — opacity-gated, no animation */}
         {primary != null && (
           <line
             x1="0"
@@ -336,56 +349,53 @@ export function NeuralSystem({ connected }: Props) {
             y2={primaryY}
             stroke="#00C2D1"
             strokeWidth="1"
-            strokeOpacity={0.35}
+            strokeOpacity={0.25}
             strokeLinecap="round"
             style={{
               opacity: listeningSignalOpacity,
               transition:
-                "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1), stroke-opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
+                "opacity 1300ms cubic-bezier(0.4, 0, 0.2, 1), stroke-opacity 1300ms cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           />
         )}
 
-        {/* Module nodes — opacity + radius are smooth functions of perceived
-            confidence (which already includes neighbor coupling). No binary
-            active state. Primary focus dominates by size + a soft outer ring,
-            not by color. */}
+        {/* Module nodes — collapsed dynamic range. Floor 0.18 (clearly
+            present at rest), peak 0.62 (active but never glaring). The
+            eye cannot track an off→on transition; it can only feel a
+            shift in where warmth lives. Each module has its own slightly-
+            different transition duration so they never lock-step. */}
         {nodes.map((n) => {
           const conf = perceived[n.id];
           const v = visibility(conf);
           const isPrimary = n.id === primary && conf >= 0.32;
+          const ms = MODULE_TRANSITION_MS[n.id];
 
-          // Tightened range: 0.12 floor (still present at rest) → 0.74 ceiling
-          // (active but not glaring). Less separation = more cohesion.
-          const opacity = 0.12 + v * 0.62;
+          // Tightened: 0.18 floor → 0.62 peak (was 0.12 → 0.74).
+          const opacity = 0.18 + v * 0.44;
 
-          // Radius eases gently. 4 → 6.5 → 7.2 (primary). Restrained.
-          const r = 4 + v * 2.5 + (isPrimary ? 0.7 : 0);
+          // Radius eases; primary gets a small lift.
+          const r = 4 + v * 2.2 + (isPrimary ? 0.6 : 0);
 
-          // Glow opacity threshold raised so glow is rare; when it appears,
-          // it's earned. No animation — just steady scaled glow.
-          const glowOpacity = v > 0.42 ? (v - 0.42) * 0.34 : 0;
+          // Glow only on genuinely warm modules.
+          const glowOpacity = v > 0.45 ? (v - 0.45) * 0.28 : 0;
 
-          // Primary ring is steady (no pulse). Earned attention, not
-          // demanded.
-          const primaryRingOpacity = isPrimary ? 0.32 + v * 0.18 : 0;
+          // Primary ring — upper bound 0.40 (was 0.50). Noticed, never loud.
+          const primaryRingOpacity = isPrimary ? 0.26 + v * 0.14 : 0;
+
+          const transitionDecl = `r ${ms}ms cubic-bezier(0.4, 0, 0.2, 1), opacity ${ms}ms cubic-bezier(0.4, 0, 0.2, 1), stroke-opacity ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`;
 
           return (
             <g key={n.id}>
-              {/* Soft glow — steady, only present when warm. */}
+              {/* Soft glow — steady, threshold-gated */}
               <circle
                 cx={n.x}
                 cy={n.y}
                 r={r + 5}
                 fill="#00C2D1"
                 opacity={glowOpacity}
-                style={{
-                  transition:
-                    "opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1), r 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                style={{ transition: transitionDecl }}
               />
-              {/* Primary-focus outer ring — steady, no pulse. Visible only on
-                  the single most-confident module above threshold. */}
+              {/* Primary-focus outer ring — steady; only one node ever shows */}
               <circle
                 cx={n.x}
                 cy={n.y}
@@ -394,60 +404,48 @@ export function NeuralSystem({ connected }: Props) {
                 stroke="#00C2D1"
                 strokeWidth="0.7"
                 strokeOpacity={primaryRingOpacity}
-                style={{
-                  transition:
-                    "stroke-opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1), r 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                style={{ transition: transitionDecl }}
               />
-              {/* Graphite base — fades down as confidence rises. */}
+              {/* Graphite base — fades down as confidence rises */}
               <circle
                 cx={n.x}
                 cy={n.y}
                 r={r}
                 fill="#1C1C1E"
                 opacity={opacity * (1 - v * 0.78)}
-                style={{
-                  transition:
-                    "r 1100ms cubic-bezier(0.4, 0, 0.2, 1), opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                style={{ transition: transitionDecl }}
               />
-              {/* Aqua overlay — fades in as confidence rises, capped lower
-                  than before so active modules feel calm. */}
+              {/* Aqua overlay — fades in. Capped lower than before so the
+                  active state never reads as glaring. */}
               <circle
                 cx={n.x}
                 cy={n.y}
                 r={r}
                 fill="#00C2D1"
-                opacity={v * 0.74}
-                style={{
-                  transition:
-                    "r 1100ms cubic-bezier(0.4, 0, 0.2, 1), opacity 1100ms cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                opacity={v * 0.62}
+                style={{ transition: transitionDecl }}
               />
             </g>
           );
         })}
 
-        {/* Core — grounded. Internal density shifts with state; outer scale
-            barely moves. The breath amplitude (the size of the inhale) is
-            what carries listening/speaking, not the absolute size. */}
+        {/* Core — frozen scale. Internal motion only. */}
         <g
           style={{
             transform: `scale(${coreScale})`,
             transformOrigin: "center",
-            transition: "transform 1200ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          {/* Outer soft glow — restrained */}
+          {/* Outer soft glow — tighter opacity */}
           <circle
             cx="0"
             cy="0"
             r={CORE_RADIUS + 8}
             fill="url(#core-grad)"
-            opacity={0.52}
+            opacity={0.46}
             filter="url(#soft-glow)"
             style={{
-              transition: "opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: "opacity 1800ms cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           />
           {/* Main core disk — pure white, faint stroke */}
@@ -456,11 +454,10 @@ export function NeuralSystem({ connected }: Props) {
             cy="0"
             r={CORE_RADIUS}
             fill="#FFFFFF"
-            stroke="rgba(28,28,30,0.12)"
+            stroke="rgba(28,28,30,0.10)"
             strokeWidth="1"
           />
-          {/* Inner aqua ring — single tempo (8s), amplitude varies by mode.
-              The breath is the signal, not the speed. */}
+          {/* Inner aqua ring — 8s breath always; amplitude carries mode */}
           <g
             style={
               {
@@ -477,22 +474,21 @@ export function NeuralSystem({ connected }: Props) {
               fill="none"
               stroke="#00C2D1"
               strokeWidth="1"
-              strokeOpacity={mode === "idle" ? 0.28 : 0.5}
+              strokeOpacity={innerRingOpacity}
               style={{
                 transition:
-                  "stroke-opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  "stroke-opacity 1800ms cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             />
           </g>
-          {/* Center seed — midnight always. The constant. */}
-          <circle cx="0" cy="0" r="5" fill="#0B1D3A" opacity={0.74} />
+          {/* Center seed — midnight, the constant */}
+          <circle cx="0" cy="0" r="5" fill="#0B1D3A" opacity={0.7} />
         </g>
       </svg>
 
-      {/* Keyframes — kept minimal. Only the breath, the slow rotation, and
-          the recommendation bloom remain as kinetic motion. Everything else
-          is driven by CSS transitions on data-bound properties, so the
-          system "settles" into states rather than animating into them. */}
+      {/* Three keyframes. Each communicates. Outer rotation: ambient
+          (system present, sub-conscious tempo). Core breath: proof of
+          life. Recommendation bloom: rare event, slowest curve. */}
       <style>{`
         @keyframes aissisted-rotate-slow {
           from { transform: rotate(0deg); }
@@ -503,9 +499,9 @@ export function NeuralSystem({ connected }: Props) {
           50%      { transform: scale(var(--breathe-amp, 1.025)); }
         }
         @keyframes aissisted-rec-bloom {
-          0%   { opacity: 0; transform: scale(0.94); }
-          40%  { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.04); }
+          0%   { opacity: 0; transform: scale(0.95); }
+          45%  { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.03); }
         }
         @media (prefers-reduced-motion: reduce) {
           * {
