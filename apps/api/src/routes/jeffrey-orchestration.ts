@@ -225,13 +225,9 @@ export async function jeffreyOrchestrationRoutes(
         },
       },
     },
-    async (
-      req: FastifyRequest<{ Body: { texts: string[] } }>,
-      reply: FastifyReply,
-    ) => {
-      const texts = req.body.texts.map((t) =>
-        t.slice(0, MAX_EMBED_TEXT_LENGTH),
-      );
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const body = req.body as { texts: string[] };
+      const texts = body.texts.map((t) => t.slice(0, MAX_EMBED_TEXT_LENGTH));
 
       try {
         const data = await openaiEmbed(texts);
@@ -279,19 +275,15 @@ export async function jeffreyOrchestrationRoutes(
         },
       },
     },
-    async (
-      req: FastifyRequest<{
-        Body: {
-          text: string;
-          context?: { role: "user" | "assistant"; text: string }[];
-          narrativeHint?: string;
-        };
-      }>,
-      reply: FastifyReply,
-    ) => {
-      const text = req.body.text.slice(0, MAX_CLASSIFY_TEXT_LENGTH);
-      const context = req.body.context ?? [];
-      const narrativeHint = req.body.narrativeHint?.slice(0, 500) ?? "";
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const body = req.body as {
+        text: string;
+        context?: { role: "user" | "assistant"; text: string }[];
+        narrativeHint?: string;
+      };
+      const text = body.text.slice(0, MAX_CLASSIFY_TEXT_LENGTH);
+      const context = body.context ?? [];
+      const narrativeHint = body.narrativeHint?.slice(0, 500) ?? "";
 
       const userPrompt = JSON.stringify({
         utterance: text,
