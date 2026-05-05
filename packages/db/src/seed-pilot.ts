@@ -24,17 +24,22 @@
  * users always sign up via the auth service which mints unique hashes.
  */
 
+import bcrypt from "bcryptjs";
 import { db, schema, eq, like } from "./index.js";
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 /**
- * Bcrypt hash of "demo1234" (10 rounds). Hard-coded so the seed runs without
- * a runtime bcrypt dependency. Each pilot user gets the same hash — fine for
- * a closed-cohort test, never reuse this in production.
+ * Bcrypt hash of the pilot password, computed at seed time. The earlier
+ * static hash (`$2a$10$N9qo8uL…`) did not actually match "demo1234" against
+ * the bcryptjs verifier the API uses, so logins silently 401'd. Computing
+ * fresh avoids drift with the auth service's bcrypt version + cost factor.
+ *
+ * Each pilot user gets the same hash — fine for a closed test cohort, never
+ * reuse this pattern in production.
  */
-const PILOT_PASSWORD_HASH =
-  "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+const PILOT_PASSWORD = "demo1234";
+const PILOT_PASSWORD_HASH = bcrypt.hashSync(PILOT_PASSWORD, 10);
 
 const PILOT_PREFIX = "aissisted-pilot-";
 
@@ -310,13 +315,22 @@ function flagFromValue(spec: BiomarkerSpec, value: number, override?: string): s
 }
 
 async function clearPriorPilot() {
-  // SQLite + drizzle: cascade deletes will clean dependents when we wipe users.
-  // We additionally wipe by-userId for tables that reference users via SET NULL.
-  // Match on the `aissisted-pilot-` prefix so production users are untouched.
-  await db.delete(schema.users).where(like(schema.users.id, `${PILOT_PREFIX}%`));
-  // auditLog uses ON DELETE SET NULL — we still want to drop pilot audit rows so
-  // the demo log doesn't accumulate stale entries.
+  // ORDER MATTERS: delete audit_log BEFORE users.
+  //
+  // audit_log.userId has ON DELETE SET NULL, so wiping users first NULLs the
+  // userId column on every prior pilot audit row — after which the
+  // userId-LIKE-prefix delete no longer matches anything, leaving stale rows
+  // behind. On the next seed those collide with the deterministic audit IDs
+  // (UNIQUE constraint failure on audit_log.id).
+  //
+  // We delete by both userId prefix AND id prefix to handle both freshly-seeded
+  // rows (still have userId set) and any orphaned rows whose userId was NULLed
+  // by an earlier broken run.
   await db.delete(schema.auditLog).where(like(schema.auditLog.userId, `${PILOT_PREFIX}%`));
+  await db.delete(schema.auditLog).where(like(schema.auditLog.id, `${PILOT_PREFIX}%`));
+  // Now wipe users — cascade deletes clean dependents (profile, biomarkers,
+  // tokens, supplement_stacks, protocols + recommendations, conversations).
+  await db.delete(schema.users).where(like(schema.users.id, `${PILOT_PREFIX}%`));
 }
 
 async function seedPilot(p: PilotDefinition) {
@@ -519,7 +533,10 @@ async function main() {
     process.stdout.write("✓\n");
   }
   console.log(`\n✓ Pilot seed complete. Login any user with password "demo1234".`);
-  console.log(`  Sign-in emails are ${PILOTS[0].email.replace("01", "NN")} (NN = 01..10).`);
+  console.log(`  Sign-in emails (each pilot has a unique address):`);
+  for (const p of PILOTS) {
+    console.log(`    ${p.id.replace(PILOT_PREFIX, "pilot ")}  ${p.email}`);
+  }
 }
 
 main()

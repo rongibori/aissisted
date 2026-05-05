@@ -213,10 +213,16 @@ importers:
       '@libsql/client':
         specifier: ^0.14.0
         version: 0.14.0
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       drizzle-orm:
         specifier: ^0.38.0
         version: 0.38.4(@libsql/client@0.14.0)(@types/react@19.2.14)(react@19.2.5)
     devDependencies:
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.17
