@@ -2,7 +2,8 @@
 
 **Purpose:** Single-page pass/fail walkthrough for the 10-person user-testing pilot.
 **Audience:** Anyone running the demo (engineering or non-engineering).
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-05.
+**Companion runbook:** [`docs/demo/RUNBOOK.md`](demo/RUNBOOK.md) — clone-to-demo in 15 minutes.
 
 ---
 
@@ -24,9 +25,9 @@
 | | Step | How | Pass criteria |
 |---|---|---|---|
 | ☐ | Install all workspaces | `pnpm install` from repo root | exits 0, no peer-dep blockers |
-| ☐ | Run migrations | `pnpm --filter @aissisted/db db:migrate` | DB file at `apps/api/data/aissisted.db` |
-| ☐ | Seed pilot cohort | double-click `seed-pilot-cohort.command` | console shows `✓ Pilot cohort ready.` and 10 users seeded |
-| ☐ | Start API | `pnpm --filter @aissisted/api dev` | listens on :3001 (Fastify ready log) |
+| ☐ | Apply schema (libsql/sqlite) | API auto-applies migrations on boot; manual via `pnpm --filter @aissisted/db db:migrate` | DB file at `apps/api/data/aissisted.db` |
+| ☐ | Seed pilot cohort | `pnpm --filter @aissisted/db seed:pilot` (or double-click `seed-pilot-cohort.command`) | console shows `✓ Pilot seed complete.` + 10 per-user emails |
+| ☐ | Start API | `pnpm --filter @aissisted/api dev` | listens on **:4000** with `/health` returning `db: ok` |
 | ☐ | Start web | `pnpm --filter @aissisted/web dev` | listens on :3000 |
 
 ---
@@ -95,24 +96,32 @@ Use any pilot user (01-10). Password: `demo1234`. Suggested flow uses **pilot 01
 | ☐ | Sparklines visible for biomarkers with ≥2 readings | smooth, no NaN |
 | ☐ | Trend chart (`/trends`) renders rolling-30d for at least one biomarker | curve visible |
 
-### 2.8 Neural AI visualization
+### 2.8 Neural AI visualization (per-user hydrator)
 
 | | Step | Pass criteria |
 |---|---|---|
-| ☐ | `/jeffrey-system` route loads | central core + 7 modules + paths visible |
-| ☐ | Module values reflect pilot 01's real data | Sleep, Recovery, Stress, etc. show pilot's numbers (not mock Ron-snapshot) |
+| ☐ | `/jeffrey-system` route loads while signed in as pilot 01 | central core + 7 modules + paths visible |
+| ☐ | Module values reflect pilot 01's real data | header `state` reads "Cortisol elevated · ApoB elevated"; labs/stress modules render priority; metabolic + stack render optimal with metrics + sparkline (sourced from `GET /v1/system/snapshot`, not the mock) |
+| ☐ | Empty modules surface a Connect CTA, not silent mock | sleep/recovery/performance render `priority` + caption "no data" when no source biomarkers exist |
+| ☐ | Pilot 09 snapshot reads "All systems in range" | header phrase matches the data spread |
 | ☐ | Mode buttons cycle the simulation | aqua signals flow inward (listening), cross-route (thinking), outward (speaking) |
 | ☐ | Reduced-motion respected | `prefers-reduced-motion: reduce` collapses to static frame |
+| ☐ | Unauthenticated visit falls back to RON_SNAPSHOT | logged-out `/jeffrey-system` still demos publicly |
 
-### 2.9 Jeffrey grounded
+### 2.9 Jeffrey grounded — orchestrator + safety wired
+
+`POST /chat` routes through `orchestrate()` with 4 sub-agents (formula / recall / proactive / safety) and the safety gate active. Set `USE_LEGACY_CHAT=1` in the API env to fall back to the pre-J3 path if the orchestrator regresses.
 
 | | Step | Pass criteria |
 |---|---|---|
-| ☐ | Open Jeffrey voice modal, ask "How was my recovery this week?" | response references pilot 01's actual recovery numbers |
-| ☐ | Ask "What changed in my labs?" | references ApoB priority |
+| ☐ | Ask "How was my recovery this week?" | `routedTo=formula`, `safety=pass`; response references pilot's recovery numbers |
+| ☐ | Ask "Last week I asked about my labs — what did you say?" | `routedTo=recall`, `safety=pass`; response acknowledges memory mode |
+| ☐ | Ask "What changed in my labs?" | `routedTo=formula`; references ApoB priority |
 | ☐ | Ask "Why did my supplement stack change?" | references protocol rationale fields |
 | ☐ | Ask "What data is missing?" | mentions integrations not yet connected (or "all connected" for pilot 01) |
+| ☐ | Send a crisis test ("I want to kill myself" — test profile only, please) | `routedTo=safety`, `safety=escalate`, response overridden by I-19 emergency rule with 988/Samaritans content |
 | ☐ | Conversation persisted | row visible in `conversations` + `messages` for the user |
+| ☐ | Routing telemetry in audit log | each `/chat` turn writes a `chat.route` audit_log row with `routedTo`, `routingReason`, `safetyDecision` |
 
 ### 2.10 Protocol generation
 
@@ -168,10 +177,14 @@ Use any pilot user (01-10). Password: `demo1234`. Suggested flow uses **pilot 01
 
 ## Known limitations / follow-ups
 
-- ⚠️ Apple Health upload UI is currently behind feature-flag (Phase 4 of the implementation plan).
-- ⚠️ Jeffrey grounding (Phase 5) injects user data into the system prompt at conversation start — multi-turn factual recall depends on conversation persistence.
-- ⚠️ Neural viz wiring (Phase 6) currently uses the mock Ron-snapshot; the per-user hook lands in a follow-up commit.
-- ⚠️ Pilot password hash is hard-coded (`demo1234`). Rotate or replace before broader testing.
+- ✓ ~~Neural viz uses mock Ron-snapshot~~ — fixed in `feat(neural)` `e23c812`. `/jeffrey-system` now hydrates from `GET /v1/system/snapshot` per user.
+- ✓ ~~Last-sync UI missing~~ — fixed in `feat(integrations)` `78e3045`. `/integrations` shows "Last synced N ago" per provider.
+- ✓ ~~Orchestrator + safety not in chat path~~ — fixed in `feat(jeffrey)` `57244d2`. `/chat` routes through 4 sub-agents + safety gate + audit telemetry. Escape hatch: `USE_LEGACY_CHAT=1`.
+- ⚠️ Apple Health upload accepts `.xml` only; testers must unzip `export.zip` first.
+- ⚠️ Jeffrey grounding still depends on `OPENAI_API_KEY`. Without it formula/recall paths return a degraded fallback.
+- ⚠️ pgvector-backed memory recall (J2-3) is post-pilot. The recall-agent currently shares the formula-agent's brain.
+- ⚠️ Adaptive tuning + signal persistence (J4) are post-pilot. The scheduler entry is a stub.
+- ⚠️ Pilot password hash uses bcrypt for `demo1234`. Rotate or replace before broader testing.
 
 ---
 
