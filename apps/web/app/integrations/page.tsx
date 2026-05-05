@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { integrations as integrationsApi } from "../../lib/api";
+import { integrations as integrationsApi, type IntegrationSyncSource } from "../../lib/api";
 import { Card, Button, Spinner, Badge } from "../../components/ui";
 
 interface ConnectedProvider {
@@ -9,6 +9,28 @@ interface ConnectedProvider {
 }
 
 type Status = Record<string, ConnectedProvider>;
+
+/** Format an ISO timestamp as "Just now / Nm ago / Nh ago / Mon D". */
+function formatAgo(iso: string | null | undefined): string {
+  if (!iso) return "never";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(ms) || ms < 0) return "just now";
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Map api provider id ("whoop"/"fhir"/"apple_health") to sync source name. */
+const SYNC_PROVIDER_ALIASES: Record<string, string[]> = {
+  whoop: ["whoop"],
+  fhir: ["fhir"],
+  apple_health: ["apple_health"],
+};
 
 const PROVIDERS = [
   {
@@ -41,6 +63,7 @@ const PROVIDERS = [
 
 export default function IntegrationsPage() {
   const [status, setStatus] = useState<Status>({});
+  const [syncSources, setSyncSources] = useState<IntegrationSyncSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<Record<string, string>>({});
@@ -50,8 +73,13 @@ export default function IntegrationsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await integrationsApi.status();
-      setStatus(data.connected);
+      // Fetch both endpoints in parallel; sync-status is best-effort.
+      const [statusRes, syncRes] = await Promise.allSettled([
+        integrationsApi.status(),
+        integrationsApi.syncStatus(),
+      ]);
+      if (statusRes.status === "fulfilled") setStatus(statusRes.value.connected);
+      if (syncRes.status === "fulfilled") setSyncSources(syncRes.value.sources);
     } catch {
       // Not fatal — show empty state
     } finally {
@@ -121,6 +149,9 @@ export default function IntegrationsPage() {
           const connected = !!status[provider.id];
           const connectedAt = status[provider.id]?.connectedAt;
           const message = syncResult[provider.id];
+          // Find the latest sync_batches row for this provider
+          const aliases = SYNC_PROVIDER_ALIASES[provider.id] ?? [provider.id];
+          const sync = syncSources.find((s) => aliases.includes(s.provider));
 
           return (
             <Card key={provider.id}>
@@ -132,12 +163,27 @@ export default function IntegrationsPage() {
                     {connected && (
                       <Badge variant="success">Connected</Badge>
                     )}
+                    {sync?.status === "failed" && (
+                      <Badge variant="warning">Sync failed</Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted mb-3">{provider.description}</p>
 
                   {connected && connectedAt && (
-                    <p className="text-xs text-muted mb-3">
+                    <p className="text-xs text-muted mb-1">
                       Connected {new Date(connectedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                  {sync && (
+                    <p className="text-xs text-muted mb-3">
+                      Last synced{" "}
+                      <span className="text-ink">{formatAgo(sync.lastCompletedAt ?? sync.startedAt)}</span>
+                      {sync.biomarkersInserted > 0 && (
+                        <> · {sync.biomarkersInserted} biomarker{sync.biomarkersInserted === 1 ? "" : "s"}</>
+                      )}
+                      {sync.errorMessage && (
+                        <> · <span className="text-warn">{sync.errorMessage.slice(0, 60)}</span></>
+                      )}
                     </p>
                   )}
 

@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../middleware/auth.js";
 import { config } from "../config.js";
-import { db, schema, eq } from "@aissisted/db";
+import { db, schema, eq, desc, and } from "@aissisted/db";
 import { persistRawBiomarkers } from "../services/biomarker.service.js";
 
 // WHOOP
@@ -39,6 +39,55 @@ export async function integrationsRoutes(app: FastifyInstance) {
 
       reply.send({ data: { connected } });
     }
+  );
+
+  /**
+   * GET /integrations/sync-status
+   *
+   * Returns the most recent sync_batches row per provider for the
+   * authenticated user. Used by the dashboard + integrations UI to surface
+   * "Last synced N ago" indicators per source.
+   */
+  app.get(
+    "/integrations/sync-status",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { sub } = request.user as { sub: string };
+
+      // Pull recent batches for this user; we filter to the latest per source
+      // in app code rather than fighting drizzle/sqlite for `MAX` + `GROUP BY`.
+      const batches = await db
+        .select({
+          source: schema.syncBatches.source,
+          status: schema.syncBatches.status,
+          startedAt: schema.syncBatches.startedAt,
+          completedAt: schema.syncBatches.completedAt,
+          biomarkersInserted: schema.syncBatches.biomarkersInserted,
+          errorMessage: schema.syncBatches.errorMessage,
+        })
+        .from(schema.syncBatches)
+        .where(eq(schema.syncBatches.userId, sub))
+        .orderBy(desc(schema.syncBatches.startedAt))
+        .limit(200);
+
+      const latestBySource = new Map<string, (typeof batches)[number]>();
+      for (const b of batches) {
+        if (!latestBySource.has(b.source)) latestBySource.set(b.source, b);
+      }
+
+      const data = {
+        sources: Array.from(latestBySource.values()).map((b) => ({
+          provider: b.source,
+          status: b.status,
+          startedAt: b.startedAt,
+          lastCompletedAt: b.completedAt ?? null,
+          biomarkersInserted: b.biomarkersInserted,
+          errorMessage: b.errorMessage ?? null,
+        })),
+      };
+
+      reply.send({ data });
+    },
   );
 
   // ─── WHOOP ─────────────────────────────────────────────

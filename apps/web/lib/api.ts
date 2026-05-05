@@ -186,11 +186,24 @@ export const chat = {
 };
 
 // ─── Integrations ────────────────────────────────────────
+export interface IntegrationSyncSource {
+  provider: string;
+  status: "running" | "completed" | "failed" | "partial";
+  startedAt: string;
+  lastCompletedAt: string | null;
+  biomarkersInserted: number;
+  errorMessage: string | null;
+}
+
 export const integrations = {
   status: () =>
     request<{ connected: Record<string, { connectedAt: string }> }>(
       "/integrations/status"
     ),
+
+  /** Most-recent sync_batches row per provider, used for "Last synced N ago". */
+  syncStatus: () =>
+    request<{ sources: IntegrationSyncSource[] }>("/integrations/sync-status"),
 
   whoopConnect: () => {
     // Redirects — navigate directly
