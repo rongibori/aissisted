@@ -1,0 +1,12 @@
+{
+  "name": "Aissisted Foundation Builder",
+  "id": "com.aissisted.foundation-builder",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "menu": [
+    { "name": "Build Color page", "command": "build-color" },
+    { "separator": true },
+    { "name": "About", "command": "about" }
+  ]
+}

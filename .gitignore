@@ -29,3 +29,6 @@ apps/*/next-env.d.ts
 
 # Cowork coordination layer (local-only; managed by Cowork session)
 /jeffrey/
+
+# Local Claude Code permissions (per-clone, do not commit)
+.claude/
