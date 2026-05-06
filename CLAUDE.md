@@ -15,7 +15,7 @@ If you're spawned at `/Users/rongibori/Documents/GitHub/aissisted`: you're in th
 
 ## Quick orientation
 
-- Monorepo: `apps/api` (Fastify), `apps/web` (authenticated product), `apps/site` (investor/marketing — M1 scaffold + M2 design system shipped), `apps/landing` (consumer landing live at aissisted.me), `packages/brand` (design tokens + primitives).
+- Monorepo: `apps/api` (Fastify), `apps/web` (authenticated product), `apps/site` (**soft-retired 2026-05-05** — see `apps/site/RETIRED.md`), `apps/landing` (canonical consumer site, live at aissisted.me), `packages/brand` (design tokens + primitives, still active).
 - Brand Bible v1.1 is canon. Rally cry: "Your Body. Understood." Palette 70/20/8/2 white / black `#1C1C1E` / red `#EE2B37` / navy `#0B1D3A`. Butler-cadence tone. Forbidden-words list in `lib/brand-rules.ts` — keep at 0 hits.
 - Jeffrey persona: in-product conversational layer. Voice modal prompts at `jeffrey/CLAUDE_DESIGN_JEFFREY_VOICE_MODAL_PROMPTS.md`. Separate from the `jeffrey-investor-site` slide deck repo.
 - v2 canon: Morning / Day / Night Formulas, Architecture A, $69 / $99 / $149 pricing, freemium platform.
