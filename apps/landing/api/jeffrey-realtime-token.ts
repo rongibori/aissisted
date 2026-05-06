@@ -12,7 +12,7 @@
  *
  * Optional:
  *   OPENAI_REALTIME_MODEL  — defaults to "gpt-4o-realtime-preview-2024-12-17"
- *   OPENAI_REALTIME_VOICE  — defaults to "alloy" (Jeffrey-mode candidates: alloy, echo, ash, sage)
+ *   OPENAI_REALTIME_VOICE  — defaults to "cedar" (Jeffrey-mode: cedar — male, RP British, calm dial-up)
  *
  * Endpoint:
  *   POST /api/jeffrey-realtime-token
