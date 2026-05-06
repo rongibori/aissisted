@@ -1,17 +1,18 @@
 # Working in this repo (for Claude sessions)
 
-## Two-clone protocol — read before any push
+## Canonical path — read before any work
 
-Ron keeps two local clones of `rongibori/aissisted` on this machine:
+**Canonical:** `/Users/rongibori/aissisted` — all builds, deploys, PRs, and edits happen here.
+**Retired:** `/Users/rongibori/Documents/GitHub/aissisted` — iCloud-synced, awaiting archive. Do not work from this path.
 
-| Path | Role |
-|---|---|
-| `/Users/rongibori/Documents/GitHub/aissisted` | **Canonical / push environment.** Mirrors `origin/main`. All PRs ship from here. Treat as source of truth. |
-| `/Users/rongibori/aissisted` | Local dev / scratch. In-progress work, experiments. Sync to canonical via PR before discarding. |
+This reverses the protocol that was in place before 2026-05-05. The retired clone lives under `~/Documents/`, which is iCloud Drive's domain on this machine — Git objects intermittently materialize as `.icloud` placeholders, breaking commits, fsck, and worktree operations. The salvage operation on 2026-05-05 moved canonical status to `~/aissisted` (not iCloud-synced) and preserved 16 salvage branches on `origin` covering all unpushed work from the retired clone.
 
-**Git does not enforce this** — both clones share `origin` and both can push. The protocol exists by convention only. If you're a Claude session spawned at `/Users/rongibori/aissisted` and you're about to open a PR, **stop and confirm with Ron first**. Migrate the work to the canonical clone before pushing.
+**Authoritative markers:**
+- `/Users/rongibori/aissisted/.canonical` — declares this path canonical.
+- `/Users/rongibori/Documents/GitHub/aissisted/.canonical` — self-identifies as RETIRED, points here.
+- `/Users/rongibori/SALVAGE_REPORT_2026-05-05.md` — full audit trail of the reversal.
 
-If you're spawned at `/Users/rongibori/Documents/GitHub/aissisted`: you're in the right place. Proceed.
+If you're a Claude session spawned at `/Users/rongibori/Documents/GitHub/aissisted`: **stop.** Re-spawn at `/Users/rongibori/aissisted`. Don't push from the retired clone.
 
 ## Quick orientation
 
@@ -22,7 +23,7 @@ If you're spawned at `/Users/rongibori/Documents/GitHub/aissisted`: you're in th
 
 ## Before you push
 
-1. Confirm you're in `/Users/rongibori/Documents/GitHub/aissisted` (`pwd`)
+1. Confirm you're in `/Users/rongibori/aissisted` (`pwd`) — the canonical clone since 2026-05-05
 2. `git fetch origin && git status` — confirm your branch is current
 3. Forbidden-words scan if you touched copy
 4. If your branch is downstream of M1/M2/PR #60 work, rebase don't merge — keep history linear
