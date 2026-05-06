@@ -2979,16 +2979,6 @@
     let connected = false;
     let assistantBuffer = "";
 
-    // ── Demo-mode state (fallback when no token-mint backend is reachable) ──
-    // preview.html is frequently opened via file:// for investor demos and
-    // standalone reviews. There is no server to mint an OpenAI Realtime token.
-    // When the real flow fails we fall back to an in-browser demo: webkit
-    // SpeechRecognition for input, SpeechSynthesis for Jeffrey's reply, and
-    // the same UI state machine. It will never show the error state.
-    let demoMode = false;
-    let demoRecognition = null;
-    let demoSpeakingNow = false;
-
     // ── State-aware default copy ──────────────────────────────────────
     // Each state has a default caption + hint. Explicit setCaption()/setHint()
     // calls override these for the duration of that state.
@@ -3041,77 +3031,7 @@
     function apiBase() {
       // Allow override for tunnel-served prototypes pointing at aissisted.me
       if (window.AISSISTED_API_BASE) return window.AISSISTED_API_BASE.replace(/\/$/, '');
-      // When the prototype is opened via file:// or a non-Vercel origin
-      // (e.g. local Next.js dev on :3000) there is no /api/* handler at the
-      // current origin. Auto-route to the deployed landing where the
-      // serverless function lives. CORS is `*` on that endpoint.
-      try {
-        const proto = window.location.protocol;
-        const host  = window.location.hostname;
-        const isFile = proto === 'file:';
-        const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '';
-        const isAissistedHost = /(^|\.)aissisted\.me$/.test(host);
-        if (isFile || (isLocal && !isAissistedHost)) {
-          return 'https://aissisted.me';
-        }
-      } catch (_) { /* non-browser, ignore */ }
       return '';
-    }
-
-    // Try a sequence of backend candidates. Returns the parsed token JSON or
-    // throws the last error. Order: explicit override → same-origin → live
-    // cloudflared tunnel (Cedar v1.1 voice lock) → production → localhost.
-    // First success wins. If all fail, caller falls back to demo voice.
-    //
-    // To pin a different tunnel for file:// previews, set
-    //   window.AISSISTED_API_BASE = 'https://your-tunnel.trycloudflare.com'
-    // before tapping the orb, OR update VOICE_LOCK_TUNNEL below.
-    const VOICE_LOCK_TUNNEL = 'https://journalism-expressed-array-mysterious.trycloudflare.com';
-
-    async function tryMintToken() {
-      const seen = new Set();
-      const candidates = [];
-      const push = (b) => {
-        const s = (b == null ? '' : String(b)).replace(/\/$/, '');
-        if (seen.has(s)) return;
-        seen.add(s);
-        candidates.push(s);
-      };
-      if (window.AISSISTED_API_BASE) push(window.AISSISTED_API_BASE);
-      // Same-origin first when not file://
-      try { if (window.location.protocol !== 'file:') push(''); } catch (_) {}
-      // Live cedar v1.1 tunnel — gives file:// previews the real locked voice.
-      if (VOICE_LOCK_TUNNEL) push(VOICE_LOCK_TUNNEL);
-      // Production deployment
-      push('https://aissisted.me');
-      // Local dev variants — Vercel dev (3000) and Fastify (4000)
-      push('http://localhost:3000');
-      push('http://localhost:4000');
-
-      let lastErr = null;
-      for (const base of candidates) {
-        try {
-          const r = await fetch(`${base}/api/jeffrey-realtime-token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({}),
-          });
-          if (!r.ok) {
-            lastErr = new Error(`HTTP ${r.status} from ${base || 'same-origin'}`);
-            continue;
-          }
-          const j = await r.json();
-          if (!j?.client_secret?.value) {
-            lastErr = new Error(`No client_secret from ${base || 'same-origin'}`);
-            continue;
-          }
-          return j;
-        } catch (e) {
-          lastErr = e;
-          // Continue to next candidate
-        }
-      }
-      throw lastErr || new Error('No token-mint candidate succeeded');
     }
 
     async function start() {
@@ -3122,21 +3042,15 @@
       setCaption('Connecting…');
       setHint('Negotiating session');
 
-      // 1. Try to mint an ephemeral token from any reachable backend.
-      let session;
       try {
-        session = await tryMintToken();
-      } catch (err) {
-        // No backend available → drop into in-browser demo mode so the orb
-        // still works (file:// prototype, no network, no API keys, etc.).
-        console.warn('[Jeffrey] Token mint unavailable, entering demo mode:', err && err.message);
-        connecting = false;
-        startDemoMode();
-        return;
-      }
-
-      try {
-        const { client_secret, model } = session;
+        // 1. Mint ephemeral token
+        const tokenRes = await fetch(`${apiBase()}/api/jeffrey-realtime-token`, { method: 'POST' });
+        if (!tokenRes.ok) {
+          const body = await tokenRes.text();
+          throw new Error(`Token mint failed (${tokenRes.status}): ${body.slice(0, 200)}`);
+        }
+        const { client_secret, model } = await tokenRes.json();
+        if (!client_secret?.value) throw new Error('No client_secret in response');
 
         // 2. Capture mic
         micStream = await navigator.mediaDevices.getUserMedia({
@@ -3203,21 +3117,16 @@
         setCaption('I’m listening. Take your time.');
         setHint('Tap the orb to end the call');
       } catch (err) {
-        // WebRTC / mic / SDP failed — clean up and try demo mode so the orb
-        // still feels alive in the prototype. Only show the hard error state
-        // if even the demo path can't run.
-        console.warn('[Jeffrey] Realtime path failed, entering demo mode:', err && err.message);
-        try { if (dc) dc.close(); } catch (_) {}
-        try { if (pc) pc.close(); } catch (_) {}
-        if (micStream) for (const t of micStream.getTracks()) t.stop();
-        pc = null; dc = null; micStream = null;
         connecting = false;
-        startDemoMode();
+        setError(err && err.message ? err.message : 'Connection error');
+        stop();
+        setState('error', 'error');
+        setCaption('Couldn’t connect. Check the network or try again.');
+        setHint('Tap to retry');
       }
     }
 
     function stop() {
-      if (demoMode) { stopDemoMode(); return; }
       try { if (dc) dc.close(); } catch (_) {}
       try { if (pc) pc.close(); } catch (_) {}
       if (micStream) {
@@ -3227,188 +3136,6 @@
       connected = false; connecting = false;
       assistantBuffer = "";
       if (audioEl) audioEl.srcObject = null;
-      setState('idle', 'idle');
-      setCaption('“Tap the orb. I’ll listen.”');
-      setHint('Tap to speak · tap again to end');
-    }
-
-    // ─── Demo voice flow (used when no backend is reachable) ───────────────
-    // Same orb, same captions, same state machine. Speech in via webkit
-    // SpeechRecognition (or a click-driven prompt fallback). Speech out via
-    // window.speechSynthesis using the closest available male voice.
-
-    const DEMO_REPLIES = [
-      {
-        match: /(rhodiola|adapt|stress|cortisol)/i,
-        text: "Rhodiola is back because your morning HRV held above sixty, but your strain rebounded. It supports adaptation without overstimulating. Two weeks. Then I'll reassess.",
-      },
-      {
-        match: /(dose|earlier|sleep|bedtime|magnesium|tonight|night)/i,
-        text: "Done. Tonight's dose moves to nine. Magnesium up forty milligrams. Glycine and theanine an hour before bed. Light off by ten.",
-      },
-      {
-        match: /(travel|pause|hold|stop|skip)/i,
-        text: "Pausing the stack. I'll keep magnesium and glycine going for sleep continuity. Resume when you're back. Tell me when.",
-      },
-      {
-        match: /(recovery|hrv|whoop|strain|today|signal)/i,
-        text: "Recovery is seventy-eight, up twelve. Sleep ninety-two. Strain low. We hold the formula. Tonight's adjustment is small.",
-      },
-    ];
-
-    const DEMO_DEFAULT = "I'm here. Tell me what's on your mind, and I'll fold it into tonight's adjustment.";
-
-    function pickDemoReply(text) {
-      const t = text || '';
-      for (const r of DEMO_REPLIES) if (r.match.test(t)) return r.text;
-      return DEMO_DEFAULT;
-    }
-
-    function pickDemoVoice() {
-      try {
-        const voices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [];
-        if (!voices.length) return null;
-        // Prefer high-quality British male voices on macOS / iOS.
-        const ranked = [
-          /daniel.*(uk|en[-_]gb)/i,
-          /oliver/i,
-          /arthur/i,
-          /serena/i,           // British, lower register
-          /alex/i,             // macOS classic male
-          /fred/i,
-          /(en[-_]gb).*male/i,
-          /male/i,
-          /en[-_]gb/i,
-          /en[-_]us/i,
-        ];
-        for (const re of ranked) {
-          const v = voices.find((v) => re.test(`${v.name} ${v.lang}`));
-          if (v) return v;
-        }
-        return voices.find((v) => /^en/i.test(v.lang)) || voices[0];
-      } catch (_) { return null; }
-    }
-
-    function speakDemo(text, onDone) {
-      if (!('speechSynthesis' in window)) { setTimeout(onDone, 1600); return; }
-      try {
-        // Cancel anything pending so interruptions feel snappy.
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        const voice = pickDemoVoice();
-        if (voice) u.voice = voice;
-        u.rate = 0.92;
-        u.pitch = 0.85;
-        u.volume = 1.0;
-        demoSpeakingNow = true;
-        u.onend = () => { demoSpeakingNow = false; onDone && onDone(); };
-        u.onerror = () => { demoSpeakingNow = false; onDone && onDone(); };
-        window.speechSynthesis.speak(u);
-      } catch (_) {
-        demoSpeakingNow = false;
-        setTimeout(onDone, 1600);
-      }
-    }
-
-    function startDemoListener() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return;
-      try {
-        if (demoRecognition) { try { demoRecognition.stop(); } catch (_) {} }
-        const rec = new SR();
-        rec.continuous = false;
-        rec.interimResults = true;
-        rec.lang = 'en-US';
-        let interim = '';
-        rec.onresult = (ev) => {
-          interim = '';
-          let finalText = '';
-          for (let i = ev.resultIndex; i < ev.results.length; i++) {
-            const r = ev.results[i];
-            if (r.isFinal) finalText += r[0].transcript;
-            else interim += r[0].transcript;
-          }
-          if (interim && demoMode && !demoSpeakingNow) {
-            setState('listening', 'demo');
-            setCaption(interim.slice(0, 140));
-          }
-          if (finalText) respondInDemo(finalText.trim());
-        };
-        rec.onerror = () => {};
-        rec.onend = () => {
-          // Auto-restart so the orb keeps listening between turns.
-          if (demoMode && !demoSpeakingNow) {
-            try { rec.start(); } catch (_) {}
-          }
-        };
-        rec.start();
-        demoRecognition = rec;
-      } catch (_) {}
-    }
-
-    function respondInDemo(userText) {
-      if (!demoMode) return;
-      // Pause the listener while Jeffrey speaks so he doesn't hear himself.
-      if (demoRecognition) try { demoRecognition.stop(); } catch (_) {}
-      setState('thinking', 'demo');
-      setCaption('Thinking…');
-      setHint('Working through your signals');
-      const reply = pickDemoReply(userText);
-      setTimeout(() => {
-        if (!demoMode) return;
-        setState('speaking', 'demo');
-        setCaption(reply.length > 140 ? reply.slice(0, 140) + '…' : reply);
-        setHint('Tap to interrupt');
-        speakDemo(reply, () => {
-          if (!demoMode) return;
-          setState('listening', 'demo');
-          setCaption("I'm listening.");
-          setHint('Tap to speak · tap again to end');
-          startDemoListener();
-        });
-      }, 700);
-    }
-
-    function startDemoMode() {
-      demoMode = true;
-      connected = true;
-      connecting = false;
-      setError('');
-      setState('listening', 'listening');
-      setCaption("I'm listening. Take your time.");
-      setHint('Tap the orb to end · or tap a prompt');
-      // Prime voices on first interaction (Safari/Chrome lazy-load them).
-      try {
-        if (window.speechSynthesis && !window.speechSynthesis.getVoices().length) {
-          window.speechSynthesis.onvoiceschanged = () => {};
-        }
-      } catch (_) {}
-      // A short scripted greeting so the user hears Jeffrey immediately —
-      // matches the realtime path which auto-greets via response.create.
-      setTimeout(() => {
-        if (!demoMode) return;
-        const greet = "I'm here. Tap a prompt, or just speak — I'm listening.";
-        setState('speaking', 'demo');
-        setCaption(greet);
-        setHint('Tap to interrupt');
-        speakDemo(greet, () => {
-          if (!demoMode) return;
-          setState('listening', 'demo');
-          setCaption("I'm listening.");
-          setHint('Tap to speak · tap again to end');
-          startDemoListener();
-        });
-      }, 250);
-    }
-
-    function stopDemoMode() {
-      demoMode = false;
-      connected = false;
-      connecting = false;
-      demoSpeakingNow = false;
-      if (demoRecognition) { try { demoRecognition.stop(); } catch (_) {} }
-      demoRecognition = null;
-      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (_) {}
       setState('idle', 'idle');
       setCaption('“Tap the orb. I’ll listen.”');
       setHint('Tap to speak · tap again to end');
@@ -3457,20 +3184,13 @@
     }
 
     function sendText(text) {
-      // Demo mode: route through the local script + TTS path.
-      if (demoMode) {
-        respondInDemo(text);
-        return;
-      }
       if (!connected || !dc) {
-        // If not connected yet, start the call and queue the message after open.
-        // start() may resolve into demo mode — handle both branches.
+        // If not connected yet, start the call and queue the message after open
         const onceOpen = () => {
           dc?.removeEventListener('open', onceOpen);
           sendText(text);
         };
         start().then(() => {
-          if (demoMode) { respondInDemo(text); return; }
           if (dc?.readyState === 'open') sendText(text);
           else dc?.addEventListener('open', onceOpen);
         });
@@ -3492,7 +3212,7 @@
       setCaption('Thinking…');
     }
 
-    return { start, stop, sendText, isConnected: () => connected || demoMode };
+    return { start, stop, sendText, isConnected: () => connected };
   })();
 
   // Public hooks used by the Jeffrey screen

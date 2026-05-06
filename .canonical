@@ -1,4 +1,5 @@
-This is the CANONICAL Aissisted repo.
-All builds, deploys, and Claude/Cowork edits should happen here.
-If you're looking at a copy elsewhere, stop and cd to:
-  /Users/rongibori/Documents/GitHub/aissisted
+RETIRED CLONE — DO NOT WORK FROM THIS COPY
+RETIRED: 2026-05-05
+CANONICAL LOCAL TREE: /Users/rongibori/aissisted
+SOURCE OF TRUTH: github.com/rongibori/aissisted
+NOTE: This iCloud-synced clone (~/Documents/GitHub/aissisted) is being archived after salvage of unpushed work to salvage/* branches on origin. Any commits or edits made here will be lost.
