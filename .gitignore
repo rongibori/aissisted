@@ -32,3 +32,5 @@ apps/*/next-env.d.ts
 
 # Local Claude Code permissions (per-clone, do not commit)
 .claude/
+.vercel
+.env*.local
